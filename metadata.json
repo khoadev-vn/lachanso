@@ -1,0 +1,7 @@
+{
+  "name": "Lá Chắn Số",
+  "description": "Nền tảng xác thực và bảo mật thông tin, bảo vệ người dùng Việt Nam khỏi lừa đảo trực tuyến và tin giả.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
