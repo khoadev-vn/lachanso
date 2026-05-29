@@ -130,6 +130,36 @@ export default function App() {
     if (e) e.preventDefault();
     if (!searchQuery.trim()) return;
 
+    if (isGamblingDomainInput(searchQuery)) {
+      setIsChecking(false);
+      setLoadingStep(0);
+      setShowResults(true);
+      navigateToPage("check");
+      setResultData({
+        isSafe: false,
+        isWarning: false,
+        isDanger: true,
+        type: "web",
+        url: searchQuery.trim(),
+        score: 0,
+        title: "CẢNH BÁO: CỜ BẠC LỪA ĐẢO",
+        description: "Hệ thống phát hiện đây là tên miền thuộc danh sách cờ bạc lừa đảo. Điểm đánh giá được đặt về 0 để tránh nhầm lẫn với nội dung an toàn.",
+        screenshot: "https://images.search.yahoo.com/search/images;_ylt=AwrKCZZT2hlqMQIASKiJzbkF;_ylu=Y29sbwNzZzMEcG9zAzIyBHZ0aWQDBHNlYwNzcg--?fr=mcafee&p=c%E1%BA%A3nh+b%C3%A1o&imgurl=https%3A%2F%2Fpng.pngtree.com%2Fpng-clipart%2F20220909%2Foriginal%2Fpngtree-traffic-warning-3d-warning-png-image_8521088.png",
+        previewCandidates: [],
+        analysisReasons: [
+          {
+            id: "GAMBLING_SCAM",
+            name: "Website cờ bạc, cá cược lừa đảo",
+            detail: "Tên miền nằm trong danh sách đen cờ bạc lừa đảo của Lá Chắn Số.",
+            status: "danger",
+            icon: AlertTriangle
+          }
+        ],
+        textContent: searchQuery.trim()
+      });
+      return;
+    }
+
     // Guard chống chồng job
     const jobId = (window as any).__LCS_JOB_ID__ = ((window as any).__LCS_JOB_ID__ ?? 0) + 1;
 
@@ -577,8 +607,8 @@ export default function App() {
                       <button
                         onClick={() => setCheckType("web")}
                         className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${checkType === "web"
-                            ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
-                            : "bg-white/60 text-gray-600 hover:bg-white"
+                          ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
+                          : "bg-white/60 text-gray-600 hover:bg-white"
                           }`}
                       >
                         Kiểm tra Web
@@ -586,8 +616,8 @@ export default function App() {
                       <button
                         onClick={() => setCheckType("news")}
                         className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${checkType === "news"
-                            ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
-                            : "bg-white/60 text-gray-600 hover:bg-white"
+                          ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
+                          : "bg-white/60 text-gray-600 hover:bg-white"
                           }`}
                       >
                         Kiểm tra Tin giả
@@ -868,8 +898,8 @@ export default function App() {
                 <button
                   onClick={() => setCheckType("web")}
                   className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${checkType === "web"
-                      ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
-                      : "bg-white/60 text-gray-600 hover:bg-white border border-gray-100"
+                    ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
+                    : "bg-white/60 text-gray-600 hover:bg-white border border-gray-100"
                     }`}
                 >
                   Kiểm tra Web
@@ -877,8 +907,8 @@ export default function App() {
                 <button
                   onClick={() => setCheckType("news")}
                   className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${checkType === "news"
-                      ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
-                      : "bg-white/60 text-gray-600 hover:bg-white border border-gray-100"
+                    ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
+                    : "bg-white/60 text-gray-600 hover:bg-white border border-gray-100"
                     }`}
                 >
                   Kiểm tra Tin giả
@@ -991,8 +1021,8 @@ export default function App() {
                             </div>
                             <div className="flex items-center gap-3">
                               <div className={`px-5 py-2 rounded-xl text-sm font-bold border ${resultData.score >= 75 ? "bg-green-500/10 border-green-500/30 text-green-400" :
-                                  resultData.score >= 50 ? "bg-orange-500/10 border-orange-500/30 text-orange-400" :
-                                    "bg-red-500/10 border-red-500/30 text-red-400"
+                                resultData.score >= 50 ? "bg-orange-500/10 border-orange-500/30 text-orange-400" :
+                                  "bg-red-500/10 border-red-500/30 text-red-400"
                                 }`}>
                                 {resultData.isSafe ? "AN TOÀN" : resultData.isWarning ? "CẦN XÁC THỰC" : "NGUY HIỂM"}
                               </div>
@@ -1296,14 +1326,14 @@ export default function App() {
                               <div
                                 key={idx}
                                 className={`rounded-2xl border p-4 ${res.status === "danger" ? "border-red-200 bg-red-50/70" :
-                                    res.status === "warning" ? "border-amber-200 bg-amber-50/70" :
-                                      "border-emerald-200 bg-emerald-50/70"
+                                  res.status === "warning" ? "border-amber-200 bg-amber-50/70" :
+                                    "border-emerald-200 bg-emerald-50/70"
                                   }`}
                               >
                                 <div className="flex items-start gap-3">
                                   <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${res.status === "danger" ? "bg-red-100 text-red-700" :
-                                      res.status === "warning" ? "bg-amber-100 text-amber-700" :
-                                        "bg-emerald-100 text-emerald-700"
+                                    res.status === "warning" ? "bg-amber-100 text-amber-700" :
+                                      "bg-emerald-100 text-emerald-700"
                                     }`}>
                                     <res.icon className="h-4 w-4" />
                                   </div>
@@ -1409,8 +1439,8 @@ export default function App() {
                               className="flex items-start gap-4 p-5 rounded-3xl border border-gray-50 bg-white hover:border-purple-200 hover:shadow-[0_8px_30px_rgb(139,92,246,0.04)] transition-all group cursor-default"
                             >
                               <div className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center ${res.status === "danger" ? "bg-red-50 text-red-500" :
-                                  res.status === "warning" ? "bg-orange-50 text-orange-500" :
-                                    "bg-green-50 text-green-500"
+                                res.status === "warning" ? "bg-orange-50 text-orange-500" :
+                                  "bg-green-50 text-green-500"
                                 }`}>
                                 <res.icon className="w-5 h-5" />
                               </div>
@@ -1420,8 +1450,8 @@ export default function App() {
                                   <span className="text-[15px] font-bold text-gray-900 truncate tracking-tight">{res.name}</span>
                                 </div>
                                 <p className={`text-[12px] leading-relaxed line-clamp-3 font-medium ${res.status === "danger" ? "text-red-600/80" :
-                                    res.status === "warning" ? "text-orange-600/80" :
-                                      "text-green-700/80"
+                                  res.status === "warning" ? "text-orange-600/80" :
+                                    "text-green-700/80"
                                   }`}>
                                   {res.detail}
                                 </p>
