@@ -1,15 +1,13 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, '.', '');
-  
+export default defineConfig(() => {
   return {
     plugins: [
       react(), 
-      tailwindcss(), // Chỉ giữ lại 1 cái này thôi bạn nhé
+      tailwindcss(),
     ],
     resolve: {
       alias: {
@@ -18,8 +16,28 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      // Giữ nguyên cấu hình HMR của bạn
+      // HMR is disabled in the platform via DISABLE_HMR env var.
       hmr: process.env.DISABLE_HMR !== 'true',
+      proxy: {
+        '/proxy/google-news': {
+          target: 'https://news.google.com',
+          changeOrigin: true,
+          secure: true,
+          rewrite: (path) => path.replace(/^\/proxy\/google-news/, ''),
+        },
+        '/proxy/factcheck': {
+          target: 'https://factchecktools.googleapis.com',
+          changeOrigin: true,
+          secure: true,
+          rewrite: (path) => path.replace(/^\/proxy\/factcheck/, ''),
+        },
+        '/proxy/newsapi': {
+          target: 'https://newsapi.org',
+          changeOrigin: true,
+          secure: true,
+          rewrite: (path) => path.replace(/^\/proxy\/newsapi/, ''),
+        },
+      },
     },
   };
 });

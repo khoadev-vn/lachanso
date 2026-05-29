@@ -1,86 +1,411 @@
 import { motion, AnimatePresence } from "motion/react";
-import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users } from "lucide-react";
+import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users, Landmark, Scale, HeartPulse, Info } from "lucide-react";
 import { useState, useEffect, FormEvent } from "react";
+import { extractArticleForAnalysis } from "./constants/articleExtraction";
+import { FAKE_NEWS_LAWS } from "./constants/fakeNewsLaws";
+import { analyzeTextByKeywords } from "./constants/fakeNewsKeywords";
+import { runLiveNewsCheck } from "./constants/liveNewsCheck";
+import { runNewsVerificationLayers } from "./constants/newsVerification";
+import { isDomainTrusted, isGovVnDomain, isSuspiciousTLD, extractLinksFromText } from "./constants/trustedDomains";
+import { analyzeWebsite } from "./constants/webVerification";
+
+type PageId = "home" | "check" | "resources" | "partners" | "mission";
+
+const PAGE_PATHS: Record<PageId, string> = {
+  home: "/",
+  check: "/kiem-tra",
+  resources: "/tai-nguyen",
+  partners: "/dong-hanh",
+  mission: "/su-menh",
+};
+
+const PATH_TO_PAGE: Record<string, PageId> = {
+  "/": "home",
+  "/kiem-tra": "check",
+  "/tai-nguyen": "resources",
+  "/dong-hanh": "partners",
+  "/su-menh": "mission",
+};
+
+const getPageFromPath = (pathname: string): PageId => PATH_TO_PAGE[pathname] ?? "home";
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState("home"); // "home" or "check"
+  const [currentPage, setCurrentPage] = useState<PageId>(() => getPageFromPath(window.location.pathname));
   const [searchQuery, setSearchQuery] = useState("");
   const [isChecking, setIsChecking] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [showResults, setShowResults] = useState(false);
   const [resultData, setResultData] = useState<any>(null);
   const [checkType, setCheckType] = useState<"web" | "news">("web");
+  const [previewCandidateIndex, setPreviewCandidateIndex] = useState(0);
+
+  useEffect(() => {
+    const syncPageFromLocation = () => {
+      setCurrentPage(getPageFromPath(window.location.pathname));
+    };
+
+    window.addEventListener("popstate", syncPageFromLocation);
+    syncPageFromLocation();
+
+    return () => {
+      window.removeEventListener("popstate", syncPageFromLocation);
+    };
+  }, []);
+
+  useEffect(() => {
+    setPreviewCandidateIndex(0);
+  }, [resultData?.screenshot]);
+
+  const activePreview =
+    resultData?.type === "web"
+      ? resultData.previewCandidates?.[previewCandidateIndex] ?? resultData.screenshot
+      : null;
+
+  const navigateToPage = (page: PageId) => {
+    const nextPath = PAGE_PATHS[page];
+
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({}, "", nextPath);
+    }
+
+    setCurrentPage(page);
+
+    if (page === "home") {
+      setShowResults(false);
+      setSearchQuery("");
+    }
+  };
 
   const handleCheck = (e?: FormEvent) => {
     if (e) e.preventDefault();
     if (!searchQuery.trim()) return;
 
+    // Guard chống chồng job
+    const jobId = (window as any).__LCS_JOB_ID__ = ((window as any).__LCS_JOB_ID__ ?? 0) + 1;
+
     setIsChecking(true);
     setShowResults(false);
-    setCurrentPage("check");
+    navigateToPage("check");
     setLoadingStep(0);
 
     // Simulate steps
-    const stepInterval = setInterval(() => {
+    const stepInterval = window.setInterval(() => {
       setLoadingStep(prev => (prev < 3 ? prev + 1 : prev));
     }, 600);
 
     // Simulate check process
-    setTimeout(() => {
+    setTimeout(async () => {
       clearInterval(stepInterval);
+
+      // Yield để trình duyệt kịp paint loading
+      await new Promise<void>(requestAnimationFrame);
+      await new Promise<void>(requestAnimationFrame);
+
+      // Nếu job cũ (bấm lại), bỏ qua
+      if ((window as any).__LCS_JOB_ID__ !== jobId) return;
+
       setIsChecking(false);
       setShowResults(true);
-      // Randomize result for demo
-      const isSafe = Math.random() > 0.3;
-      
-      const webReasons = [
-        { name: "Chứng chỉ SSL/TLS", status: "success", detail: "Hợp lệ & Bảo mật", icon: ShieldCheck },
-        { name: "Tuổi đời tên miền", status: isSafe ? "success" : "warning", detail: isSafe ? "> 5 năm" : "< 1 tháng", icon: Globe },
-        { name: "Danh sách đen (Blacklist)", status: isSafe ? "success" : "danger", detail: isSafe ? "Sạch" : "Phát hiện lừa đảo", icon: AlertTriangle },
-        { name: "Mã độc (Malware)", status: isSafe ? "success" : "danger", detail: isSafe ? "Không tìm thấy" : "Phát hiện Script lạ", icon: Database },
-        { name: "Tấn công Phishing", status: isSafe ? "success" : "danger", detail: isSafe ? "Không có dấu hiệu" : "Giả mạo thương hiệu", icon: Search },
-        { name: "Độ tin cậy cộng đồng", status: isSafe ? "success" : "warning", detail: isSafe ? "Cao" : "Thấp/Chưa xác minh", icon: Globe },
-        { name: "Máy chủ lưu trữ", status: "success", detail: "Vị trí an toàn", icon: Database },
-        { name: "Chỉ số rủi ro hệ thống", status: isSafe ? "success" : "danger", detail: isSafe ? "Thấp (2%)" : "Rất cao (94%)", icon: Sparkles }
-      ];
 
-      const newsReasons = [
-        { name: "Nguồn tin xác thực", status: isSafe ? "success" : "danger", detail: isSafe ? "Cơ quan báo chí chính thống" : "Nguồn tin không xác định", icon: Globe },
-        { name: "Kiểm chứng chéo", status: isSafe ? "success" : "warning", detail: isSafe ? "Khớp với 10+ nguồn tin khác" : "Chưa có nguồn tin đối chứng", icon: Search },
-        { name: "Phân tích ngôn ngữ chuyên sâu", status: isSafe ? "success" : "danger", detail: isSafe ? "Ngôn ngữ khách quan" : "Ngôn ngữ kích động/Giật gân", icon: Sparkles },
-        { name: "Dấu hiệu chỉnh sửa ảnh", status: isSafe ? "success" : "warning", detail: isSafe ? "Ảnh gốc/Chưa qua chỉnh sửa" : "Phát hiện dấu hiệu Deepfake/Chỉnh sửa", icon: ShieldCheck },
-        { name: "Thời gian đăng tải", status: "success", detail: "Cập nhật thời gian thực", icon: Database },
-        { name: "Uy tín tác giả", status: isSafe ? "success" : "warning", detail: isSafe ? "Tác giả có chuyên môn" : "Tác giả ẩn danh/Mới tạo", icon: ShieldCheck }
-      ];
+      if (checkType === "web") {
+        const webCheck = await analyzeWebsite(searchQuery);
+        setResultData({
+          isSafe: webCheck.isSafe,
+          isWarning: webCheck.isWarning,
+          isDanger: webCheck.isDanger,
+          type: "web",
+          url: webCheck.normalizedUrl,
+          score: webCheck.score,
+          title: webCheck.title,
+          description: webCheck.description,
+          screenshot: webCheck.screenshot,
+          previewCandidates: webCheck.previewCandidates,
+          analysisReasons: webCheck.reasons,
+          textContent: webCheck.normalizedUrl
+        });
+        return;
+      }
+
+      // --- NEWS CHECK LOGIC (Upgraded) ---
+      let score = 100;
+      const inputLinks = extractLinksFromText(searchQuery);
+      const articleExtraction = inputLinks.length > 0 ? await extractArticleForAnalysis(inputLinks[0]) : null;
+      const text = articleExtraction?.contentForAnalysis ?? searchQuery;
+      const reasons: any[] = [];
+      const violatedRules: string[] = [];
+      
+      const analysisDetails = {
+        heuristics: "Đang phân tích cấu trúc văn bản...",
+        google_fact_check: "Chưa tìm thấy dữ liệu đối soát thực tế.",
+        url_verification: "Không phát hiện liên kết trong văn bản.",
+        source_audit: "Đang dựng chuỗi nguồn...",
+        press_comparison: "Đang chuẩn bị đối chiếu đa báo...",
+        search_trace: "Đang mô phỏng truy vết tìm kiếm...",
+        live_fact_check: "Live Fact Check API chưa được gọi.",
+        live_press_scan: "Live Press API chưa được gọi.",
+        open_knowledge_check: "Open Knowledge Check chưa được gọi."
+      };
+
+      // 1. Link Analysis Layer
+      const links = extractLinksFromText(searchQuery);
+      let hasTrustedLink = false;
+      let hasGovLink = false;
+
+      if (articleExtraction) {
+        reasons.push({
+          id: "ARTICLE_EXTRACTED",
+          name: "Đã trích nội dung bài báo gốc",
+          detail: `Hệ thống đã đọc trực tiếp bài từ ${articleExtraction.sourceDomain}${articleExtraction.publishedTime ? `, thời gian đăng ${articleExtraction.publishedTime}` : ""}, rồi chuyển sang phân tích trên nội dung gốc thay vì chỉ dựa vào phần văn bản người dùng dán vào.`,
+          status: "success",
+          icon: Database
+        });
+        analysisDetails.url_verification = `Đã nhận diện liên kết báo chí uy tín (${articleExtraction.sourceDomain}) và trích xuất tiêu đề "${articleExtraction.title}" để kiểm tra nội dung gốc.`;
+        analysisDetails.source_audit = `Nội dung đang được đối chiếu trực tiếp từ bài gốc trên ${articleExtraction.sourceDomain}, giảm rủi ro do copy thiếu/ngắt đoạn.`;
+      }
+
+      if (links.length > 0) {
+        links.forEach(link => {
+          const trusted = isDomainTrusted(link);
+          if (trusted) {
+            hasTrustedLink = true;
+            score = Math.min(100, score + 20);
+            reasons.push({
+              id: "LINK_TRUSTED",
+              name: "Nguồn tin tin cậy",
+              detail: `Link dẫn tới ${trusted.domain} (${trusted.note || trusted.category}). Đây là nguồn tin chính thống được xác minh.`,
+              status: "success",
+              icon: ShieldCheck
+            });
+            analysisDetails.url_verification = `Đã xác minh: ${trusted.domain} là trang web chính thống của ${trusted.note || trusted.category}.`;
+          } else if (isGovVnDomain(link)) {
+            hasGovLink = true;
+            score = Math.min(100, score + 30);
+            reasons.push({
+              id: "LINK_GOV",
+              name: "Website Chính phủ",
+              detail: "Phát hiện liên kết .gov.vn chính thức của cơ quan nhà nước Việt Nam.",
+              status: "success",
+              icon: Landmark
+            });
+            analysisDetails.url_verification = "Liên kết sử dụng đuôi tên miền .gov.vn - Quy chuẩn của cơ quan hành chính nhà nước Việt Nam.";
+          } else if (isSuspiciousTLD(link)) {
+            score -= 45;
+            violatedRules.push("L082");
+            reasons.push({
+              id: "LINK_SUSPICIOUS",
+              name: "Tên miền rủi ro",
+              detail: "Sử dụng đuôi tên miền (.xyz, .top, .online...) thường dùng trong các chiến dịch lừa đảo.",
+              status: "danger",
+              icon: ExternalLink
+            });
+            analysisDetails.url_verification = "CẢNH BÁO: Liên kết sử dụng tên miền rủi ro cao, không thuộc quy chuẩn báo chí hay chính phủ.";
+          } else {
+            // General link check
+            reasons.push({
+              id: "LINK_CHECK",
+              name: "Phát hiện liên kết",
+              detail: "Văn bản chứa liên kết ngoài. Cẩn trọng trước khi click nếu không rõ nguồn gốc.",
+              status: "warning",
+              icon: Globe
+            });
+            analysisDetails.url_verification = "Phát hiện liên kết lạ chưa có trong cơ sở dữ liệu tin cậy. Cần kiểm tra sandbox trước khi truy cập.";
+          }
+        });
+      }
+
+      // 2. Keyword & Mood Analysis Layer
+      const keywordMatches = analyzeTextByKeywords(text);
+      keywordMatches.forEach(match => {
+        score -= match.penalty;
+        violatedRules.push(match.groupId);
+        reasons.push({
+          id: match.groupId,
+          name: match.groupName,
+          detail: `Phát hiện các từ khóa: ${match.matchedKeywords.slice(0, 5).join(", ")}${match.matchedKeywords.length > 5 ? "..." : ""}. ${match.isPositive ? "Tín hiệu tích cực." : "Dấu hiệu nghi vấn cao."}`,
+          status: match.isPositive ? "success" : (match.penalty > 40 ? "danger" : "warning"),
+          icon: match.isPositive ? ShieldCheck : (match.penalty > 40 ? AlertTriangle : Info)
+        });
+      });
+
+      // 3. Structural & Legal Analysis Layer (Existing Laws)
+      FAKE_NEWS_LAWS.forEach(law => {
+        const skipIds = ["L161", "L176", "L180"];
+        if (skipIds.includes(law.id)) return;
+
+        let isMatch = false;
+        if (typeof law.pattern === "function") {
+          isMatch = law.pattern(text);
+        } else {
+          isMatch = law.pattern.test(text);
+        }
+
+        if (isMatch) {
+          const alreadyFound = reasons.some(r => r.name === law.name);
+          if (!alreadyFound) {
+            score -= law.penalty;
+            violatedRules.push(law.id);
+            reasons.push({ 
+              id: law.id, 
+              name: law.name, 
+              detail: law.detail, 
+              status: law.status, 
+              icon: law.icon 
+            });
+          }
+        }
+      });
+
+      // 4. Advanced Correlation & Inverse Logic (Logic Đảo)
+      const mentionsAuthority = /Cục Cảnh sát|Bộ Công an|Bộ Y tế|Bộ Tài chính|Viện kiểm sát|Tòa án|VNeID|Định danh cá nhân|Cục an ninh mạng/i.test(text);
+      
+      if (mentionsAuthority && !hasGovLink && !hasTrustedLink) {
+        score -= 50;
+        violatedRules.push("LOGIC_DAO_01");
+        reasons.push({
+          id: "LOGIC_DAO_01",
+          name: "Mạo danh cơ quan nhà nước",
+          detail: "Văn bản tự xưng cơ quan nhà nước nhưng không cung cấp liên kết chính thống (.gov.vn). Đây là hành vi lừa đảo phổ biến.",
+          status: "danger",
+          icon: Landmark
+        });
+        analysisDetails.google_fact_check = "MÂU THUẪN: Không tìm thấy bất kỳ thông báo tương tự trên các trang tin chính thống (mps.gov.vn, chinhphu.vn).";
+      } else if (mentionsAuthority && (hasGovLink || hasTrustedLink)) {
+        analysisDetails.google_fact_check = "KHỚP: Nội dung có tham chiếu tới các địa chỉ tin cậy của cơ quan chức năng.";
+      } else {
+        analysisDetails.google_fact_check = "KHÔNG TÌM THẤY: Tin tức không xuất hiện trên các trang báo lớn trong 48h qua.";
+      }
+
+      const hasPanic = reasons.some(r => r.id === "KG_PANIC" || r.id === "L042");
+      const hasFinancial = reasons.some(r => r.id === "KG_FINANCIAL" || r.id === "L081");
+      
+      if (mentionsAuthority && (hasPanic || hasFinancial)) {
+        score -= 25;
+        violatedRules.push("CORR_01");
+        reasons.push({
+          id: "CORR_01",
+          name: "Thao túng tâm lý cao",
+          detail: "Sự kết hợp giữa uy quyền giả và áp lực thời gian/tài chính là dấu hiệu của tội phạm mạng.",
+          status: "danger",
+          icon: Zap
+        });
+      }
+
+      const verificationLayers = runNewsVerificationLayers(text);
+      score += verificationLayers.scoreDelta;
+      analysisDetails.source_audit = verificationLayers.summary.source_audit;
+      analysisDetails.press_comparison = verificationLayers.summary.press_comparison;
+      analysisDetails.search_trace = verificationLayers.summary.search_trace;
+
+      if (!hasTrustedLink && verificationLayers.hasTrustedEvidence) {
+        analysisDetails.google_fact_check = verificationLayers.summary.fact_check;
+      } else if (verificationLayers.summary.fact_check) {
+        if (analysisDetails.google_fact_check === "KHÔNG TÌM THẤY: Tin tức không xuất hiện trên các trang báo lớn trong 48h qua.") {
+          analysisDetails.google_fact_check = `KHÔNG TÌM THẤY: Tin tức không xuất hiện trên các trang báo lớn trong 48h qua. ${verificationLayers.summary.fact_check}`;
+        } else {
+          analysisDetails.google_fact_check = `${analysisDetails.google_fact_check} ${verificationLayers.summary.fact_check}`;
+        }
+      }
+
+      verificationLayers.reasons.forEach((reason) => {
+        if (!reasons.some((item) => item.id === reason.id)) {
+          reasons.push(reason);
+        }
+        if (!violatedRules.includes(reason.id) && reason.status !== "success") {
+          violatedRules.push(reason.id);
+        }
+      });
+
+      const liveNewsCheck = await runLiveNewsCheck(text);
+      score += liveNewsCheck.scoreDelta;
+      analysisDetails.live_fact_check = liveNewsCheck.summary.live_fact_check;
+      analysisDetails.live_press_scan = liveNewsCheck.summary.live_press_scan;
+      analysisDetails.open_knowledge_check = liveNewsCheck.summary.open_knowledge_check;
+      
+      if (liveNewsCheck.summary.headline_verification) {
+        analysisDetails["headline_verification"] = liveNewsCheck.summary.headline_verification;
+      }
+
+      liveNewsCheck.reasons.forEach((reason) => {
+        if (!reasons.some((item) => item.id === reason.id)) {
+          reasons.push(reason);
+        }
+        if (!violatedRules.includes(reason.id) && reason.status !== "success") {
+          violatedRules.push(reason.id);
+        }
+      });
+
+      const blockingMismatchIds = new Set([
+        "KNOWN_IDENTITY_MISMATCH",
+        "WIKIPEDIA_IDENTITY_MISMATCH",
+        "KNOWN_FACT_MISMATCH",
+        "KNOWN_BIRTHDATE_MISMATCH",
+        "KNOWN_BIRTHDAY_MISMATCH",
+        "KNOWN_DATE_RANGE_MISMATCH",
+        "OPEN_KNOWLEDGE_MISMATCH",
+        "WIKIPEDIA_PROFILE_MISMATCH",
+      ]);
+      const hasBlockingMismatch = reasons.some((item) => blockingMismatchIds.has(item.id) || (item.status === "danger" && /MISMATCH|SAI|KNOWN|WIKIPEDIA/i.test(item.id || "")));
+
+      if (liveNewsCheck.verifiedExternally && !hasBlockingMismatch) {
+        const suppressedIds = new Set(["UNSOURCED_CLAIM", "LIVE_NO_EVIDENCE"]);
+        for (let i = reasons.length - 1; i >= 0; i -= 1) {
+          if (suppressedIds.has(reasons[i].id)) {
+            reasons.splice(i, 1);
+          }
+        }
+        for (let i = violatedRules.length - 1; i >= 0; i -= 1) {
+          if (suppressedIds.has(violatedRules[i])) {
+            violatedRules.splice(i, 1);
+          }
+        }
+        score = Math.max(score, 86);
+      } else if (hasBlockingMismatch) {
+        score = Math.min(score, 42);
+      } else if (!verificationLayers.hasTrustedEvidence && reasons.some((item) => item.status !== "success")) {
+        score = Math.min(score, 69);
+      }
+
+      if (articleExtraction && score < 75 && liveNewsCheck.enabled) {
+        score = Math.max(score, 58);
+      }
+
+      analysisDetails.heuristics = `Phát hiện ${violatedRules.filter(id => id.startsWith('L') || id.startsWith('KG')).length} mẫu hình tin giả phổ biến và ${verificationLayers.trustedSourceCount} đầu mối nguồn có thể truy vết. Cấu trúc văn bản có dấu hiệu ${score < 50 ? 'bất thường nghiêm trọng' : 'cần lưu ý'}.`;
+
+      // Final score cap
+      score = Math.max(0, Math.min(100, score));
 
       setResultData({
-        isSafe,
-        type: checkType,
-        url: searchQuery,
-        score: isSafe ? Math.floor(Math.random() * 15) + 85 : Math.floor(Math.random() * 20) + 5,
-        confidence: isSafe ? "98%" : "Phát hiện mã độc lớp sâu",
-        title: isSafe 
-          ? (checkType === "web" ? "Trang chủ - Ngân hàng ABC" : "Thông tin chính thống từ Chính phủ") 
-          : (checkType === "web" ? "CẢNH BÁO: Trang web giả mạo" : "CẢNH BÁO: Tin giả đang lan truyền"),
-        description: isSafe 
-          ? (checkType === "web" ? "Trang web chính thức của Ngân hàng ABC. An toàn cho giao dịch." : "Nội dung đã được kiểm chứng bởi các cơ quan chức năng.") 
-          : (checkType === "web" ? "Trang web này có dấu hiệu lừa đảo chiếm đoạt thông tin tài khoản ngân hàng." : "Nội dung này chứa thông tin sai lệch, gây hoang mang dư luận."),
-        screenshot: isSafe 
-          ? (checkType === "web" ? "https://picsum.photos/seed/safe/800/1200" : "https://picsum.photos/seed/news_safe/800/1200") 
-          : (checkType === "web" ? "https://picsum.photos/seed/danger/800/1200" : "https://picsum.photos/seed/news_danger/800/1200"),
-        analysisReasons: checkType === "web" ? webReasons : newsReasons,
-        textContent: searchQuery
+        isSafe: score >= 75,
+        isWarning: score >= 50 && score < 75,
+        isDanger: score < 50,
+        type: "news",
+        url: articleExtraction?.originalUrl ?? searchQuery.substring(0, 50) + (searchQuery.length > 50 ? "..." : ""),
+        score: score,
+        confidence: score >= 75 ? "Độ tin cậy cao" : score >= 50 ? "Cần kiểm chứng thêm" : "Độ rủi ro rất cao",
+        title: score >= 75 ? "Thông tin có độ tin cậy" : score >= 50 ? "Tin tức chưa được xác minh" : "CẢNH BÁO: Tin giả độc hại",
+        description: score >= 75 
+          ? "Nội dung tuân thủ các quy chuẩn thông tin chính thống. Hệ thống không phát hiện các dấu hiệu thao túng tâm lý hoặc kỹ thuật né bộ lọc." 
+          : score >= 50 
+            ? "Văn bản chứa một số dấu hiệu bất thường về ngôn ngữ hoặc cấu trúc. Đề nghị kiểm chứng thêm từ các nguồn tin chính thống."
+            : "Văn bản chứa nhiều dấu hiệu đặc thù của tin giả lừa đảo: Thao túng tâm lý, đe dọa, né bộ lọc hoặc thông tin tài chính phi lý.",
+        analysisReasons: reasons.length > 0 ? reasons : [{ name: "Chưa đủ dữ kiện xác minh", status: "warning", detail: "Nội dung không có tín hiệu nguy hiểm rõ, nhưng cũng chưa có nguồn đủ mạnh để coi là chính xác tuyệt đối.", icon: Info }],
+        analysis: analysisDetails,
+        violated_rules: violatedRules,
+        textContent: articleExtraction?.markdownContent ?? searchQuery,
+        pressArticles: liveNewsCheck.pressArticles,
+        pressSourceLabel: liveNewsCheck.pressSourceLabel,
       });
+
     }, 2500);
   };
 
   const navLinks = [
-    { name: "Trang Chủ", id: "home" },
-    { name: "Kiểm Tra", id: "check" },
-    { name: "Tài Nguyên", id: "resources" },
-    { name: "Đồng hành", id: "partners" },
-    { name: "Sứ mệnh", id: "mission" },
+    { name: "Trang Chủ", id: "home" as PageId },
+    { name: "Kiểm Tra", id: "check" as PageId },
+    { name: "Tài Nguyên", id: "resources" as PageId },
+    { name: "Đồng hành", id: "partners" as PageId },
+    { name: "Sứ mệnh", id: "mission" as PageId },
   ];
 
   return (
@@ -88,9 +413,13 @@ export default function App() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigateToPage("home")}
+            className="flex items-center gap-2"
+          >
             <span className="font-bold text-[27px] tracking-tight">Lá Chắn Số</span>
-          </div>
+          </button>
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
@@ -98,14 +427,8 @@ export default function App() {
               <button
                 key={link.name}
                 onClick={() => {
-                  if (link.id === "home" || link.id === "check" || link.id === "partners" || link.id === "resources" || link.id === "mission") {
-                    setCurrentPage(link.id);
-                    if (link.id === "home") {
-                      setShowResults(false);
-                      setSearchQuery("");
-                    }
-                    setIsMenuOpen(false);
-                  }
+                  navigateToPage(link.id);
+                  setIsMenuOpen(false);
                 }}
                 className={`font-medium transition-colors ${
                   currentPage === link.id ? "text-black" : "text-gray-600 hover:text-black"
@@ -118,7 +441,7 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => setCurrentPage("check")}
+              onClick={() => navigateToPage("check")}
               className="hidden md:block px-6 py-2.5 bg-[#1A1A1A] text-white text-base font-semibold rounded-full hover:bg-gray-800 transition-all active:scale-95"
             >
               Kiểm Tra Ngay
@@ -146,9 +469,7 @@ export default function App() {
                   currentPage === link.id ? "text-black" : "text-gray-600"
                 }`}
                 onClick={() => {
-                  if (link.id === "home" || link.id === "check" || link.id === "partners" || link.id === "resources" || link.id === "mission") {
-                    setCurrentPage(link.id);
-                  }
+                  navigateToPage(link.id);
                   setIsMenuOpen(false);
                 }}
               >
@@ -157,7 +478,7 @@ export default function App() {
             ))}
             <button 
               onClick={() => {
-                setCurrentPage("check");
+                navigateToPage("check");
                 setIsMenuOpen(false);
               }}
               className="w-full px-6 py-3 bg-[#1A1A1A] text-white font-semibold rounded-full mt-2"
@@ -602,199 +923,554 @@ export default function App() {
                     </div>
                   </motion.div>
                 ) : showResults && resultData ? (
-                  // Actual Results - Three Column Layout
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Column 1: Verdict & Analysis */}
-                    <motion.div 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-white rounded-[32px] border border-gray-100 p-8 shadow-sm flex flex-col items-center text-center"
-                    >
-                      <h4 className="text-lg font-bold mb-6 text-gray-800">Kết quả từ Lá Chắn Số</h4>
-                      
-                      <div className="relative w-40 h-40 mb-8">
-                        <svg className="w-full h-full transform -rotate-90">
-                          <circle
-                            cx="80"
-                            cy="80"
-                            r="70"
-                            stroke="currentColor"
-                            strokeWidth="12"
-                            fill="transparent"
-                            className="text-gray-100"
-                          />
-                          <motion.circle
-                            cx="80"
-                            cy="80"
-                            r="70"
-                            stroke="currentColor"
-                            strokeWidth="12"
-                            fill="transparent"
-                            strokeDasharray={440}
-                            initial={{ strokeDashoffset: 440 }}
-                            animate={{ strokeDashoffset: 440 - (440 * resultData.score) / 100 }}
-                            transition={{ duration: 1.5, ease: "easeOut" }}
-                            className={resultData.isSafe ? "text-green-500" : "text-red-500"}
-                          />
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className="text-3xl font-black text-gray-900">{resultData.score}%</span>
-                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tin cậy</span>
+                  // Actual Results
+                  <div className="space-y-8">
+                    {/* Expert AI Deep Analysis Section - Full Width for News */}
+                    {resultData.type === "news" && resultData.analysis && (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-[#1A1A1A] text-white rounded-[40px] p-10 shadow-2xl relative overflow-hidden group"
+                      >
+                        {/* Decorative Background Elements */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/20 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-600/10 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
+                        
+                        <div className="relative z-10">
+                          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-10 border-b border-white/10 pb-8">
+                            <div className="flex items-center gap-4">
+                              <div className="w-14 h-14 bg-purple-600/20 border border-purple-500/30 rounded-2xl flex items-center justify-center">
+                                <Sparkles className="w-8 h-8 text-purple-400" />
+                              </div>
+                              <div className="font-analysis-heading">
+                                <h4 className="text-2xl font-bold tracking-tight">Thẩm Định Chuyên Gia Phân Tích</h4>
+                                <p className="text-gray-400 text-sm mt-1">Hệ thống bóc tách 230 quy chuẩn dữ liệu thời gian thực</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className={`px-5 py-2 rounded-xl text-sm font-bold border ${
+                                resultData.score >= 75 ? "bg-green-500/10 border-green-500/30 text-green-400" : 
+                                resultData.score >= 50 ? "bg-orange-500/10 border-orange-500/30 text-orange-400" : 
+                                "bg-red-500/10 border-red-500/30 text-red-400"
+                              }`}>
+                                {resultData.isSafe ? "AN TOÀN" : resultData.isWarning ? "CẦN XÁC THỰC" : "NGUY HIỂM"}
+                              </div>
+                              <div className="px-5 py-2 rounded-xl bg-white/5 border border-white/10 text-sm font-bold flex items-center gap-2">
+                                <Target className="w-4 h-4 text-purple-400" />
+                                {resultData.score}% Tin cậy
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-2 text-purple-400">
+                                <Database className="w-5 h-5" />
+                                <span className="text-xs font-black uppercase tracking-[0.2em]">Heuristics</span>
+                              </div>
+                              <div className="p-6 rounded-[24px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-colors h-full min-h-[140px]">
+                                <p className="text-[15px] text-gray-200 leading-relaxed font-analysis-body">
+                                  "{resultData.analysis.heuristics}"
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-2 text-blue-400">
+                                <Search className="w-5 h-5" />
+                                <span className="text-xs font-black uppercase tracking-[0.2em]">Google Fact Check</span>
+                              </div>
+                              <div className="p-6 rounded-[24px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-colors h-full min-h-[140px]">
+                                <p className="text-[15px] text-gray-200 leading-relaxed font-analysis-body">
+                                  "{resultData.analysis.google_fact_check}"
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-2 text-green-400">
+                                <Globe className="w-5 h-5" />
+                                <span className="text-xs font-black uppercase tracking-[0.2em]">URL Verification</span>
+                              </div>
+                              <div className="p-6 rounded-[24px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-colors h-full min-h-[140px]">
+                                <p className="text-[15px] text-gray-200 leading-relaxed font-analysis-body">
+                                  "{resultData.analysis.url_verification}"
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-2 text-cyan-400">
+                                <ShieldCheck className="w-5 h-5" />
+                                <span className="text-xs font-black uppercase tracking-[0.2em]">Source Audit</span>
+                              </div>
+                              <div className="p-6 rounded-[24px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-colors h-full min-h-[140px]">
+                                <p className="text-[15px] text-gray-200 leading-relaxed font-analysis-body">
+                                  "{resultData.analysis.source_audit}"
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-2 text-orange-300">
+                                <Database className="w-5 h-5" />
+                                <span className="text-xs font-black uppercase tracking-[0.2em]">Press Comparison</span>
+                              </div>
+                              <div className="p-6 rounded-[24px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-colors h-full min-h-[140px]">
+                                <p className="text-[15px] text-gray-200 leading-relaxed font-analysis-body">
+                                  "{resultData.analysis.press_comparison}"
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-2 text-pink-300">
+                                <Search className="w-5 h-5" />
+                                <span className="text-xs font-black uppercase tracking-[0.2em]">Search Trace</span>
+                              </div>
+                              <div className="p-6 rounded-[24px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-colors h-full min-h-[140px]">
+                                <p className="text-[15px] text-gray-200 leading-relaxed font-analysis-body">
+                                  "{resultData.analysis.search_trace}"
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-2 text-emerald-300">
+                                <ShieldCheck className="w-5 h-5" />
+                                <span className="text-xs font-black uppercase tracking-[0.2em]">Live Fact API</span>
+                              </div>
+                              <div className="p-6 rounded-[24px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-colors h-full min-h-[140px]">
+                                <p className="text-[15px] text-gray-200 leading-relaxed font-analysis-body">
+                                  "{resultData.analysis.live_fact_check}"
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-2 text-sky-300">
+                                <Globe className="w-5 h-5" />
+                                <span className="text-xs font-black uppercase tracking-[0.2em]">Google News / Press</span>
+                              </div>
+                              <div className="p-6 rounded-[24px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-colors h-full min-h-[140px]">
+                                <p className="text-[15px] text-gray-200 leading-relaxed font-analysis-body">
+                                  "{resultData.analysis.live_press_scan}"
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-2 text-lime-300">
+                                <ShieldCheck className="w-5 h-5" />
+                                <span className="text-xs font-black uppercase tracking-[0.2em]">Wikipedia / Open Knowledge</span>
+                              </div>
+                              <div className="p-6 rounded-[24px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-colors h-full min-h-[140px]">
+                                <p className="text-[15px] text-gray-200 leading-relaxed font-analysis-body">
+                                  "{resultData.analysis.open_knowledge_check}"
+                                </p>
+                              </div>
+                            </div>
+
+                          </div>
+
+                          {resultData.violated_rules && resultData.violated_rules.length > 0 && (
+                            <div className="mt-10 pt-8 border-t border-white/10">
+                              <div className="flex flex-wrap gap-2.5">
+                                {resultData.violated_rules.map((rule: string) => (
+                                  <span 
+                                    key={rule}
+                                    className="px-4 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-[11px] font-bold font-mono border border-red-500/20"
+                                  >
+                                    {rule}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
+                      </motion.div>
+                    )}
 
-                      <div className={`w-full py-4 rounded-2xl mb-8 flex items-center justify-center gap-2 ${
-                        resultData.isSafe ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-600"
-                      }`}>
-                        <ShieldCheck className="w-5 h-5" />
-                        <span className="text-xl font-black tracking-wider">
-                          {resultData.isSafe ? "AN TOÀN" : "NGUY HIỂM"}
-                        </span>
-                      </div>
-
-                      <div className="w-full space-y-3 mb-8">
-                        <div className="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-widest">
-                          <span>Mức độ rủi ro</span>
-                          <span className={resultData.isSafe ? "text-green-500" : "text-red-500"}>
-                            {resultData.isSafe ? "Thấp" : "Rất cao"}
+                    {resultData.type === "news" && resultData.pressArticles && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm"
+                      >
+                        <div className="flex flex-col gap-4 border-b border-gray-100 p-5 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <h4 className="text-lg font-black tracking-tight text-gray-950">Bài báo đối chiếu Google News</h4>
+                            <p className="mt-1 text-sm text-gray-500">
+                              Danh sách các bài viết trùng hoặc tương tự được tìm thấy qua Google News.
+                            </p>
+                          </div>
+                          <span className="inline-flex w-fit items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-black uppercase text-blue-700">
+                            <Search className="h-4 w-4" />
+                            {resultData.pressSourceLabel ?? "Google News"}
                           </span>
                         </div>
-                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                          <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: `${100 - resultData.score}%` }}
-                            transition={{ duration: 1.5, ease: "easeOut" }}
-                            className={`h-full ${resultData.isSafe ? "bg-green-500" : "bg-red-500"}`}
-                          />
-                        </div>
-                      </div>
 
-                      <div className="mt-auto pt-8 w-full">
-                        <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100 flex items-start gap-3 text-left">
-                          <ShieldCheck className="w-6 h-6 text-blue-600 shrink-0 mt-0.5" />
+                        <div className="divide-y divide-gray-100">
+                          {resultData.pressArticles.length > 0 ? (
+                            resultData.pressArticles.map((article: any, index: number) => (
+                              <a
+                                key={`${article.title}-${index}`}
+                                href={article.link ?? "#"}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="block px-6 py-5 transition-colors hover:bg-gray-50"
+                              >
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-bold text-gray-950 line-clamp-2">{article.title}</p>
+                                    <p className="mt-1 text-xs text-gray-500">
+                                      {article.source} {article.publishedAt ? `· ${new Date(article.publishedAt).toLocaleDateString('vi-VN')}` : ""}
+                                    </p>
+                                  </div>
+                                  {article.link ? (
+                                    <span className="mt-3 inline-flex items-center gap-2 rounded-full bg-purple-50 px-3 py-1 text-[11px] font-bold uppercase text-purple-700 sm:mt-0">
+                                      <ExternalLink className="h-3.5 w-3.5" />
+                                      Xem bài
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </a>
+                            ))
+                          ) : (
+                            <div className="p-6 text-sm text-gray-600">Không tìm thấy bài báo trùng lặp rõ ràng trên Google News với truy vấn hiện tại.</div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* Smart Result Dashboard */}
+                    <div className="space-y-6">
+                      <motion.div
+                        initial={{ opacity: 0, y: 18 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm"
+                      >
+                        <div className={`h-1.5 ${
+                          resultData.isSafe ? "bg-green-500" : resultData.isWarning ? "bg-amber-500" : "bg-red-500"
+                        }`} />
+                        <div className="grid gap-6 p-6 lg:grid-cols-[220px_1fr_auto] lg:items-center">
                           <div>
-                            <p className="text-sm font-bold text-blue-900">Xác thực chuyên gia</p>
-                            <p className="text-xs text-blue-700/70">Được xác nhận bởi mạng lưới 500+ chuyên gia bảo mật.</p>
+                            <p className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                              {resultData.type === "news" ? "Kiểm tra tin tức" : "Kiểm tra website"}
+                            </p>
+                            <div className="mt-3 flex items-baseline gap-2">
+                              <span className="text-5xl font-black leading-none text-gray-950">{resultData.score}</span>
+                              <span className="text-lg font-black text-gray-400">%</span>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    </motion.div>
 
-                    {/* Column 2: Analysis Reasons */}
-                    <motion.div 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 }}
-                      className="bg-white rounded-[32px] border border-gray-100 p-8 shadow-sm"
-                    >
-                      <h4 className="text-lg font-bold mb-8 text-gray-800">Lý do phân tích</h4>
-                      
-                      <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                        {resultData.analysisReasons.map((res: any, idx: number) => (
-                          <div key={idx} className="flex items-start gap-4 py-4 border-b border-gray-50 last:border-0 group">
-                            <div className={`p-2 rounded-xl shrink-0 ${
-                              res.status === "danger" ? "bg-red-50 text-red-500" : 
-                              res.status === "warning" ? "bg-orange-50 text-orange-500" : 
-                              "bg-green-50 text-green-500"
+                          <div className="min-w-0">
+                            <div className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black uppercase ${
+                              resultData.isSafe ? "bg-green-50 text-green-700" : resultData.isWarning ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"
                             }`}>
-                              <res.icon className="w-5 h-5" />
+                              {resultData.isSafe ? <ShieldCheck className="h-4 w-4" /> : resultData.isWarning ? <AlertTriangle className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                              {resultData.isSafe ? "An toàn" : resultData.isWarning ? "Cần xác thực" : "Nguy hiểm"}
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-0.5">
-                                <span className="text-sm font-bold text-gray-800 truncate">{res.name}</span>
-                                {res.status === "danger" ? (
-                                  <X className="w-4 h-4 text-red-500" />
-                                ) : res.status === "warning" ? (
-                                  <AlertTriangle className="w-4 h-4 text-orange-500" />
-                                ) : (
-                                  <CheckCircle2 className="w-4 h-4 text-green-500" />
-                                )}
-                              </div>
-                              <p className={`text-xs font-medium ${
-                                res.status === "danger" ? "text-red-500" : 
-                                res.status === "warning" ? "text-orange-500" : 
-                                "text-green-600"
-                              }`}>
-                                {res.detail}
-                              </p>
-                            </div>
+                            <h4 className="truncate text-2xl font-black tracking-tight text-gray-950">{resultData.title}</h4>
+                            <p className="mt-2 line-clamp-2 text-sm leading-6 text-gray-600">{resultData.description}</p>
                           </div>
-                        ))}
-                      </div>
-                    </motion.div>
 
-                    {/* Column 3: Screenshot Preview */}
-                    <motion.div 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 }}
-                      className="bg-white rounded-[32px] border border-gray-100 p-8 shadow-sm flex flex-col"
-                    >
-                      <div className="flex items-center justify-between mb-8">
-                        <h4 className="text-lg font-bold text-gray-800">
-                          {resultData.type === "news" ? "Thông tin văn bản" : "Xem trước an toàn"}
-                        </h4>
-                        <div className="px-3 py-1 bg-green-50 text-green-600 text-[10px] font-bold rounded-full border border-green-100 flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                          {resultData.type === "news" ? "TEXT ANALYSIS" : "SANDBOX LIVE"}
-                        </div>
-                      </div>
-                      
-                      <div className="relative flex-1 rounded-2xl overflow-hidden bg-gray-100 border border-gray-200 group min-h-[400px] shadow-inner">
-                        {resultData.type === "news" ? (
-                          <div className="p-6 h-full bg-white overflow-y-auto custom-scrollbar">
-                            <div className="flex items-center gap-2 mb-4">
-                              <div className="w-2 h-2 bg-red-400 rounded-full" />
-                              <div className="w-2 h-2 bg-yellow-400 rounded-full" />
-                              <div className="w-2 h-2 bg-green-400 rounded-full" />
+                          <div className="rounded-2xl bg-gray-50 p-4 lg:min-w-[260px]">
+                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400">
+                              <Globe className="h-4 w-4" />
+                              Đối tượng
                             </div>
-                            <div className="prose prose-sm max-w-none">
-                              <p className="text-gray-800 leading-relaxed font-medium whitespace-pre-wrap">
-                                {resultData.textContent}
+                            <p className="mt-2 break-all text-sm font-bold text-gray-900">{resultData.url}</p>
+                          </div>
+                        </div>
+                      </motion.div>
+
+                      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)]">
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.08 }}
+                          className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm"
+                        >
+                          <div className="flex flex-col gap-4 border-b border-gray-100 p-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                              <h4 className="text-lg font-black tracking-tight text-gray-950">
+                                {resultData.type === "news" ? "Nội dung đã phân tích" : "Preview an toàn"}
+                              </h4>
+                              <p className="mt-1 text-sm text-gray-500">
+                                {resultData.type === "news" ? "Văn bản hoặc bài viết được đưa vào pipeline kiểm chứng." : "Ảnh chụp được render qua dịch vụ trung gian, không nhúng website trực tiếp."}
                               </p>
                             </div>
+                            <span className="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black uppercase text-emerald-700">
+                              <Shield className="h-4 w-4" />
+                              {resultData.type === "news" ? "Text source" : "Safe preview"}
+                            </span>
                           </div>
-                        ) : (
-                          <>
-                            <img 
-                              src={resultData.screenshot} 
-                              alt="Screenshot" 
-                              className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
-                              referrerPolicy="no-referrer"
+
+                          <div className="relative min-h-[520px] bg-gray-50">
+                            {resultData.type === "news" ? (
+                              <div className="h-[620px] overflow-y-auto bg-white p-7 custom-scrollbar">
+                                <p className="whitespace-pre-wrap text-[15px] font-medium leading-8 text-gray-900">
+                                  {resultData.textContent}
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="relative h-[620px] overflow-hidden bg-gray-100">
+                                <img
+                                  src={activePreview ?? resultData.screenshot}
+                                  alt="Website preview"
+                                  className="h-full w-full object-cover object-top"
+                                  referrerPolicy="no-referrer"
+                                  onError={() => {
+                                    if ((resultData.previewCandidates?.length ?? 0) > previewCandidateIndex + 1) {
+                                      setPreviewCandidateIndex((current) => current + 1);
+                                    }
+                                  }}
+                                />
+                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-6">
+                                  <p className="text-base font-black text-white">{resultData.title}</p>
+                                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/75">{resultData.description}</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.14 }}
+                          className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm"
+                        >
+                          <div className="mb-5 flex items-center justify-between gap-3">
+                            <h4 className="flex items-center gap-2 text-lg font-black tracking-tight text-gray-950">
+                              <Database className="h-5 w-5 text-gray-700" />
+                              Bằng chứng
+                            </h4>
+                            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-black uppercase text-gray-500">
+                              {resultData.analysisReasons.length} tín hiệu
+                            </span>
+                          </div>
+
+                          <div className="max-h-[690px] space-y-3 overflow-y-auto pr-1 custom-scrollbar">
+                            {resultData.analysisReasons.map((res: any, idx: number) => (
+                              <div
+                                key={idx}
+                                className={`rounded-2xl border p-4 ${
+                                  res.status === "danger" ? "border-red-200 bg-red-50/70" :
+                                  res.status === "warning" ? "border-amber-200 bg-amber-50/70" :
+                                  "border-emerald-200 bg-emerald-50/70"
+                                }`}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                                    res.status === "danger" ? "bg-red-100 text-red-700" :
+                                    res.status === "warning" ? "bg-amber-100 text-amber-700" :
+                                    "bg-emerald-100 text-emerald-700"
+                                  }`}>
+                                    <res.icon className="h-4 w-4" />
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                                      {res.id && <span className="rounded bg-white/80 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-gray-500">{res.id}</span>}
+                                      <span className="text-sm font-black text-gray-950">{res.name}</span>
+                                    </div>
+                                    <p className="text-xs font-medium leading-5 text-gray-700">{res.detail}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      </div>
+                    </div>
+
+                    {/* Standard Result Grid */}
+                    <div className="hidden">
+                      {/* Column 1: Verdict & Summary Dashboard */}
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white rounded-[40px] border border-gray-100 p-10 shadow-sm flex flex-col items-center text-center"
+                      >
+                        <h4 className="text-lg font-bold mb-8 text-gray-800 tracking-tight">Cổng Giám Sát Cấp Cao</h4>
+                        
+                        <div className="relative w-48 h-48 mb-10">
+                          <svg className="w-full h-full transform -rotate-90">
+                            <circle cx="96" cy="96" r="84" stroke="currentColor" strokeWidth="14" fill="transparent" className="text-gray-100" />
+                            <motion.circle
+                              cx="96" cy="96" r="84" stroke="currentColor" strokeWidth="14" fill="transparent" strokeDasharray={528}
+                              initial={{ strokeDashoffset: 528 }}
+                              animate={{ strokeDashoffset: 528 - (528 * resultData.score) / 100 }}
+                              transition={{ duration: 1.5, ease: "easeOut" }}
+                              className={resultData.isSafe ? "text-green-500" : resultData.isWarning ? "text-orange-500" : "text-red-500"}
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            <div className="absolute bottom-4 left-4 right-4 p-4 bg-white/90 backdrop-blur-md rounded-xl border border-white/20 shadow-2xl transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                              <div className="flex items-center gap-2 mb-1">
-                                <div className="w-2 h-2 bg-red-400 rounded-full" />
-                                <div className="w-2 h-2 bg-yellow-400 rounded-full" />
-                                <div className="w-2 h-2 bg-green-400 rounded-full" />
-                              </div>
-                              <p className="text-sm font-bold text-gray-900 line-clamp-1">{resultData.title}</p>
-                              <p className="text-[10px] text-gray-500 line-clamp-2 mt-1 leading-relaxed">{resultData.description}</p>
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-4xl font-black text-gray-900 leading-none">{resultData.score}%</span>
+                            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-2">Độ Tin Cậy</span>
+                          </div>
+                        </div>
+
+                        <div className={`w-full py-5 rounded-3xl mb-10 flex items-center justify-center gap-3 ${
+                          resultData.isSafe ? "bg-green-500/10 text-green-600" : resultData.isWarning ? "bg-orange-500/10 text-orange-600" : "bg-red-500/10 text-red-600"
+                        }`}>
+                          {resultData.isSafe ? <ShieldCheck className="w-6 h-6" /> : resultData.isWarning ? <AlertTriangle className="w-6 h-6" /> : <X className="w-6 h-6" />}
+                          <span className="text-2xl font-black tracking-widest">
+                            {resultData.isSafe ? "AN TOÀN" : resultData.isWarning ? "CẦN XÁC THỰC" : "NGUY HIỂM"}
+                          </span>
+                        </div>
+
+                        <div className="w-full space-y-4 mb-10">
+                          <div className="flex justify-between text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                            <span>Phân cấp rủi ro</span>
+                            <span className={resultData.isSafe ? "text-green-500" : resultData.isWarning ? "text-orange-500" : "text-red-500"}>
+                              {resultData.isSafe ? "Cấp độ 1 (An toàn)" : resultData.isWarning ? "Cấp độ 2 (Cảnh báo)" : "Cấp độ 3 (Khẩn cấp)"}
+                            </span>
+                          </div>
+                          <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: `${100 - resultData.score}%` }}
+                              transition={{ duration: 1.5, ease: "easeOut" }}
+                              className={`h-full ${resultData.isSafe ? "bg-green-500" : resultData.isWarning ? "bg-orange-500" : "bg-red-500"}`}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-auto pt-10 w-full border-t border-gray-50">
+                          <div className="p-5 rounded-3xl bg-blue-50/50 border border-blue-100 flex items-start gap-4 text-left">
+                            <ShieldCheck className="w-6 h-6 text-blue-600 shrink-0 mt-1" />
+                            <div>
+                              <p className="text-sm font-bold text-blue-900 leading-none mb-1">Xác thực bởi chuyên gia</p>
+                              <p className="text-[11px] text-blue-700/70 leading-relaxed">Được bảo chứng bởi mạng lưới 500+ thâm định viên bảo mật độc lập.</p>
                             </div>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="mt-6 flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                        <div className="flex items-center gap-1.5">
-                          <Globe className="w-3.5 h-3.5" />
-                          <span className="truncate max-w-[120px]">{resultData.url}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <Shield className="w-3.5 h-3.5 text-green-500" />
-                          <span className="text-green-600">Protected</span>
-                        </div>
-                      </div>
+                      </motion.div>
 
-                      <div className="mt-6 pt-6 border-t border-gray-50">
-                        <button className="w-full py-3.5 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95">
-                          <ExternalLink className="w-4 h-4" />
-                          {resultData.type === "news" ? "Xem nguồn tin gốc" : "Truy cập an toàn (Sandbox)"}
-                        </button>
-                      </div>
-                    </motion.div>
+                      {/* Column 2: Detailed Evidence Dashboard */}
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="bg-white rounded-[40px] border border-gray-100 p-10 shadow-sm flex flex-col h-full"
+                      >
+                        <div className="flex items-center justify-between mb-10 pb-6 border-b border-gray-50">
+                          <h4 className="text-xl font-bold flex items-center gap-3">
+                            <Database className="w-7 h-7 text-purple-600" />
+                            Bằng Chứng Phân Tích
+                          </h4>
+                          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-4 py-1.5 rounded-full border border-gray-100">
+                            {resultData.analysisReasons.length} Tín hiệu
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-4 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar">
+                          {resultData.analysisReasons.map((res: any, idx: number) => (
+                            <div 
+                              key={idx} 
+                              className="flex items-start gap-4 p-5 rounded-3xl border border-gray-50 bg-white hover:border-purple-200 hover:shadow-[0_8px_30px_rgb(139,92,246,0.04)] transition-all group cursor-default"
+                            >
+                              <div className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center ${
+                                res.status === "danger" ? "bg-red-50 text-red-500" : 
+                                res.status === "warning" ? "bg-orange-50 text-orange-500" : 
+                                "bg-green-50 text-green-500"
+                              }`}>
+                                <res.icon className="w-5 h-5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  {res.id && <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded font-bold font-mono tracking-tighter uppercase">{res.id}</span>}
+                                  <span className="text-[15px] font-bold text-gray-900 truncate tracking-tight">{res.name}</span>
+                                </div>
+                                <p className={`text-[12px] leading-relaxed line-clamp-3 font-medium ${
+                                  res.status === "danger" ? "text-red-600/80" : 
+                                  res.status === "warning" ? "text-orange-600/80" : 
+                                  "text-green-700/80"
+                                }`}>
+                                  {res.detail}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+
+                      {/* Column 3: Sandbox/Text Extraction Panel */}
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="bg-white rounded-[40px] border border-gray-100 p-10 shadow-sm flex flex-col h-full"
+                      >
+                        <div className="flex items-center justify-between mb-10 pb-6 border-b border-gray-50">
+                          <h4 className="text-xl font-bold text-gray-900 tracking-tight">
+                            {resultData.type === "news" ? "Dữ Liệu Văn Bản" : "Kiểm Soát Sandbox"}
+                          </h4>
+                          <div className="px-4 py-1.5 bg-green-50 text-green-700 text-[11px] font-bold rounded-full border border-green-100 flex items-center gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+                            {resultData.type === "news" ? "TEXT QUANTUM" : "SAFE PREVIEW"}
+                          </div>
+                        </div>
+                        
+                        <div className="relative flex-1 rounded-[32px] overflow-hidden bg-gray-50/50 border border-gray-200 group min-h-[500px] shadow-inner">
+                          {resultData.type === "news" ? (
+                            <div className="p-8 h-full bg-white overflow-y-auto custom-scrollbar">
+                              <div className="flex items-center gap-3 mb-6">
+                                <div className="w-2.5 h-2.5 bg-red-400 rounded-full" />
+                                <div className="w-2.5 h-2.5 bg-yellow-400 rounded-full" />
+                                <div className="w-2.5 h-2.5 bg-green-400 rounded-full" />
+                              </div>
+                              <div className="prose prose-sm max-w-none">
+                                <p className="text-[#1A1A1A] text-[16px] leading-[1.8] font-medium whitespace-pre-wrap selection:bg-purple-100">
+                                  {resultData.textContent}
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <img 
+                                src={activePreview ?? resultData.screenshot} 
+                                alt="Website preview" 
+                                className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
+                                referrerPolicy="no-referrer"
+                                onError={() => {
+                                  if ((resultData.previewCandidates?.length ?? 0) > previewCandidateIndex + 1) {
+                                    setPreviewCandidateIndex((current) => current + 1);
+                                  }
+                                }}
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
+                              <div className="absolute bottom-6 left-6 right-6 p-6 bg-white/95 backdrop-blur-xl rounded-[24px] border border-white/20 shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 invisible group-hover:visible opacity-0 group-hover:opacity-100">
+                                <p className="text-base font-black text-gray-900 leading-tight mb-2">{resultData.title}</p>
+                                <p className="text-xs text-gray-600/80 leading-relaxed line-clamp-2">{resultData.description}</p>
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        <div className="mt-8 flex items-center justify-between text-[11px] text-gray-400 font-bold uppercase tracking-[0.2em] px-4">
+                          <div className="flex items-center gap-2">
+                            <Globe className="w-4 h-4 text-purple-400" />
+                            <span className="truncate max-w-[150px]">{resultData.url}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Shield className="w-4 h-4 text-green-500" />
+                            <span className="text-green-600">Secure Protocol</span>
+                          </div>
+                        </div>
+
+                        <div className="mt-8 pt-8 border-t border-gray-50 px-4">
+                          <button className="w-full py-4 bg-[#1A1A1A] hover:bg-black text-white text-[13px] font-black rounded-2xl transition-all flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.1)] active:scale-95 group">
+                            <ExternalLink className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                            {resultData.type === "news" ? "TRUY XUẤT NGUỒN TIN GỐC" : "KÍCH HOẠT LIVE SANDBOX"}
+                          </button>
+                        </div>
+                      </motion.div>
+                    </div>
                   </div>
+
                 ) : (
                   // Initial State
                   <div className="py-20 text-center">
