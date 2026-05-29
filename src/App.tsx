@@ -144,7 +144,7 @@ export default function App() {
         score: 0,
         title: "CẢNH BÁO: CỜ BẠC LỪA ĐẢO",
         description: "Hệ thống phát hiện đây là tên miền thuộc danh sách cờ bạc lừa đảo. Điểm đánh giá được đặt về 0 để tránh nhầm lẫn với nội dung an toàn.",
-        screenshot: "https://images.search.yahoo.com/search/images;_ylt=AwrKCZZT2hlqMQIASKiJzbkF;_ylu=Y29sbwNzZzMEcG9zAzIyBHZ0aWQDBHNlYwNzcg--?fr=mcafee&p=c%E1%BA%A3nh+b%C3%A1o&imgurl=https%3A%2F%2Fpng.pngtree.com%2Fpng-clipart%2F20220909%2Foriginal%2Fpngtree-traffic-warning-3d-warning-png-image_8521088.png",
+        screenshot: "https://png.pngtree.com/png-clipart/20220909/original/pngtree-traffic-warning-3d-warning-png-image_8521088.png",
         previewCandidates: [],
         analysisReasons: [
           {
