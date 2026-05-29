@@ -1,5 +1,11 @@
 import { AlertTriangle, Database, ExternalLink, Globe, Info, Landmark, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { extractLinksFromText, isDomainTrusted, isGovVnDomain, isSuspiciousTLD, TRUSTED_DOMAINS } from "./trustedDomains";
+import { getWikipediaProfile, compareFactsWithWikipedia } from "./wikipediaEnhanced";
+import { extractClaimsFromText, verifyClaimsInBatch, crossVerifyClaim } from "./liveFactApiEnhanced";
+import { parseGoogleNewsRSS, detectNewsClusters } from "./pressSourceEnhanced";
+import { detectManipulation, temporalAnalysis, claimSpecificity, verifyWithWeights, combineAnalyses } from "../utils/consensusScorer";
+import { PerformanceTracker, extractHighConfidenceClaims } from "../utils/performanceOptimizer";
+import { withTimeout } from "../utils/performanceOptimizer";
 
 export interface NewsAnalysisReason {
   id: string;
@@ -414,4 +420,168 @@ export function runNewsVerificationLayers(text: string): NewsVerificationResult 
     trustedSourceCount: allTrustedSources.length,
     hasTrustedEvidence,
   };
+}
+
+/**
+ * ENHANCED VERIFICATION - Multi-layer consensus with AI/Wikipedia/Press integration
+ * Combines Wikipedia, Fact APIs, Press coverage, manipulation detection, and temporal analysis
+ */
+export async function runEnhancedNewsVerification(text: string): Promise<{
+  scoreDelta: number;
+  reasons: NewsAnalysisReason[];
+  summary: NewsVerificationSummary;
+  manipulationScore: number;
+  temporalRelevance: number;
+  consensusDetails: string;
+}> {
+  const tracker = new PerformanceTracker();
+
+  try {
+    // Extract high-confidence claims only to reduce API calls
+    const claims = extractHighConfidenceClaims(text);
+    if (claims.length === 0) {
+      const baseResult = runNewsVerificationLayers(text);
+      return {
+        ...baseResult,
+        manipulationScore: 0,
+        temporalRelevance: 0,
+        consensusDetails: "No high-confidence claims to verify",
+      };
+    }
+
+    // Run parallel verification tasks
+    const tasks = [
+      // 1. Fact-check claims
+      () => withTimeout(verifyClaimsInBatch(claims.slice(0, 3)), 5000).then((r) => r || []),
+
+      // 2. Wikipedia verification for persons mentioned
+      async () => {
+        const personMatches = text.match(/\b[A-ZÀ-Ỹ][\w\s.-]{2,}\b/gu) || [];
+        const profiles = [];
+        for (const name of personMatches.slice(0, 2)) {
+          const profile = await withTimeout(getWikipediaProfile(name), 3000);
+          if (profile) profiles.push(profile);
+        }
+        return profiles;
+      },
+
+      // 3. Press coverage analysis
+      async () => {
+        if (claims.length > 0) {
+          const articles = await withTimeout(parseGoogleNewsRSS(claims[0], ["en", "vi"], 48), 4000).then(
+            (r) => r || []
+          );
+          return detectNewsClusters(articles);
+        }
+        return [];
+      },
+
+      // 4. Manipulation detection
+      () => Promise.resolve(detectManipulation(text)),
+
+      // 5. Temporal analysis
+      () => Promise.resolve(temporalAnalysis(text, new Date())),
+
+      // 6. Claim specificity
+      () => Promise.resolve(claimSpecificity(claims[0] || text)),
+    ];
+
+    const [factCheckResults, wikipediaProfiles, newsCluster, manipulation, temporal, specificity] =
+      await Promise.all(tasks.map((task) => task()));
+
+    tracker.recordApiCall();
+
+    // Convert results to structured format
+    const factCheckArticles: any[] = factCheckResults || [];
+    const pressArticles = newsCluster && newsCluster.length > 0 ? newsCluster[0].relatedArticles : [];
+
+    // Calculate consensus
+    const consensus = verifyWithWeights(
+      wikipediaProfiles && wikipediaProfiles.length > 0 ? wikipediaProfiles[0] : null,
+      factCheckArticles,
+      pressArticles,
+      claims[0] || text
+    );
+
+    // Combine all analyses
+    const finalAnalysis = combineAnalyses(
+      consensus,
+      manipulation,
+      temporal,
+      specificity
+    );
+
+    // Build reasons based on enhanced analysis
+    const baseResult = runNewsVerificationLayers(text);
+    const reasons: NewsAnalysisReason[] = [...baseResult.reasons];
+    let scoreDelta = baseResult.scoreDelta;
+
+    // Add enhanced verification reasons
+    if (finalAnalysis.confidence > 0.8) {
+      scoreDelta += 25;
+      reasons.push({
+        id: "ENHANCED_VERIFIED",
+        name: "Xác minh bằng công nghệ nâng cao",
+        detail: `Nội dung được kiểm chứng qua Wikipedia, Fact Check API, và coverage báo chí (độ tin cậy: ${Math.round(finalAnalysis.confidence * 100)}%).`,
+        status: "success",
+        icon: ShieldCheck,
+      });
+    } else if (finalAnalysis.finalVerdict === "false") {
+      scoreDelta -= 50;
+      reasons.push({
+        id: "ENHANCED_FALSE",
+        name: "Được xác định là sai lệch",
+        detail: `Nội dung không phù hợp với dữ liệu Wikipedia, Fact Check, và coverage báo chí đa chiều.`,
+        status: "danger",
+        icon: AlertTriangle,
+      });
+    }
+
+    if (manipulation.score > 0.6) {
+      scoreDelta -= 30;
+      const topPatterns = manipulation.patterns.slice(0, 2).map((p) => p.name).join(", ");
+      reasons.push({
+        id: "MANIPULATION_DETECTED",
+        name: "Phát hiện ngôn ngữ thao túng",
+        detail: `Nội dung chứa tín hiệu thao túng tâm lý: ${topPatterns}. Độ rủi ro thao túng: ${Math.round(manipulation.score * 100)}%.`,
+        status: "warning",
+        icon: AlertTriangle,
+      });
+    }
+
+    if (!temporal.isTimely && temporal.ageInDays > 365) {
+      scoreDelta -= 15;
+      reasons.push({
+        id: "OUTDATED_CLAIM",
+        name: "Tuyên bố lỗi thời",
+        detail: `Nội dung đề cập sự kiện cũ (${temporal.ageInDays} ngày trước) mà không có bối cảnh lịch sử phù hợp.`,
+        status: "warning",
+        icon: Info,
+      });
+    }
+
+    const consensusDetails =
+      `Multi-source consensus: ${finalAnalysis.finalVerdict.toUpperCase()} (${Math.round(finalAnalysis.confidence * 100)}% confidence). ` +
+      `Sources: ${finalAnalysis.sourceCount} verified. ` +
+      `Manipulation risk: ${Math.round(manipulation.score * 100)}%.`;
+
+    return {
+      scoreDelta,
+      reasons,
+      summary: baseResult.summary,
+      manipulationScore: manipulation.score,
+      temporalRelevance: temporal.relevance,
+      consensusDetails,
+    };
+  } catch (error) {
+    console.error("[v0] Enhanced verification error:", error);
+    // Fallback to base verification
+    const baseResult = runNewsVerificationLayers(text);
+    return {
+      ...baseResult,
+      manipulationScore: 0,
+      temporalRelevance: 0,
+      consensusDetails: "Enhanced verification unavailable",
+    };
+  }
 }
