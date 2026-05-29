@@ -26,7 +26,7 @@ export interface FraudAnalysisResult {
 }
 
 /**
- * Calculate final fraud score from all analysis layers
+ * Calculate final fraud score from all analysis layers - STRICT VERSION
  */
 export function calculateFraudScore(analysisData: {
   urlScore: 0-25;
@@ -35,17 +35,33 @@ export function calculateFraudScore(analysisData: {
   databaseScore: 0-25;
   manipulationScore: 0-100;
 }): { score: 0-100; confidence: 0-100 } {
-  // Weight the scores
+  // STRICT SCORING - Heavily weight database matches and content
   let totalScore = 0;
-  totalScore += analysisData.urlScore * 1.0; // 25 points max
-  totalScore += analysisData.contentScore * 1.0; // 30 points max
-  totalScore += analysisData.visualScore * 1.0; // 20 points max
-  totalScore += analysisData.databaseScore * 1.0; // 25 points max
+  
+  // Database score is MOST important - heavy weight if matched
+  if (analysisData.databaseScore > 20) {
+    totalScore += 35; // Immediate 35 points if in known fraud database
+  } else {
+    totalScore += analysisData.databaseScore * 1.4; // 1.4x weight for database
+  }
 
-  // Add manipulation score (but cap at 20 additional points)
-  totalScore += Math.min(20, analysisData.manipulationScore / 5);
+  // Content score - high weight for fraud keywords
+  if (analysisData.contentScore > 25) {
+    totalScore += 28; // Near max if strong content indicators
+  } else {
+    totalScore += analysisData.contentScore * 1.2; // 1.2x weight
+  }
 
-  // Calculate confidence based on data consistency
+  // URL score - medium weight
+  totalScore += analysisData.urlScore * 1.1;
+
+  // Visual/pattern score - moderate weight
+  totalScore += analysisData.visualScore * 1.0;
+
+  // Add manipulation score aggressively (cap at 25 additional points)
+  totalScore += Math.min(25, analysisData.manipulationScore / 4);
+
+  // Calculate confidence based on evidence consistency and strength
   const scores = [
     analysisData.urlScore,
     analysisData.contentScore,
@@ -53,30 +69,36 @@ export function calculateFraudScore(analysisData: {
     analysisData.databaseScore,
   ];
 
+  const maxScore = Math.max(...scores);
   const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-  const variance = scores.reduce((sum, score) => sum + Math.pow(score - avg, 2), 0) / scores.length;
-  const stdDev = Math.sqrt(variance);
-
-  // Higher consistency = higher confidence
-  const consistency = Math.max(0, 100 - stdDev * 4);
-  const confidenceBoost = analysisData.databaseScore > 15 ? 15 : 0; // Boost if in database
-
-  const confidence = Math.min(100, consistency + confidenceBoost);
+  
+  // If ANY component has high fraud indicators, confidence increases
+  let confidence = 50 + Math.min(50, avg * 1.5);
+  
+  // HUGE confidence boost if in database (this is very reliable)
+  if (analysisData.databaseScore > 20) {
+    confidence = Math.min(100, confidence + 30);
+  }
+  
+  // Confidence from content analysis is very strong
+  if (analysisData.contentScore > 20) {
+    confidence = Math.min(100, confidence + 20);
+  }
 
   return {
     score: Math.min(100, totalScore) as FraudAnalysisResult["fraudScore"],
-    confidence: confidence as FraudAnalysisResult["confidenceLevel"],
+    confidence: Math.min(100, confidence) as FraudAnalysisResult["confidenceLevel"],
   };
 }
 
 /**
- * Determine verdict based on fraud score
+ * Determine verdict based on fraud score - STRICT THRESHOLDS
  */
 export function determineVerdict(score: 0-100): FraudVerdict {
-  if (score <= 20) return "SAFE";
-  if (score <= 40) return "SUSPICIOUS";
-  if (score <= 70) return "HIGH_RISK";
-  return "FRAUD_CONFIRMED";
+  if (score <= 15) return "SAFE";           // Must be very clean
+  if (score <= 35) return "SUSPICIOUS";     // Lower threshold for suspicious
+  if (score <= 60) return "HIGH_RISK";      // Stricter threshold
+  return "FRAUD_CONFIRMED";                 // 60+ is confirmed fraud
 }
 
 /**

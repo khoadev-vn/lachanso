@@ -24,26 +24,44 @@ const fraudDatabases = new Map<string, FraudDatabase>();
 let databasesLoaded = false;
 
 /**
- * Initialize and load fraud databases
+ * Initialize and load fraud databases with enhanced patterns
  */
 async function initializeFraudDatabases(): Promise<void> {
   if (databasesLoaded) return;
 
-  // Load Vietnamese gambling sites database
+  // Load Vietnamese gambling sites database - EXPANDED with all known variations
   const gamblingDomains = new Set([
-    "sunwin.com", "sunwin.vn", "sunwin-app.com",
-    "vin777.com", "vin777.vn",
-    "iwin.com", "iwin.vn",
-    "f8bet.com", "f8bet.vn",
-    "fun88.com", "fun88.vn", "fun88asia.com",
-    "188bet.com", "188bet.vn",
-    "12play.com", "12play.vn",
-    "w88.com", "w88.vn",
-    "ae888.com", "ae888.vn",
-    "sands.vn", "sands88.vn",
-    "kingbet.vn",
-    "bet88.com", "bet88.vn",
-    "casino.com", "online-casino.vn",
+    // Sunwin variants
+    "sunwin.com", "sunwin.vn", "sunwin-app.com", "sunwin.qa", "sunwin.co", "sunwin.io", 
+    "sunwin.gg", "sunwin.app", "sunwin.pro", "sunwin.live", "sunwin-vip.com",
+    "sunwins.com", "sunwin-play.com", "play-sunwin.com", "sunwin888.com",
+    // Vin777 variants
+    "vin777.com", "vin777.vn", "vin777.co", "vin777.io", "vin777.app",
+    "vinwin.com", "vinwin777.com",
+    // iWin variants
+    "iwin.com", "iwin.vn", "iwin.app", "iwin.live", "iwin-vip.com",
+    "iwin888.com", "playiwin.com",
+    // F8bet variants
+    "f8bet.com", "f8bet.vn", "f8bet.app", "f8bet.live", "f8bet.pro",
+    "f8bet888.com",
+    // Fun88 variants
+    "fun88.com", "fun88.vn", "fun88asia.com", "fun88.app", "fun88.co",
+    "fun88.live", "fun888.com", "fun88thai.com",
+    // 188bet variants
+    "188bet.com", "188bet.vn", "188bet.app", "188bet.live", "bet188.com",
+    // 12play variants
+    "12play.com", "12play.vn", "12play.app", "12play.live",
+    // W88 variants
+    "w88.com", "w88.vn", "w88.app", "w88.live", "w88.co", "w88.pro",
+    "w88thai.com", "w88asia.com",
+    // AE888 variants
+    "ae888.com", "ae888.vn", "ae888.app", "ae888.live",
+    // Other gambling sites
+    "sands.vn", "sands88.vn", "kingbet.vn", "bet88.com", "bet88.vn",
+    "casino.com", "online-casino.vn", "ca-do.com", "casino.vn",
+    "betfair.com", "bet365.com", "ladbrokes.com", "betfred.com",
+    "williamhill.com", "betvictor.com", "paddy-power.com", "bwin.com",
+    "dafabet.com", "maxbet.com", "188188.com", "live-casino.com",
   ]);
 
   fraudDatabases.set("gambling", {

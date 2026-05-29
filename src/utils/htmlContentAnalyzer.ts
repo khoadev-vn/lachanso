@@ -25,29 +25,51 @@ interface ContentAnalysisResult {
   details: string[];
 }
 
-// Fraud-specific keyword patterns
+// Fraud-specific keyword patterns - MASSIVELY EXPANDED for Vietnamese gambling
 const FRAUD_KEYWORDS = {
   gambling: [
+    // Common gambling terms
     "deposit", "withdraw", "bonus", "jackpot", "casino", "poker", "betting",
     "odds", "baccarat", "slots", "roulette", "sports betting", "live betting",
-    "777", "vin777", "sunwin", "iwin", "f8bet", "fun88",
+    // Major gambling brands
+    "sunwin", "vin777", "iwin", "f8bet", "fun88", "188bet", "12play", "w88", "ae888",
+    "sands", "kingbet", "bet88", "online-casino",
+    // Vietnamese gambling terms
+    "cờ bạc", "tài xỉu", "đánh bạc", "sòng bạc", "cá cược", "chơi bài",
+    "chơi game", "nạp tiền", "rút tiền", "thưởng", "người chơi",
+    // Action terms
+    "play now", "chơi ngay", "đăng ký", "tham gia", "tái nạp",
+    // Payment/Reward terms
+    "thưởng miễn phí", "bonus tặng", "cashback", "hoàn tiền", "khuyến mãi",
+    // Gambling game types
+    "game", "slots", "live dealer", "bingo", "keno", "video poker",
+    "table games", "card games", "thể thao", "esports",
+    // Deceptive guarantee terms
+    "guaranteed", "guaranteed win", "sure", "chắc chắn thắng", "100%",
+    "high payout", "tỷ lệ thắng cao", "luôn thắng",
+    // More specific variants
+    "777", "888", "888k", "66", "win", "vip", "pro", "elite",
+    "daily bonus", "weekly bonus", "monthly bonus",
   ],
   financial: [
     "invest", "return", "guaranteed profit", "bitcoin", "cryptocurrency",
     "forex", "stock", "mutual fund", "lending", "loan approval",
     "credit boost", "quick cash", "fast loan", "instant withdrawal",
     "investment opportunity", "passive income", "automatic transfer",
+    "guaranteed return", "risk-free", "high return", "100% profit",
   ],
   phishing: [
     "verify account", "confirm identity", "validate password", "reset password",
     "update payment method", "confirm login", "security check",
     "unusual activity detected", "click here to verify", "act now",
     "limited time", "click below", "urgent action required",
+    "verify now", "xác nhận", "cập nhật", "kiểm tra", "bảo mật",
   ],
   ecommerce: [
     "checkout", "payment gateway", "buy now", "limited stock",
     "fast shipping", "free delivery", "discount code", "special offer",
     "sale price", "original price", "clearance", "final sale",
+    "95% off", "99% discount", "flash sale", "today only",
   ],
   malware: [
     "download now", "install", "setup.exe", "run this file",
@@ -139,12 +161,29 @@ export async function analyzeHtmlContent(html: string): Promise<ContentAnalysisR
     details.push("Hidden fields can be used to collect unauthorized data");
   }
 
-  // Calculate HTML score (0-30)
+  // Calculate HTML score (0-30) - STRICT SCORING
   let htmlScore = 0;
-  htmlScore += Object.values(fraudKeywords).reduce((sum, arr) => sum + arr.length, 0) * 2;
-  htmlScore += suspiciousPatterns.length * 3;
+  
+  // Each fraud keyword found = 3 points (very aggressive)
+  const totalFraudKeywords = Object.values(fraudKeywords).reduce((sum, arr) => sum + arr.length, 0);
+  htmlScore += Math.min(15, totalFraudKeywords * 3); // Cap at 15 for keywords
+  
+  // Suspicious patterns = 4 points each
+  htmlScore += Math.min(10, suspiciousPatterns.length * 4);
+  
+  // Suspicious links = 2 points each
   htmlScore += suspiciousLinks.length * 2;
-  htmlScore += formAnalysis.hasPasswordField && !formAnalysis.isLoginPage ? 3 : 0;
+  
+  // Password field without login context = high risk
+  htmlScore += formAnalysis.hasPasswordField && !formAnalysis.isLoginPage ? 5 : 0;
+  
+  // Multiple forms = indicator of data harvesting
+  htmlScore += formAnalysis.totalForms > 2 ? 5 : 0;
+  
+  // If gambling keywords detected, boost score significantly
+  if (fraudKeywords.gambling.length > 0) {
+    htmlScore += 8; // Extra 8 points for gambling keywords
+  }
 
   return {
     htmlScore: Math.min(30, htmlScore) as ContentAnalysisResult["htmlScore"],

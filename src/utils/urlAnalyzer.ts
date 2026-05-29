@@ -24,14 +24,20 @@ interface DomainAnalysis {
   details: string[];
 }
 
-// Known suspicious TLDs
+// Known suspicious TLDs - EXPANDED for gambling detection
 const SUSPICIOUS_TLDS = [
-  ".tk", ".ml", ".ga", ".cf", // Freedomain provider TLDs
-  ".pw", ".gq", ".xyz", ".top",
-  ".download", ".review", ".trade",
-  ".info", ".online", ".site", ".space",
+  // Freedomain provider TLDs (HIGH RISK)
+  ".tk", ".ml", ".ga", ".cf", ".gq",
+  ".pw", ".xyz", ".top", ".download", ".review",
+  ".trade", ".info", ".online", ".site", ".space",
   ".work", ".loan", ".charity", ".click",
   ".country", ".faith", ".family", ".games",
+  // New suspicious TLDs for gambling/fraud
+  ".qa", ".co", ".io", ".app", ".gg", ".live", ".pro",
+  ".win", ".casino", ".poker", ".bet", ".bingo",
+  ".uk", ".tv", ".cc", ".ws", ".vg", ".ai",
+  // Uncommon but suspicious
+  ".cd", ".ch", ".ky", ".mn", ".sb", ".do",
 ];
 
 // Suspicious domain patterns

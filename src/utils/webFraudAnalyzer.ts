@@ -75,16 +75,19 @@ export async function analyzeWebsiteForFraud(urlInput: string): Promise<FraudAna
     );
     const manipulationScore = calculateManipulationRisk(patterns);
 
-    // 4. Database Cross-reference (25 points)
+    // 4. Database Cross-reference (25 points) - STRICT CHECKING
     console.log("[v0] Phase 4: Checking fraud databases...");
     const databaseMatches = await checkFraudDatabase(domain);
     const similarDomains = await checkDomainSimilarity(domain);
 
     let databaseScore = 0;
     if (databaseMatches.length > 0) {
-      databaseScore = 25; // Full points if found in database
+      databaseScore = 25; // Full points if found in database - this is definitive
+      console.log("[v0] Domain found in fraud database:", databaseMatches);
     } else if (similarDomains.hasSimilar) {
-      databaseScore = Math.min(20, similarDomains.riskScore + 10);
+      // High score for similar domains to known frauds (typosquatting)
+      databaseScore = Math.min(22, similarDomains.riskScore + 15);
+      console.log("[v0] Similar domain detected:", similarDomains.similarDomains);
     }
 
     // 5. Screenshot Analysis (20 points)
