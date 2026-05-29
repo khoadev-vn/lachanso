@@ -28,7 +28,7 @@ export interface ClaimExtractionResult {
   category: string;
 }
 
-const FACT_CHECK_API_KEY = process.env.VITE_GOOGLE_FACT_CHECK_API_KEY || "";
+const FACT_CHECK_API_KEY = import.meta.env.VITE_GOOGLE_FACT_CHECK_API_KEY || "";
 const rateLimiter = new RateLimiter(10, 1000); // 10 calls per second
 
 /**
