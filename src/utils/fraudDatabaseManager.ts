@@ -1,17 +1,19 @@
 /**
  * Fraud Database Manager
- * Manages public fraud lists and domain blacklists
+ * Manages public fraud lists, domain blacklists, and enforces zero-score overrides
  */
 
-interface FraudDatabaseMatch {
+export interface FraudDatabaseMatch {
   isBlacklisted: boolean;
   database: string;
   fraudType: string;
   lastUpdated: Date;
   description: string;
+  scoreOverride?: number; // Enforces immediately 0 points on match
+  alertCategory?: string; // Custom warning label like "Cờ bạc lừa đảo"
 }
 
-interface FraudDatabase {
+export interface FraudDatabase {
   name: string;
   type: "gambling" | "financial" | "phishing" | "ecommerce" | "malware" | "general";
   domains: Set<string>;
@@ -26,13 +28,13 @@ let databasesLoaded = false;
 /**
  * Initialize and load fraud databases with enhanced patterns
  */
-async function initializeFraudDatabases(): Promise<void> {
+export async function initializeFraudDatabases(): Promise<void> {
   if (databasesLoaded) return;
 
   // Load Vietnamese gambling sites database - EXPANDED with all known variations
   const gamblingDomains = new Set([
     // Sunwin variants
-    "sunwin.com", "sunwin.vn", "sunwin-app.com", "sunwin.qa", "sunwin.co", "sunwin.io", 
+    "sunwin.com", "sunwin.vn", "sunwin-app.com", "sunwin.qa", "sunwin.co", "sunwin.io",
     "sunwin.gg", "sunwin.app", "sunwin.pro", "sunwin.live", "sunwin-vip.com",
     "sunwins.com", "sunwin-play.com", "play-sunwin.com", "sunwin888.com",
     // Vin777 variants
@@ -65,10 +67,10 @@ async function initializeFraudDatabases(): Promise<void> {
   ]);
 
   fraudDatabases.set("gambling", {
-    name: "Gambling/Betting Sites",
+    name: "Danh sách đen Cờ bạc / Cá cược lừa đảo",
     type: "gambling",
     domains: gamblingDomains,
-    keywords: ["casino", "betting", "poker", "slots", "jackpot", "odds", "deposit", "withdraw"],
+    keywords: ["casino", "betting", "poker", "slots", "jackpot", "odds", "deposit", "withdraw", "cá cược", "đá gà", "nổ hũ", "tài xỉu"],
     lastUpdated: new Date(),
   });
 
@@ -82,10 +84,10 @@ async function initializeFraudDatabases(): Promise<void> {
   ]);
 
   fraudDatabases.set("financial", {
-    name: "Financial Fraud",
+    name: "Danh sách đen Tài chính giả mạo",
     type: "financial",
     domains: financialDomains,
-    keywords: ["guaranteed profit", "quick return", "investment opportunity", "crypto profit"],
+    keywords: ["guaranteed profit", "quick return", "investment opportunity", "crypto profit", "lãi suất cao", "đầu tư thông minh"],
     lastUpdated: new Date(),
   });
 
@@ -96,10 +98,10 @@ async function initializeFraudDatabases(): Promise<void> {
   ]);
 
   fraudDatabases.set("phishing", {
-    name: "Phishing Sites",
+    name: "Danh sách đen Giả mạo lấy OTP / Phishing",
     type: "phishing",
     domains: phishingDomains,
-    keywords: ["verify", "confirm", "password", "login", "account", "security"],
+    keywords: ["verify", "confirm", "password", "login", "account", "security", "xác thực tài khoản", "nhập otp"],
     lastUpdated: new Date(),
   });
 
@@ -110,10 +112,10 @@ async function initializeFraudDatabases(): Promise<void> {
   ]);
 
   fraudDatabases.set("malware", {
-    name: "Malware Distribution",
+    name: "Danh sách Mã độc độc hại",
     type: "malware",
     domains: malwareDomains,
-    keywords: ["download", "install", "executable", "setup", "virus", "malware"],
+    keywords: ["download", "install", "executable", "setup", "virus", "malware", "tải ngay", "cài đặt phần mềm"],
     lastUpdated: new Date(),
   });
 
@@ -124,58 +126,60 @@ async function initializeFraudDatabases(): Promise<void> {
   ]);
 
   fraudDatabases.set("ecommerce", {
-    name: "Fake E-commerce",
+    name: "Danh sách Cửa hàng giả mạo / Ecommerce Scam",
     type: "ecommerce",
     domains: ecommerceDomains,
-    keywords: ["checkout", "payment", "limited stock", "free shipping"],
+    keywords: ["checkout", "payment", "limited stock", "free shipping", "khuyến mãi khủng"],
     lastUpdated: new Date(),
   });
 
   databasesLoaded = true;
-  console.log("[v0] Fraud databases loaded:", fraudDatabases.size);
+  console.log("[Lá Chắn Số] Cơ sở dữ liệu lừa đảo đã được nạp:", fraudDatabases.size);
 }
 
 /**
- * Check if a domain is in fraud database
+ * Check if a domain is in fraud database and instantly flag with 0 score on gambling/phishing matches
  */
 export async function checkFraudDatabase(domain: string): Promise<FraudDatabaseMatch[]> {
   await initializeFraudDatabases();
 
   const matches: FraudDatabaseMatch[] = [];
-  const domainLower = domain.toLowerCase();
+  const domainLower = domain.toLowerCase().trim();
 
   for (const [key, database] of fraudDatabases.entries()) {
-    // Check exact match
-    if (database.domains.has(domainLower)) {
+    // Generate domain variations to guarantee detection (with/without www, etc.)
+    const domainVariations = [
+      domainLower,
+      `www.${domainLower}`,
+      domainLower.replace(/^www\./, ""),
+    ];
+
+    let hasMatch = false;
+    let descriptionText = "";
+
+    // Check matches in the set
+    for (const variation of domainVariations) {
+      if (database.domains.has(variation)) {
+        hasMatch = true;
+        descriptionText = `Tên miền nằm trong ${database.name} của hệ thống.`;
+        break;
+      }
+    }
+
+    if (hasMatch) {
+      const isCriticalScam = database.type === "gambling" || database.type === "phishing" || database.type === "financial";
+
       matches.push({
         isBlacklisted: true,
         database: database.name,
         fraudType: database.type,
         lastUpdated: database.lastUpdated,
-        description: `Domain found in ${database.name} database`,
+        description: isCriticalScam
+          ? `Lá Chắn Số phát hiện trang web cờ bạc lừa đảo trực tuyến cực kỳ nguy hiểm! Đánh giá an toàn: 0 ĐIỂM.`
+          : descriptionText,
+        scoreOverride: isCriticalScam ? 0 : undefined,
+        alertCategory: isCriticalScam ? "Cờ bạc lừa đảo" : undefined
       });
-    }
-
-    // Check for domain variations (with/without www, different TLDs)
-    const domainVariations = [
-      domainLower,
-      `www.${domainLower}`,
-      domainLower.replace("www.", ""),
-      domainLower.split(".")[0], // Just the main domain part
-    ];
-
-    for (const variation of domainVariations) {
-      if (database.domains.has(variation)) {
-        if (!matches.some((m) => m.database === database.name)) {
-          matches.push({
-            isBlacklisted: true,
-            database: database.name,
-            fraudType: database.type,
-            lastUpdated: database.lastUpdated,
-            description: `Domain variation found in ${database.name} database`,
-          });
-        }
-      }
     }
   }
 
@@ -261,14 +265,13 @@ export async function addFraudDomain(domain: string, fraudType: string, reason: 
 
   const db = fraudDatabases.get(fraudType);
   if (db) {
-    db.domains.add(domain.toLowerCase());
-    console.log(`[v0] Added ${domain} to ${fraudType} database. Reason: ${reason}`);
+    db.domains.add(domain.toLowerCase().trim());
+    console.log(`[Lá Chắn Số] Đã thêm ${domain} vào cơ sở dữ liệu ${fraudType}. Lý do: ${reason}`);
   }
 }
 
 /**
- * Check domain similarity to known fraud domains
- * Uses simple string matching and fuzzy logic
+ * Check domain similarity to known fraud domains using fuzzy matching
  */
 export async function checkDomainSimilarity(domain: string): Promise<{
   hasSimilar: boolean;
@@ -287,7 +290,7 @@ export async function checkDomainSimilarity(domain: string): Promise<{
       const fraudDomainParts = fraudDomain.split(".");
       const fraudMainDomain = fraudDomainParts[0];
 
-      // Check for very similar domains (typosquatting)
+      // Check for very similar domains (typosquatting detection)
       if (calculateSimilarity(mainDomain, fraudMainDomain) > 0.85) {
         if (!similarDomains.includes(fraudDomain)) {
           similarDomains.push(fraudDomain);
@@ -304,7 +307,7 @@ export async function checkDomainSimilarity(domain: string): Promise<{
 }
 
 /**
- * Simple string similarity calculation (Levenshtein-like)
+ * Simple string similarity calculation (Levenshtein-based)
  */
 function calculateSimilarity(str1: string, str2: string): number {
   const longer = str1.length > str2.length ? str1 : str2;
