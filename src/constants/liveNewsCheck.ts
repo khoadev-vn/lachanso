@@ -1,8 +1,11 @@
 import { AlertTriangle, Database, Globe, Search, ShieldCheck } from "lucide-react";
 import { NEWS_API_CONFIG, NEWS_API_KEYS } from "../config/newsApis";
+import { VERIFICATION_CONFIG } from "../config/verificationConfig";
 import type { NewsAnalysisReason } from "./newsVerification";
 import { compareIdentityClaimsWithWikipedia, compareProfileClaimWithWikipedia, extractWikipediaClaims, type WikipediaIdentityClaim } from "./wikipediaClaimExtractor";
 import { verifyHeadline, isHeadlineText, type HeadlineVerificationResult } from "./headlineVerification";
+import { searchNews, searchNewsByTopic, isTrustedNewsSource, getNewsApiMetrics } from "../utils/newsApiOptimized";
+import { apiOrchestrator } from "../utils/apiOrchestrator";
 
 export interface LiveNewsSummary {
   live_fact_check: string;
