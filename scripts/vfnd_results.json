@@ -1,0 +1,712 @@
+{
+  "totalEvaluated": 100,
+  "metrics": {
+    "accuracy": 57.99999999999999,
+    "tp": 10,
+    "tn": 48,
+    "fp": 2,
+    "fn": 40
+  },
+  "details": [
+    {
+      "title": "Thấy vợ máu me nằm bất động trên sàn, tưởng con gái “xuống tay” hạ sát, lao vào phát hiện sự thật ki",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: kinh hoàng (-35)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Pravda: Đặc nhiệm Nga tiêu diệt tay súng bắn tỉa \"giỏi nhất thế giới\" ở Ukraine",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Bi kịch ngoại tình với bố chồng",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Bɑ Lɑn đe Ԁọɑ ѕẽ ƅắṅ tɾả EU bằnց “tất cả ρɦáo tɾonց tɑу”",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Hại não với Vọng Cổ mang tên Vuông Tròn Tam Giác!",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Nếu thấy thứ này thò lên ngoài vườn nhà, đừng chạm vào mà hãy chạy nhanh khi còn có thể",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Cô gái “tự sướng” 101 lần liên tiếp trong suốt 12 giờ liền và cái kết gây sốc",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: sốc (-35)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Nhặt được chiếc hộp kì lạ trên biển, người đàn ông phải vào viện ngay lập tức khi biết danh tính thậ",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: ngay lập tức (-35)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Hẹn hò người thương nơi sân trường, nam sinh khóc thét cầm dép bỏ chạy khi thấy thứ này lòi ra từ vò",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Dân tình \"tá hỏa\" với hình ảnh \"mát mẻ\", phì phèo thuốc lá của Erik sau bao nhiêu năm làm \"trai ngoa",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Bí mật đằng sau chiếc nhẫn trên ngón tay út của Thanh Hằng và Chi Pu",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "qυên rúт ѕạc đιện тнoạι ĸнỏι ổ cắм, вà мẹ ngấт lịм nнìn тнảм cảnн хảy đến vớι con gáι",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Bỏ vợ già chi 2 tỷ cưới vợ trẻ măng, cυồɴɢ ɴʜiệτ tới nửa đêm tôi ƈăm ʜậɴ trả về",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 60,
+      "reasons": "[Mạo danh uy quyền: phán quyết (-10)] | [Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Lấy chồng thực vật, 35 tuổi vẫn còn zin, 1 đêm chăm chồng mệt quá vợ ngủ thiếp đi, lúc tỉnh dậy thì ",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "MC Lại Văn Sâm đột ngột qua đời ở tuổi 64",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Rùa biển sa lưới ‘vươn cổ cúi lạy’, ông chủ bèn mua rồi phóng sinh, 16 năm sau chú rùa quay lại trả ",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Đêm nào mẹ cũng báo mộng cho con trai và cái kết",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Chị Vân ạ, chỉ 1 câu nói “con gái là người tình kiếp trước của bố!” thì chẳng khiến người ta loạn lu",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Chồng “chôn” chuối xanh và trứng xuống dưới đất cảnh tượng đằng sau khiến vợ kinh hãi",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Cưới vợ cho con trai, bố mẹ đặt 200 mâm cỗ nhưng không ai tới, thông gia biết được sự thật thì đòi h",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: ngay lập tức (-35)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Sự thật kinh hoàng về nước Mỹ qua lời kể của một du học sinh Trung Quốc",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: kinh hoàng (-35)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Có phải con gái là người tình kiếp trước của bố? Hiểu thế nào đây",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Khiếp sợ với chiếc mũi biến dạng kinh dị, người đàn ông khiến cả phòng phẫu thuật ám ảnh khi vừa chạ",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Muốn tiền vào như nước, nhớ đừng để thứ này trong ví",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Đức từ chối cấp Visa cho đoàn công tác nhà nước, tạm ngừng cấp Visa cho du học sinh Việt Nam?",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "NÓNG : xử phạt 10 đối tượng \"bom\" hàng \" Lợi dụng lòng tốt của các chiến sĩ \" Khai bom hàng cho vui",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Đêm nào cũng nghe lục đục dưới gầm giường, sợ hãi lật tấm phản phát hiện bí mật kinh hoàng",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: kinh hoàng (-35)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Con Gái Là Tình Nhân Kiếp Trước Của Bố",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Bức vẽ giúp bạn đánh giá mức độ stress của bản thân",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Dốc ống điều hòa, rụng tim vì thấy sinh vật bằng cổ tay dài cả mét này trườn ra",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Có tin Tổng thống Ukraine Zelensky đang trốn trong Đại sứ quán Mỹ ở Ba Lan",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Mẹ già báo mộng “nó ăn hết rồi”, con cháu cải mộ sau 3 năm khóc ngất khi thấy cảnh này",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "MC Lại Văn Sâm đột ngột qua đời ở tuổi 64 và sự thật chấn động?",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: chấn động (-35)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Liên tục được con trai báo mộng, bà mẹ kinh hãi khi nhìn thấy cảnh tượng khi thăm mộ con",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Tin tức Tổng Thống Trump & Q: CANH BÁO!!!! 18/8/2019 Chính phủ Nhật Bản đã quyết định chấm dứt sản x",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Тáς giả Trường Lâm muốn đưa chữ 4.0 vào dạy THPT, đại học :\" con tôi sẽ học khi đủ 5 tuổi !\"",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Cảm giác như trục quay trái đất sắp gãy khi xem loạt ảnh không thể không gào thét này",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Tình cảm giữa bố và con gái tưởng rằng xa cách nhưng lại rất gần",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "ngнι ngờ vợ léng pнéng lúc мìnн đι công тác dàι нạn nên мớι có вầυ, cнồng ѕững ngườι ĸнι вιếт ѕự тнậ",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Tổng thống Ukraine Zelensky đang \"trốn\" trong Đại sứ quán Mỹ ở Ba Lan",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Hai người đàn ông cũng có thể sinh con với nhau",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Một nցười Ƭrunց ⵕuốc đănց nhữnց bức ảnh nàу lên mạnց weibo và bình luận",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Nghiện xăm mình, thiếu nữ khóc ngất khi nhìn thấy cánh tay mình sau vài ngày đi xóa",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Đêm nào cũng thấy vợ biến mất, đặt camera ẩn chồng phát hiện hành động quá kinh hoàng",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: kinh hoàng (-35)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Khám phá sửng sốt về trí nhớ \"như thần\" của động vật",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Bác sĩ không đầu trước cửa phòng khám khiến cả bệnh viện náo loạn khi biết sự thật",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Cặp đôi chụp 1000 kiểu ảnh chỉ một tư thế trong 3 năm, ai cũng sốc khi biết sự thật",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: sốc (-35)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Mặc đồ không khác gì vải màn lên bar đú đởn, Mon 2k nhận cái kết quá đắng khi phát ngôn câu này",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Lý do Phi Nhung phải uống thuốc trừ sâu tự tử khiến ai cũng ‘choáng’?",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "CCTV: Nga 2 lần yêu cầu HĐBA họp khẩn nhưng bất thành, sẽ nộp bằng chứng \"thảm sát Bucha\"",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: khẩn cấp (-35)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Khán giả phố đi bộ Nguyễn Huệ cuồng nhiệt cổ vũ tuyển Việt Nam",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Người Việt đã vỡ mộng xe giá rẻ?",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Không có chuyện thí điểm chữ viết 'Tiếq Việt' bậc đại học ở TP.HCM",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Bị cảnh báo giả, khách trên máy bay TP.HCM đi Hà Nội hoảng sợ",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Go-Jek và Grab giành giật thị trường Indonesia ra sao?",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Phát hiện văn phòng công chứng giả tại TP.HCM",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Người Việt ở Paris: Cuộc sống vẫn diễn ra bình thường bất chấp bạo loạn",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Federer đụng Djokovic ở bán kết Giải quần vợt Paris Masters",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Ôtô 'chôn chân' vì bị chặn đầu bởi trăm xe máy đi ngược chiều ở Sài Gòn",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Hơn 55 tỷ đồng nâng cấp 8,5 km đại lộ Võ Văn Kiệt ở TP HCM",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Thông ngã trên đèo Prenn, giao thông tắc nghẽn 2 giờ",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Dùng dao đâm chết người vì xích mích lúc đổ xăng",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Xả súng tại nhà thờ Mỹ, ít nhất 26 người thiệt mạng",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Số người chết sau thảm họa ở Indonesia tăng lên 1.347",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Hai tài xế đánh nhau vì giành đường tại 'nút cổ chai' Hà Nội",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Ôtô ở Sài Gòn cuốn hàng loạt người, xe máy vào gầm",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Chuyện về chàng sinh viên Luật - Kiện tướng Lê Tuấn Minh",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "TP HCM muốn có tuyến buýt từ Tân Sơn Nhất đi các tỉnh",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Khải Hoàn Môn tan hoang sau cuộc bạo loạn lớn nhất 5 thập kỷ ở Paris",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Thưởng 20.000 USD cho đội tuyển cờ vua Việt Nam tại Olympiad 2018",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Bộ Công Thương kết luận Con Cưng có sai sót nhưng không bán hàng giả",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Tài xế ép hàng loạt xe máy, ôtô nhập đúng làn ở Đà Nẵng",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Bộ sưu tập xe trị giá 1,3 triệu USD của Neymar",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Thói quen Bill Gates đã từ bỏ để thành công",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Sài Gòn mưa như trút nước, cây đổ đè người tử vong",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "9X Việt được công ty đắt giá nhất thế giới mời thực tập",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Người Hà Nội chen chân chụp ảnh trong vườn cúc hoạ mi",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "'Hoa hậu quần vợt' Bouchard trổ tài đá bóng",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Nhật Bản cấm lò vi sóng, phạt tù từ 5 đến 10 năm ai còn dùng lò vi sóng",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Dòng người xếp hàng chờ lấy vé mua online trận Việt Nam",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Thu bằng lái 2 phi công VietJet sau sự cố máy bay văng bánh",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Cảnh đời người đàn ông Nhật sống mòn trên tiền thừa kế",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Nữ tiếp viên gốc Hoa bị chụp trộm gây sốt mạng xã hội",
+      "label": "Real",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: gây sốt (-35)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Xuân Trường háo hức thi đấu trước 80.000 khán giả Malaysia",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Máy bay quay đầu để cấp cứu sản phụ người nước ngoài",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Trường Sơn giành HCV tại giải cờ vua đồng đội thế giới 2018",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Nhiều người mẩn ngứa sau khi tắm biển ở Đà Nẵng",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Nhiều máy bay không thể đáp xuống Tân Sơn Nhất",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Trung Quốc hủy nhiều chuyến bay tới Thường Châu, CĐV Việt lo lắng",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Nữ sinh lớp 5 trả lại iPhone X cùng tiền cho người đánh rơi",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Cầu vượt biển dài nhất Việt Nam bị rải đinh dày đặc",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Vì sao Toyota Vios tăng giá trong khi xe hãng khác giảm?",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "WHO không chấp nhận kit test của Công ty Việt Á",
+      "label": "Real",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: khẩn cấp (-35)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Cuộc sống của những người Thủ Thiêm cố giữ đất",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "“Siêu máy bay” A350 sẽ chở CĐV Việt Nam đi Malaysia cổ vũ chung kết lượt đi",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Hà Nội, Sài Gòn cờ rợp đường mừng chiến thắng của tuyển Việt Nam",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Nguyễn Khắc Thủy tự nguyện đi thi hành án 3 năm tù",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 60,
+      "reasons": "[Mạo danh uy quyền: thi hành án (-10)] | [Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Ôtô đi ngược chiều bị phạt 800.000 đồng",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Lừa bán bé gái 14 tuổi, bắt luôn người giải cứu để đòi tiền chuộc",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Nam sinh quay lén bạn nữ tắm ở Đà Nẵng bị đuổi học",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    }
+  ]
+}

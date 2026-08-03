@@ -1,0 +1,492 @@
+{
+  "totalEvaluated": 60,
+  "metrics": {
+    "accuracy": 98.33333333333333,
+    "truePositives": 29,
+    "trueNegatives": 30,
+    "falsePositives": 0,
+    "falseNegatives": 1
+  },
+  "details": [
+    {
+      "title": "Chính phủ mở rộng diện tiếp nhận làm viên chức",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Học bơi từ ao làng đến trường học ở Hà Nội",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Siêu bão Ba Vì gây gió mạnh, sóng lớn ở Biển Đông",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Di vật bên cạnh 9 hài cốt liệt sĩ ở công viên Lê Thị Riêng",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Nút giao lớn nhất TP HCM lùi tiến độ thêm một năm",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Cháy lớn tại nhà xưởng công ty hóa chất ở Phú Thọ",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Đóng một phần cao tốc Chí Thạnh - Vân Phong trong hai ngày",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Chặt hàng đước để gỡ vướng nghiệm thu kè sông ở Nha Trang",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Người Hà Nội kỳ vọng gì với quy hoạch trăm năm?",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Hà Nội xây quảng trường trước công viên Thống Nhất",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Quảng Trị khảo sát khu vực nghi mộ tập thể liệt sĩ",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Hà Nội cấm phương tiện nhiều tuyến phố trung tâm trong 2 ngày",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Miền Bắc tiếp tục mưa giông sau bão Maysak",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Liệt sĩ tìm thấy ở công viên Lê Thị Riêng có người thân đến nhận",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Tàu chở 17 người bị tàu hàng tông chìm",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Đề xuất kéo dài metro Vũng Tàu đến sân bay Long Thành",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Hà Nội quy hoạch 9 trục động lực phát triển, lấy sông Hồng làm trung tâm",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Nghiên cứu sáp nhập 705 xã, phường để tránh phân tán nguồn lực",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Quy tập 343 hài cốt liệt sĩ ở Campuchia, Tây Ninh và An Giang",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Nơi phát hiện 7 hài cốt liệt sĩ ở công viên Lê Thị Riêng",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Cháy siêu thị điện máy bỏ không ở Hà Nội",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Bộ Quốc phòng tuyển người học quân sự cơ sở về cấp xã",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Tìm thấy 7 hài cốt liệt sĩ ở công viên Lê Thị Riêng",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Thủ tướng dự lễ tìm kiếm hài cốt liệt sĩ ở công viên Lê Thị Riêng",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Quảng Ngãi làm đường 800 tỷ đồng nối cao tốc với biển",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Siêu bão Ba Vì có thể ảnh hưởng đến Biển Đông",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Bão Maysak suy yếu thành áp thấp nhiệt đới",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Bão Maysak gây ngập, tốc mái nhà ở Móng Cái",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Hơn 3,55 triệu người lĩnh lương hưu mới",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Bão vào Trung Quốc, miền Bắc tiếp tục mưa",
+      "is_fake_groundtruth": false,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Tin nóng: Diện mạo tương lai ven sông Sài Gòn",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 0,
+      "penalty": 84,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Không thể tin nổi: Nút thắt thanh toán ở dự án chống ngập 10.000 tỷ đồng",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 0,
+      "penalty": 124,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Tin nóng: Cứu bé gái mắc kẹt giữa sông ở Khánh Hòa",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 24,
+      "penalty": 46,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Tin nóng: Bão Maysak đổ bộ Móng Cái",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 24,
+      "penalty": 46,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Không thể tin nổi: Học sinh toàn quốc được miễn phí sách giáo khoa từ năm 2029",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 35,
+      "penalty": 35,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Không thể tin nổi: Venezuela tặng huân chương Công trạng cho quân khuyển Việt Nam",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 0,
+      "penalty": 74,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Khẩn cấp: Anh hùng Ngô Thị Tuyển qua đời",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 0,
+      "penalty": 124,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Không thể tin nổi: Đèo Cả muốn đầu tư 124 km cao tốc nối Tây Nguyên với duyên hải",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 35,
+      "penalty": 35,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Kinh hoàng: Việt Nam thu 9 tỷ USD từ du khách quốc tế nửa đầu năm 2026",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 24,
+      "penalty": 46,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Kinh hoàng: Ba nạn nhân vụ cháy nhà liền kề ở Hà Nội là bố con",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 35,
+      "penalty": 35,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Sốc: TP HCM miễn phí sách giáo khoa từ năm học 2026-2027",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 0,
+      "penalty": 74,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Tin nóng: Hai ôtô va chạm trên cao tốc Hà Nội - Hải Phòng, một người chết",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 0,
+      "penalty": 124,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Không thể tin nổi: Dự kiến khai quật công viên Lê Thị Riêng ngày 6/7",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 0,
+      "penalty": 93,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Không thể tin nổi: Bão Maysak áp sát đất liền Quảng Ninh - Hải Phòng",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 24,
+      "penalty": 46,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Không thể tin nổi: Kho nhựa trong khu dân cư ở Nha Trang cháy ngùn ngụt",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 35,
+      "penalty": 35,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Không thể tin nổi: Đề xuất chi hơn 12.700 tỷ đồng cải tạo hai tuyến sông khu Nam TP HCM",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 0,
+      "penalty": 74,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Kinh hoàng: Hà Nội quy hoạch 18 tuyến metro dài gần 1.000 km",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 0,
+      "penalty": 124,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Khẩn cấp: Đưa hàng nghìn người từ đảo vào bờ tránh bão Maysak",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 24,
+      "penalty": 46,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Khẩn cấp: Bão Maysak áp sát Quảng Ninh, trưa nay ảnh hưởng đất liền",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 14,
+      "penalty": 56,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Không thể tin nổi: Quy định mới về phục vụ chuyên cơ với lãnh đạo chủ chốt",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 35,
+      "penalty": 35,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Tin nóng: Thiết kế đặc biệt của hai cầu dây văng cao nhất Việt Nam",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 0,
+      "penalty": 84,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Không thể tin nổi: Bão Maysak có thể gây mưa trên 500 mm cho Đông Bắc Bộ",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 0,
+      "penalty": 124,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Tin nóng: Thu nhập bình quân lao động quý II/2026 đạt 9 triệu đồng",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 35,
+      "penalty": 35,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Tin nóng: Đề nghị giám sát thực trạng nợ đọng BHXH tại doanh nghiệp",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 24,
+      "penalty": 46,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Khẩn cấp: Cháy nhà liền kề ở Hà Nội, hai người tử vong",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 24,
+      "penalty": 46,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Khẩn cấp: TP HCM tiếp tục đề xuất tài xế công nghệ đóng BHXH bắt buộc",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 0,
+      "penalty": 84,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Sốc: Cứu người đàn ông đi lạc 5 ngày trong rừng",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 0,
+      "penalty": 124,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Sốc: Cơ quan hành chính phải chủ động cung cấp thông tin cho báo chí",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 35,
+      "penalty": 35,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "CẢNH BÁO: Mã độc tống tiền lây lan qua tin nhắn Zalo",
+      "is_fake_groundtruth": true,
+      "predicted_fake": true,
+      "score": 14,
+      "penalty": 56,
+      "hasLivePressMatch": false
+    },
+    {
+      "title": "Mourinho ký hợp đồng với Real",
+      "is_fake_groundtruth": true,
+      "predicted_fake": false,
+      "score": 100,
+      "penalty": 0,
+      "hasLivePressMatch": false
+    }
+  ]
+}

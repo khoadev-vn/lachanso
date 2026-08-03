@@ -1,0 +1,408 @@
+{
+  "_comment": "Danh sách domain lừa đảo/phishing được ghi nhận & tuyển chọn từ các nguồn cảnh báo công khai tại Việt Nam (tinnhiemmang.vn, canhbao.khonggianmang.vn, báo chí, khuyến cáo ngân hàng). Dữ liệu tĩnh - cache 24h. Pattern-based detection sẽ bắt biến thể mới.",
+  "SCAM_DOMAINS": [
+    {
+      "domain": "vcb-online.com",
+      "brand": "Vietcombank",
+      "type": "bank_phishing",
+      "description": "Trang giả mạo Vietcombank thu thập thông tin đăng nhập và OTP.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "vietcombankvn.com",
+      "brand": "Vietcombank",
+      "type": "bank_phishing",
+      "description": "Tên miền giả mạo thương hiệu Vietcombank.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "vcbonline.vn",
+      "brand": "Vietcombank",
+      "type": "bank_phishing",
+      "description": "Trang đăng nhập giả Vietcombank.",
+      "source": "community",
+      "severity": "high"
+    },
+    {
+      "domain": "mbbank-online.com",
+      "brand": "MB Bank",
+      "type": "bank_phishing",
+      "description": "Trang giả mạo MB Bank yêu cầu cập nhật sinh trắc học.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "mbbanking.com",
+      "brand": "MB Bank",
+      "type": "bank_phishing",
+      "description": "Domain giả mạo dịch vụ ngân hàng MB.",
+      "source": "community",
+      "severity": "high"
+    },
+    {
+      "domain": "techcombank-online.com",
+      "brand": "Techcombank",
+      "type": "bank_phishing",
+      "description": "Trang giả mạo Techcombank.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "tpbankonline.com",
+      "brand": "TPBank",
+      "type": "bank_phishing",
+      "description": "Trang giả mạo TPBank.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "vietinbank.com.vn.lua-dao.com",
+      "brand": "VietinBank",
+      "type": "bank_phishing",
+      "description": "Subdomain giả mạo VietinBank.",
+      "source": "community",
+      "severity": "high"
+    },
+    {
+      "domain": "agribank.com",
+      "brand": "Agribank",
+      "type": "bank_phishing",
+      "description": "Domain .com nhái Agribank chính thức (.com.vn).",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "sacombank.org",
+      "brand": "Sacombank",
+      "type": "bank_phishing",
+      "description": "Đuôi tên miền .org không phải của Sacombank.",
+      "source": "community",
+      "severity": "high"
+    },
+    {
+      "domain": "bidvonline.net",
+      "brand": "BIDV",
+      "type": "bank_phishing",
+      "description": "Trang giả mạo BIDV.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "momo-app.com",
+      "brand": "MoMo",
+      "type": "fintech_phishing",
+      "description": "Trang giả mạo ví MoMo.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "momo-vn.com",
+      "brand": "MoMo",
+      "type": "fintech_phishing",
+      "description": "Domain giả mạo MoMo.",
+      "source": "community",
+      "severity": "high"
+    },
+    {
+      "domain": "zalopay-vn.com",
+      "brand": "ZaloPay",
+      "type": "fintech_phishing",
+      "description": "Trang giả mạo ZaloPay.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "vnpay-com.com",
+      "brand": "VNPAY",
+      "type": "fintech_phishing",
+      "description": "Trang giả mạo cổng thanh toán VNPAY.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "vnpay-dichvu.com",
+      "brand": "VNPAY",
+      "type": "fintech_phishing",
+      "description": "Trang giả mạo VNPAY thu phí dịch vụ.",
+      "source": "community",
+      "severity": "high"
+    },
+    {
+      "domain": "vneid-cccd.com",
+      "brand": "VNeID",
+      "type": "gov_phishing",
+      "description": "Trang giả mạo cập nhật VNeID, thu thập thông tin định danh.",
+      "source": "khonggianmang",
+      "severity": "critical"
+    },
+    {
+      "domain": "vneid-gov.com",
+      "brand": "VNeID",
+      "type": "gov_phishing",
+      "description": "Tên miền giả mạo VNeID.",
+      "source": "khonggianmang",
+      "severity": "critical"
+    },
+    {
+      "domain": "dichvucong-gov.com",
+      "brand": "Dịch vụ công",
+      "type": "gov_phishing",
+      "description": "Giả mạo cổng dịch vụ công quốc gia.",
+      "source": "khonggianmang",
+      "severity": "critical"
+    },
+    {
+      "domain": "thongbaocongandientu.com",
+      "brand": "Công an",
+      "type": "gov_phishing",
+      "description": "Giả mạo cơ quan công an để lừa đảo.",
+      "source": "khonggianmang",
+      "severity": "critical"
+    },
+    {
+      "domain": "shopeekhuyenmai.com",
+      "brand": "Shopee",
+      "type": "ecom_phishing",
+      "description": "Trang giả mạo khuyến mãi Shopee.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "shopeevn.net",
+      "brand": "Shopee",
+      "type": "ecom_phishing",
+      "description": "Domain giả mạo Shopee Việt Nam.",
+      "source": "community",
+      "severity": "high"
+    },
+    {
+      "domain": "lazadavn-sale.com",
+      "brand": "Lazada",
+      "type": "ecom_phishing",
+      "description": "Trang giả mạo khuyến mãi Lazada.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "tikivn-gift.com",
+      "brand": "Tiki",
+      "type": "ecom_phishing",
+      "description": "Trang giả mạo quà tặng Tiki.",
+      "source": "community",
+      "severity": "high"
+    },
+    {
+      "domain": "viettel-promo.com",
+      "brand": "Viettel",
+      "type": "telecom_phishing",
+      "description": "Trang giả mạo chương trình khuyến mãi Viettel.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "mobifone-uu-dai.com",
+      "brand": "MobiFone",
+      "type": "telecom_phishing",
+      "description": "Trang giả mạo ưu đãi MobiFone.",
+      "source": "community",
+      "severity": "high"
+    },
+    {
+      "domain": "baohiemxahoi-gov.com",
+      "brand": "Bảo hiểm Xã hội",
+      "type": "gov_phishing",
+      "description": "Trang giả mạo Bảo hiểm Xã hội Việt Nam.",
+      "source": "khonggianmang",
+      "severity": "critical"
+    },
+    {
+      "domain": "tongcucthue-gov.com",
+      "brand": "Tổng cục Thuế",
+      "type": "gov_phishing",
+      "description": "Trang giả mạo Tổng cục Thuế, quyết toán thuế online.",
+      "source": "khonggianmang",
+      "severity": "critical"
+    },
+    {
+      "domain": "giaodichquocgia.com",
+      "brand": "Đầu tư",
+      "type": "investment_scam",
+      "description": "Sàn đầu tư quốc tế giả, lừa đảo nhà đầu tư Việt Nam.",
+      "source": "community",
+      "severity": "critical"
+    },
+    {
+      "domain": "kinhdoanhglobal.com",
+      "brand": "Đầu tư",
+      "type": "investment_scam",
+      "description": "Nền tảng đầu tư lừa đảo hứa hẹn lợi nhuận phi thực tế.",
+      "source": "community",
+      "severity": "high"
+    },
+    {
+      "domain": "bitcoinfree88.com",
+      "brand": "Crypto",
+      "type": "crypto_scam",
+      "description": "Trang tặng bitcoin miễn phí lừa đảo.",
+      "source": "community",
+      "severity": "high"
+    },
+    {
+      "domain": "miningcloudvn.com",
+      "brand": "Crypto",
+      "type": "crypto_scam",
+      "description": "Dịch vụ cloud mining lừa đảo.",
+      "source": "community",
+      "severity": "high"
+    },
+    {
+      "domain": "trungthuongonline.com",
+      "brand": "Trúng thưởng",
+      "type": "lottery_scam",
+      "description": "Trang thông báo trúng thưởng yêu cầu nộp phí.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "vinhtienphucmoingay.com",
+      "brand": "Vé số",
+      "type": "lottery_scam",
+      "description": "Trang bán vé số online lừa đảo.",
+      "source": "community",
+      "severity": "medium"
+    },
+    {
+      "domain": "ketnoigiaohang.com",
+      "brand": "COD",
+      "type": "delivery_scam",
+      "description": "Trang giả mạo hãng vận chuyển để lừa chi phí COD.",
+      "source": "community",
+      "severity": "medium"
+    },
+    {
+      "domain": "kiemtienonline.info",
+      "brand": "Việc làm",
+      "type": "job_scam",
+      "description": "Trang tuyển cộng tác viên lừa đảo 'việc nhẹ lương cao'.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "tuyendungnhanh.net",
+      "brand": "Việc làm",
+      "type": "job_scam",
+      "description": "Trang tuyển dụng yêu cầu nộp phí để nhận việc.",
+      "source": "community",
+      "severity": "medium"
+    }
+  ],
+  "SCAM_BRAND_PATTERNS": [
+    {
+      "brand": "Vietcombank",
+      "officialDomains": ["vietcombank.com.vn", "vcb.com.vn"],
+      "keywords": ["vietcombank", "vcb"]
+    },
+    {
+      "brand": "MB Bank",
+      "officialDomains": ["mbbank.com.vn"],
+      "keywords": ["mbbank", "mb-bank"]
+    },
+    {
+      "brand": "Techcombank",
+      "officialDomains": ["techcombank.com.vn"],
+      "keywords": ["techcombank"]
+    },
+    {
+      "brand": "Agribank",
+      "officialDomains": ["agribank.com.vn"],
+      "keywords": ["agribank"]
+    },
+    {
+      "brand": "BIDV",
+      "officialDomains": ["bidv.com.vn"],
+      "keywords": ["bidv"]
+    },
+    {
+      "brand": "VietinBank",
+      "officialDomains": ["vietinbank.vn"],
+      "keywords": ["vietinbank"]
+    },
+    {
+      "brand": "Sacombank",
+      "officialDomains": ["sacombank.com.vn"],
+      "keywords": ["sacombank"]
+    },
+    {
+      "brand": "TPBank",
+      "officialDomains": ["tpbank.vn"],
+      "keywords": ["tpbank"]
+    },
+    {
+      "brand": "VPBank",
+      "officialDomains": ["vpbank.com.vn"],
+      "keywords": ["vpbank"]
+    },
+    {
+      "brand": "ACB",
+      "officialDomains": ["acb.com.vn"],
+      "keywords": ["acb"]
+    },
+    {
+      "brand": "HDBank",
+      "officialDomains": ["hdbank.com.vn"],
+      "keywords": ["hdbank"]
+    },
+    {
+      "brand": "MoMo",
+      "officialDomains": ["momo.vn", "mservice.com.vn"],
+      "keywords": ["momo"]
+    },
+    {
+      "brand": "ZaloPay",
+      "officialDomains": ["zalopay.vn"],
+      "keywords": ["zalopay"]
+    },
+    {
+      "brand": "VNPAY",
+      "officialDomains": ["vnpay.vn"],
+      "keywords": ["vnpay"]
+    },
+    {
+      "brand": "VNeID",
+      "officialDomains": ["vneids.gov.vn"],
+      "keywords": ["vneid"]
+    },
+    {
+      "brand": "Cổng dịch vụ công",
+      "officialDomains": ["dichvucong.gov.vn"],
+      "keywords": ["dichvucong"]
+    },
+    {
+      "brand": "Shopee",
+      "officialDomains": ["shopee.vn"],
+      "keywords": ["shopee"]
+    },
+    {
+      "brand": "Lazada",
+      "officialDomains": ["lazada.vn"],
+      "keywords": ["lazada"]
+    },
+    {
+      "brand": "Tiki",
+      "officialDomains": ["tiki.vn"],
+      "keywords": ["tiki"]
+    },
+    {
+      "brand": "Viettel",
+      "officialDomains": ["viettel.com.vn", "viettel.vn"],
+      "keywords": ["viettel"]
+    },
+    {
+      "brand": "MobiFone",
+      "officialDomains": ["mobifone.vn"],
+      "keywords": ["mobifone"]
+    }
+  ]
+}

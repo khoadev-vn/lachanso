@@ -1,0 +1,712 @@
+{
+  "totalEvaluated": 100,
+  "metrics": {
+    "accuracy": 75,
+    "tp": 28,
+    "tn": 47,
+    "fp": 3,
+    "fn": 22
+  },
+  "details": [
+    {
+      "title": "CCTV: Nga 2 lần yêu cầu HĐBA họp khẩn nhưng bất thành, sẽ nộp bằng chứng \"thảm sát Bucha\"",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 0,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: khẩn cấp (-35)] | [Giật tít câu view: khẩn cấp (-35)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Cứ tưởng đào được trứng khủng long, người đàn ông tách đôi mới câm nín vì bên trong thực ra là…",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Giật tít câu view: trứng khủng long (-35)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Đêm nào cũng nghe lục đục dưới gầm giường, sợ hãi lật tấm phản phát hiện bí mật kinh hoàng",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 0,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: kinh hoàng (-35)] | [Giật tít câu view: kinh hoàng (-35)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "YÊU RÂU XANH (P51): Câu chuyện động trời sau tấm ri đô mỏng",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 5,
+      "reasons": "[Kỹ thuật né bộ lọc: c.ô.n.g a.n (-30)] | [Giật tít câu view: thú tính (-35)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "MC Lại Văn Sâm đột ngột qua đời ở tuổi 64 và sự thật chấn động?",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 0,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: chấn động (-35)] | [Giật tít câu view: đột ngột qua đời, sự thật chấn động (-46)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Đại sứ quán Đức tại Hà Nội từ chối cấp Visa cho lao động Việt Nam sang học nghề điều dưỡng",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Lớn lên, con sẽ lấy một người chồng giống bố",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 25,
+      "reasons": "[Tin đồn nhảm / Mê tín / Hư cấu / Spam: kiếp trước (-45)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Vợ chết 3 ngày về báo mộng, chồng dỡ trần nhà xuống để rồi sốc ngất khi thấy thứ đó",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 0,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: sốc (-35)] | [Giật tít câu view: sốc, báo mộng (-46)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Mặc đồ bơi gợi cảm, Bảo Anh gây bất ngờ khi xăm chữ này lên đùi",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Vác bừa hòn đá về kê bếp, người đàn ông sốc nặng khi được trả 400 triệu chỉ vì bí mật này bên trong",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 0,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: sốc (-35)] | [Giật tít câu view: sốc (-35)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Ao làng bỗng lúc nhúc toàn sinh vật lạ, thò tay sờ vào mới tím mặt sợ hãi khi biết sự thật",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 0,
+      "reasons": "[Tin đồn chính trị xã hội: sinh vật lạ (-50)] | [Giật tít câu view: tím mặt, lúc nhúc (-46)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Bức vẽ giúp bạn đánh giá mức độ stress của bản thân",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Tưởng cả trăm con rắn bò vào nhà trả thù, chàng trai kinh hãi tột độ khi thấy cảnh tượng chết chóc á",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Giật tít câu view: kinh hãi (-35)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Mẹ và con gái mới đích thực là tình nhân nhiều kiếp",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "'Thần dược' mùa đông",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 85,
+      "reasons": "[Giật tít câu view: thần dược (-35)] | [NLI Xác thực: Báo chí đồng thuận (Entailment: 45%): +20 điểm]"
+    },
+    {
+      "title": "Thích dạng háng check-in cho thoáng, thiếu nữ khiến bạn bè đứng hình khi thấy thứ kinh dị lòi ra",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 14,
+      "reasons": "[Giật tít câu view: đứng hình, lòi ra, kinh dị (-56)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Vừa rời giường bệnh chưa bao lâu, ai nấy chết ngất khi bắt gặp Trần Sơn đang làm việc kinh dị này",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Giật tít câu view: kinh dị (-35)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "qυên rúт ѕạc đιện тнoạι ĸнỏι ổ cắм, вà мẹ ngấт lịм nнìn тнảм cảnн хảy đến vớι con gáι",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 25,
+      "reasons": "[Sử dụng ký tự đặc biệt để lách luật: υ, т, ѕ, ι, н, м, в, х (-45)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Lý do Phi Nhung phải uống thuốc trừ sâu tự tử khiến ai cũng ‘choáng’?",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Một nցười Ƭrunց ⵕuốc đănց nhữnց bức ảnh nàу lên mạnց weibo và bình luận",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 25,
+      "reasons": "[Sử dụng ký tự đặc biệt để lách luật: у, ρ, ѵ, η, α (-45)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Tin tức Tổng Thống Trump & Q: CANH BÁO!!!! 18/8/2019 Chính phủ Nhật Bản đã quyết định chấm dứt sản x",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Chấp nhận đổ vỏ cho con nhỏ bạn thân và cái kết sốc",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 0,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: sốc (-35)] | [Giật tít câu view: sốc, cái kết sốc (-46)] | [Tin đồn nhảm / Mê tín / Hư cấu / Spam: chấp nhận đổ vỏ, đổ vỏ cho con nhỏ bạn thân (-59)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Thấy vợ máu me nằm bất động trên sàn, tưởng con gái “xuống tay” hạ sát, lao vào phát hiện sự thật ki",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 0,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: kinh hoàng (-35)] | [Giật tít câu view: kinh hoàng (-35)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Nhặt được xác trăn ven đường, người đàn ông chết sững với thứ trong bụng trăn lâu năm",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Giật tít câu view: chết sững (-35)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Cười vỡ bụng khi tiếng CẢI CÁCH \"vuông tròn\" xâm nhập chợ búa, các mẹ sử dụng chuyên nghiệp",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Chỉ một lần vui quá trớn, thanh niên sùi đầy nốt lạ trên lưng để rồi chết lặng khi biết sự thật đắng",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 24,
+      "reasons": "[Giật tít câu view: chết lặng, sự thật đắng (-46)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Тáς giả Trường Lâm muốn đưa chữ 4.0 vào dạy THPT, đại học :\" con tôi sẽ học khi đủ 5 tuổi !\"",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 25,
+      "reasons": "[Sử dụng ký tự đặc biệt để lách luật: т, ς, ύ, υ, ѵ, м, н, п, γ, ά, τ, ι, α, ρ, σ, к (-45)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "MC Lại Văn Sâm đột ngột qua đời ở tuổi 64",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Giật tít câu view: đột ngột qua đời (-35)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Bộ KIT xét nghiệm Covid -19 của Việt Nam sản xuất vừa được Tổ chức Y tế Thế giới chấp thuận",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 0,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: khẩn cấp (-35)] | [Giật tít câu view: khẩn cấp (-35)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Nghiện xăm mình, thiếu nữ khóc ngất khi nhìn thấy cánh tay mình sau vài ngày đi xóa",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Bí mật đằng sau chiếc nhẫn trên ngón tay út của Thanh Hằng và Chi Pu",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Mặc đồ không khác gì vải màn lên bar đú đởn, Mon 2k nhận cái kết quá đắng khi phát ngôn câu này",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Hại não với Vọng Cổ mang tên Vuông Tròn Tam Giác!",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Hoạ sỹ khuyết tật Lê Minh Châu trở thành người Việt đầu tiên có tên trên Đại lộ Danh vọng Hollywood",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Đàn ông cũng có thể sinh con",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 25,
+      "reasons": "[Tin đồn nhảm / Mê tín / Hư cấu / Spam: lần đầu tiên (-45)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "N̲gh̲i v̲ấn U̲k̲r̲a̲i̲n̲e ᴛ̲ự ᴛh̲ả̲m s̲á̲ᴛ d̲â̲n củ̲a̲ m̲ì̲n̲h: G̲i̲ới lãn̲h̲ đ̲ạo ph̲ư̲ơng T̲â̲y số",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "TẢI NGAY APP 567LIVE NGẮM GÁI XINH NÓNG BỎNG",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 0,
+      "reasons": "[Tin đồn nhảm / Mê tín / Hư cấu / Spam: tải ngay app, ngắm gái xinh, gái xinh nóng bỏng (-72)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Người đàn ông bị “ma dắt đi chơi” cho tới chết ở Quảng Nam?",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Tổng thống Ukraine Zelensky đang \"trốn\" trong Đại sứ quán Mỹ ở Ba Lan",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Sốc với những loại “bùa ngải” có thật dấu hiệu khi bị dính và đây là cách phòng tránh !",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 0,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: sốc (-35)] | [Giật tít câu view: sốc (-35)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Rạch đầu rắn mọc lổn nhổn đá dăm là cảnh tượng kinh hoàng không ai muốn chứng kiến quá 5 giây",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 0,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: kinh hoàng (-35)] | [Giật tít câu view: kinh hoàng (-35)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Đại học Hutech sẽ áp dụng cải cách \"Tiếq Việt\" vào năm học 2018?",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Bé Nhật Lan báo mộng cho người nhà về nghi phạm trước khi bị bắt",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Giật tít câu view: báo mộng (-35)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Võ sư 60 tuổi, tay không đánh bại hàng trăm giang hồ Sài Gòn",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Chưa bao giờ nhạc Kpop lại dễ hát đến thế!!!",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Cảm giác như trục quay trái đất sắp gãy khi xem loạt ảnh không thể không gào thét này",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Choáng! Cơ trưởng đeo khăn quàng quẩy banh nóc trên sân khấu trường!!!",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Bí mật động trời mà không một nhân viên khách sạn nào dám nói cho bạn biết",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Giật tít câu view: bí mật động trời (-35)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Nếu thấy thứ này thò lên ngoài vườn nhà, đừng chạm vào mà hãy chạy nhanh khi còn có thể",
+      "label": "Fake",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Cô gái “tự sướng” 101 lần liên tiếp trong suốt 12 giờ liền và cái kết gây sốc",
+      "label": "Fake",
+      "predicted_fake": true,
+      "score": 0,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: sốc (-35)] | [Giật tít câu view: sốc (-35)] | [Thiếu nguồn xác nhận & Văn phong đáng ngờ: -30 điểm]"
+    },
+    {
+      "title": "Phát hiện văn phòng công chứng giả tại TP.HCM",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Nam sinh quay lén bạn nữ tắm ở Đà Nẵng bị đuổi học",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Tiền đạo Malaysia: “Tôi đã có cách vượt qua hàng thủ đội tuyển Việt Nam”",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Vẻ xa xỉ của Song Hye Kyo khi đóng quý cô trâm anh thế phiệt",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Go-Jek và Grab giành giật thị trường Indonesia ra sao?",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "TP HCM muốn có tuyến buýt từ Tân Sơn Nhất đi các tỉnh",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Tài xế ép hàng loạt xe máy, ôtô nhập đúng làn ở Đà Nẵng",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Nhân chứng kể lại phút đối mặt với tên cướp ngân hàng",
+      "label": "Real",
+      "predicted_fake": true,
+      "score": 40,
+      "reasons": "[Kỹ thuật né bộ lọc: n.g.â.n h.à.n.g (-30)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Đường đi bộ lát gỗ lim ven sông Hương sắp hoàn thành",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Khán giả phố đi bộ Nguyễn Huệ cuồng nhiệt cổ vũ tuyển Việt Nam",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "TP HCM sẽ có thêm nhiều phố đi bộ",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Tại sao Apple chưa bao giờ quảng cáo trên mạng xã hội",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Lao động nước ngoài ở Việt Nam phải đóng bảo hiểm xã hội",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Nguyễn Khắc Thủy tự nguyện đi thi hành án 3 năm tù",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 60,
+      "reasons": "[Mạo danh uy quyền: thi hành án (-10)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Chuyện về chàng sinh viên Luật - Kiện tướng Lê Tuấn Minh",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "WHO không chấp nhận kit test của Công ty Việt Á",
+      "label": "Real",
+      "predicted_fake": true,
+      "score": 0,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: khẩn cấp (-35)] | [Giật tít câu view: khẩn cấp (-35)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Xuân Trường háo hức thi đấu trước 80.000 khán giả Malaysia",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Nhân viên an ninh sân bay Thọ Xuân bị phạt vì 'phản ứng chậm'",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Nhiều máy bay không thể đáp xuống Tân Sơn Nhất",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Quên khóa ô tô, nữ tài xế bị \"khoắng\" sạch tài sản",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 100,
+      "reasons": "[NLI Xác thực: Báo chí đồng thuận (Entailment: 47%): +20 điểm]"
+    },
+    {
+      "title": "Bé gái bị cha cứa cổ khi muốn đi tập văn nghệ đêm trung thu",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Đánh bại Djokovic, Zverev lần đầu vô địch Giải quần vợt ATP Finals",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Con không chịu đi học, mẹ Thái Lan bắt nhặt rác cả ngày",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Cầu vượt biển dài nhất Việt Nam bị rải đinh dày đặc",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Khải Hoàn Môn tan hoang sau cuộc bạo loạn lớn nhất 5 thập kỷ ở Paris",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Sẽ bỏ quản lý dân cư bằng hộ khẩu",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Trung Quốc hủy nhiều chuyến bay tới Thường Châu, CĐV Việt lo lắng",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Chưa được kiểm chứng bởi báo chí chính thống: -30 điểm]"
+    },
+    {
+      "title": "Thói quen lái xe giúp tiết kiệm 25% nhiên liệu",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Sài Gòn mưa như trút nước, cây đổ đè người tử vong",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "'Nhật Bản cấm dùng lò vi sóng' là tin giả",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Xã hội đen Đài Loan mở tiệm mỳ miễn phí cho người nghèo",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Băng trộm SH đâm chết các 'hiệp sĩ': Tấm lòng người cha hiệp sĩ",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Nhật Bản cấm lò vi sóng, phạt tù từ 5 đến 10 năm ai còn dùng lò vi sóng",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Nữ tiếp viên gốc Hoa bị chụp trộm gây sốt mạng xã hội",
+      "label": "Real",
+      "predicted_fake": true,
+      "score": 35,
+      "reasons": "[Ngôn ngữ gây hoảng loạn: gây sốt (-35)] | [Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Người đàn ông chết khô ở máy dập có thể do đột quỵ",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Sắp có tuyến buýt '5 sao' từ Tân Sơn Nhất đi Vũng Tàu",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "vũ khí kết nối người trẻ của Tổng thống Indonesia",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Luật cho phép xe cứu hỏa được đi ngược chiều khi làm nhiệm vụ",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Thương em bị mẹ vợ đoạ đày, anh trai gây án giết người",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Người Việt đã vỡ mộng xe giá rẻ?",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Federer đụng Djokovic ở bán kết Giải quần vợt Paris Masters",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Không có chuyện thí điểm chữ viết 'Tiếq Việt' bậc đại học ở TP.HCM",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Xả súng tại nhà thờ Mỹ, ít nhất 26 người thiệt mạng",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Thanh Hoá chi gần 700 triệu cho ba cán bộ đi Mỹ xúc tiến đầu tư",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Nghi phạm bắn chết Phó chủ tịch HĐND phường trộm 2 khẩu súng, 16 viên đạn",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "'Hoa hậu quần vợt' Bouchard trổ tài đá bóng",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Hai tài xế đánh nhau vì giành đường tại 'nút cổ chai' Hà Nội",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "9X Việt được công ty đắt giá nhất thế giới mời thực tập",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Cô giáo ở Quảng Bình bắt trò tát bạn học 230 cái",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    },
+    {
+      "title": "Khởi tố ông Nguyễn Hoài Nam - bí thư Quận ủy Quận 2",
+      "label": "Real",
+      "predicted_fake": false,
+      "score": 70,
+      "reasons": "[Có bài báo liên quan nhưng NLI không xác thực được nội dung: -30 điểm]"
+    }
+  ]
+}

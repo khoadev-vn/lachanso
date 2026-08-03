@@ -1,0 +1,119 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@500;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --background: #f5f4f0;
+  --foreground: #111111;
+}
+
+body {
+  background-color: var(--background);
+  background-image:
+    linear-gradient(rgba(0,0,0,0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.045) 1px, transparent 1px);
+  background-size: 60px 60px;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+.font-analysis-heading {
+  font-family: "Manrope", "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-analysis-body {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-style: normal;
+  letter-spacing: -0.01em;
+}
+
+.mask-gradient {
+  mask-image: linear-gradient(to top, black 20%, transparent 100%);
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-25%); }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #E5E7EB;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #D1D5DB;
+}
+
+
+@keyframes liquid-spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes flash-empty {
+  0%, 100% { background-color: #fef2f2; border-color: #fecaca; box-shadow: 0 0 15px rgba(248, 113, 113, 0.2); }
+  50% { background-color: #fee2e2; border-color: #ef4444; box-shadow: 0 0 25px rgba(239, 68, 68, 0.6); }
+}
+
+.liquid-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #f3f4f6; 
+  border: 4px solid white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.liquid-empty-flash {
+  animation: flash-empty 1.5s ease-in-out infinite;
+  border: 2px dashed #ef4444;
+}
+
+.liquid-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: bottom center;
+}
+
+.liquid-fill::before,
+.liquid-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 250%;
+  height: 250%;
+  background: white;
+  transform: translate(-50%, -50%);
+}
+
+.liquid-fill::before {
+  border-radius: 45%;
+  animation: liquid-spin 4s linear infinite;
+}
+
+.liquid-fill::after {
+  border-radius: 40%;
+  animation: liquid-spin 7s linear infinite;
+  background: rgba(255, 255, 255, 0.4);
+}

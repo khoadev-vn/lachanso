@@ -1,0 +1,324 @@
+{
+  "tp": 28,
+  "fn": 12,
+  "total": 40,
+  "results": [
+    {
+      "title": "Lớn lên, con sẽ lấy một người chồng giống bố",
+      "score": 100,
+      "caught": false,
+      "reasons": [
+        "[Tin đồn nhảm / Mê tín / Hư cấu / Spam: kiếp trước (-45)]"
+      ]
+    },
+    {
+      "title": "Chuyện li kì người phụ nữ cứu rắn hổ chúa và bầy rắn hổ tìm đến nhà để…",
+      "score": 0,
+      "caught": true,
+      "reasons": [
+        "[Giật tít câu view: li kì (-40)]",
+        "[Tin đồn nhảm / Mê tín / Hư cấu / Spam: rắn hổ chúa, tìm đến nhà (-59)]"
+      ]
+    },
+    {
+      "title": "Mừng sinh nhậт sếρ, ƙhi thanh тoán hóa ᵭ‌ơn тhì тấт cả ᵭ‌ều cúi ᵭ‌ầu νào ᵭ‌iện т",
+      "score": 33,
+      "caught": true,
+      "reasons": [
+        "[Sử dụng ký tự đặc biệt để lách luật: т, ρ, ᵭ, ν (-45)]"
+      ]
+    },
+    {
+      "title": "Chồng “chôn” chuối xanh và trứng xuống dưới đất cảnh tượng đằng sau khiến vợ kin",
+      "score": 38,
+      "caught": true,
+      "reasons": [
+        "[Giật tít câu view: kinh hãi (-40)]"
+      ]
+    },
+    {
+      "title": "Tưởng cả trăm con rắn bò vào nhà trả thù, chàng trai kinh hãi tột độ khi thấy cả",
+      "score": 38,
+      "caught": true,
+      "reasons": [
+        "[Giật tít câu view: kinh hãi (-40)]"
+      ]
+    },
+    {
+      "title": "Chấp nhận đổ vỏ cho con nhỏ bạn thân và cái kết sốc",
+      "score": 0,
+      "caught": true,
+      "reasons": [
+        "[Ngôn ngữ gây hoảng loạn: sốc (-35)]",
+        "[Giật tít câu view: sốc, cái kết sốc (-52)]",
+        "[Tin đồn nhảm / Mê tín / Hư cấu / Spam: chấp nhận đổ vỏ, đổ vỏ cho con nhỏ bạn thân (-59)]"
+      ]
+    },
+    {
+      "title": "Thủ tướng Nhật cúi đầu xin lỗi vì tinh thần phi thể thao của đội bóng",
+      "score": 100,
+      "caught": false,
+      "reasons": []
+    },
+    {
+      "title": "MC Lại Văn Sâm đột ngột qua đời ở tuổi 64",
+      "score": 38,
+      "caught": true,
+      "reasons": [
+        "[Giật tít câu view: đột ngột qua đời (-40)]"
+      ]
+    },
+    {
+      "title": "Bạn gái Đạt Cỏ nhận muôn nghìn gạch đá khi bình luận cực sốc thế này ở bức ảnh h",
+      "score": 10,
+      "caught": true,
+      "reasons": [
+        "[Ngôn ngữ gây hoảng loạn: sốc (-35)]",
+        "[Giật tít câu view: sốc (-40)]"
+      ]
+    },
+    {
+      "title": "Mặc đồ không khác gì vải màn lên bar đú đởn, Mon 2k nhận cái kết quá đắng khi ph",
+      "score": 33,
+      "caught": true,
+      "reasons": [
+        "[Tin đồn nhảm / Mê tín / Hư cấu / Spam: đú đởn (-45)]"
+      ]
+    },
+    {
+      "title": "TẢI NGAY APP 567LIVE NGẮM GÁI XINH NÓNG BỎNG",
+      "score": 12,
+      "caught": true,
+      "reasons": [
+        "[Tin đồn nhảm / Mê tín / Hư cấu / Spam: tải ngay app, ngắm gái xinh, gái xinh nóng bỏng (-72)]"
+      ]
+    },
+    {
+      "title": "Nhật Kim Anh tiết lộ \"thần dược\" giúp cô thoát khỏi lưỡi hái tử thần trên máy ba",
+      "score": 38,
+      "caught": true,
+      "reasons": [
+        "[Giật tít câu view: thần dược (-40)]"
+      ]
+    },
+    {
+      "title": "Những dấu hiệu nhận biết nhà bạn đang có ma và cách trừ ma quỷ trong nhà",
+      "score": 33,
+      "caught": true,
+      "reasons": [
+        "[Tin đồn nhảm / Mê tín / Hư cấu / Spam: ma quỷ (-45)]"
+      ]
+    },
+    {
+      "title": "Hàng ngàn người Hà Nội đứng hình khi chứng kiến bộ trang phục trần da thịt của e",
+      "score": 38,
+      "caught": true,
+      "reasons": [
+        "[Giật tít câu view: đứng hình (-40)]"
+      ]
+    },
+    {
+      "title": "Võ sư 60 tuổi, tay không đánh bại hàng trăm giang hồ Sài Gòn",
+      "score": 21,
+      "caught": true,
+      "reasons": [
+        "[Tin đồn nhảm / Mê tín / Hư cấu / Spam: đánh bại hàng trăm, giang hồ sài gòn (-59)]"
+      ]
+    },
+    {
+      "title": "Tưởng ổ trứng gà mang về ấp thành con, thanh niên ngay lập tức chuyển nhà chỉ sa",
+      "score": 43,
+      "caught": true,
+      "reasons": [
+        "[Ngôn ngữ gây hoảng loạn: ngay lập tức (-35)]"
+      ]
+    },
+    {
+      "title": "NÓNG : xử phạt 10 đối tượng \"bom\" hàng \" Lợi dụng lòng tốt của các chiến sĩ \" Kh",
+      "score": 100,
+      "caught": false,
+      "reasons": []
+    },
+    {
+      "title": "Người đàn ông bị “ma dắt đi chơi” cho tới chết ở Quảng Nam?",
+      "score": 38,
+      "caught": true,
+      "reasons": [
+        "[Giật tít câu view: ma dắt (-40)]"
+      ]
+    },
+    {
+      "title": "Có tin Tổng thống Ukraine Zelensky đang trốn trong Đại sứ quán Mỹ ở Ba Lan",
+      "score": 26,
+      "caught": true,
+      "reasons": [
+        "[Giật tít câu view: có tin, đang trốn (-52)]"
+      ]
+    },
+    {
+      "title": "Vừa thấy “quái khủng” đen xì lòi ra từ khúc cây, thanh niên vứt vội gỗ quý chạy ",
+      "score": 38,
+      "caught": true,
+      "reasons": [
+        "[Giật tít câu view: lòi ra (-40)]"
+      ]
+    },
+    {
+      "title": "Một nցười Ƭrunց ⵕuốc đănց nhữnց bức ảnh nàу lên mạnց weibo và bình luận",
+      "score": 100,
+      "caught": false,
+      "reasons": [
+        "[Sử dụng ký tự đặc biệt để lách luật: у, ρ, Ѵ, η, α (-45)]"
+      ]
+    },
+    {
+      "title": "Chữa hết bệnh câm cho vợ, người chồng cay đắng nhìn vợ ra đi tìm cuộc sống mới v",
+      "score": 100,
+      "caught": false,
+      "reasons": []
+    },
+    {
+      "title": "Cười vỡ bụng khi tiếng CẢI CÁCH \"vuông tròn\" xâm nhập chợ búa, các mẹ sử dụng ch",
+      "score": 100,
+      "caught": false,
+      "reasons": []
+    },
+    {
+      "title": "Tím mặt bóp bụng trăn khủng quằn quại trên sàn “bơm” ra thứ kinh dị ám ảnh cả gi",
+      "score": 26,
+      "caught": true,
+      "reasons": [
+        "[Giật tít câu view: tím mặt, kinh dị (-52)]"
+      ]
+    },
+    {
+      "title": "N̲gh̲i v̲ấn U̲k̲r̲a̲i̲n̲e ᴛ̲ự ᴛh̲ả̲m s̲á̲ᴛ d̲â̲n củ̲a̲ m̲ì̲n̲h: G̲i̲ới lãn̲h̲ đ̲",
+      "score": 10,
+      "caught": true,
+      "reasons": [
+        "[Ngôn ngữ gây hoảng loạn: sốc (-35)]",
+        "[Giật tít câu view: sốc (-40)]"
+      ]
+    },
+    {
+      "title": "KHẨN CẤP: Hàng loạt trẻ em nhập viện vì ngộ độc thịt lợn có chứa thuốc an thần",
+      "score": 10,
+      "caught": true,
+      "reasons": [
+        "[Ngôn ngữ gây hoảng loạn: khẩn cấp (-35)]",
+        "[Giật tít câu view: khẩn cấp (-40)]"
+      ]
+    },
+    {
+      "title": "YÊU RÂU XANH (P51): Câu chuyện động trời sau tấm ri đô mỏng",
+      "score": 100,
+      "caught": false,
+      "reasons": [
+        "[Kỹ thuật né bộ lọc: c.ô.n.g a.n (-30)]",
+        "[Giật tít câu view: thú tính, sự thật động trời (-52)]"
+      ]
+    },
+    {
+      "title": "Thích dạng háng check-in cho thoáng, thiếu nữ khiến bạn bè đứng hình khi thấy th",
+      "score": 17,
+      "caught": true,
+      "reasons": [
+        "[Giật tít câu view: đứng hình, lòi ra, kinh dị (-64)]"
+      ]
+    },
+    {
+      "title": "Tập đoàn lớn mạnh nhất UAE sản xuất, xuất khẩu vaccine COVID-19 mang tên Hayat-V",
+      "score": 100,
+      "caught": false,
+      "reasons": []
+    },
+    {
+      "title": "Cứ tưởng đào được trứng khủng long, người đàn ông tách đôi mới câm nín vì bên tr",
+      "score": 38,
+      "caught": true,
+      "reasons": [
+        "[Giật tít câu view: trứng khủng long (-40)]"
+      ]
+    },
+    {
+      "title": "Đại học Hutech sẽ áp dụng cải cách \"Tiếq Việt\" vào năm học 2018?",
+      "score": 100,
+      "caught": false,
+      "reasons": []
+    },
+    {
+      "title": "Cặp đôi chụp 1000 kiểu ảnh chỉ một tư thế trong 3 năm, ai cũng sốc khi biết sự t",
+      "score": 10,
+      "caught": true,
+      "reasons": [
+        "[Ngôn ngữ gây hoảng loạn: sốc (-35)]",
+        "[Giật tít câu view: sốc (-40)]"
+      ]
+    },
+    {
+      "title": "Kinh hoàng bé gái bị chó nhà tấn công, cắn vào khắp người gây phẫn nộ",
+      "score": 10,
+      "caught": true,
+      "reasons": [
+        "[Ngôn ngữ gây hoảng loạn: kinh hoàng (-35)]",
+        "[Giật tít câu view: kinh hoàng (-40)]"
+      ]
+    },
+    {
+      "title": "Choáng! Cơ trưởng đeo khăn quàng quẩy banh nóc trên sân khấu trường!!!",
+      "score": 21,
+      "caught": true,
+      "reasons": [
+        "[Tin đồn nhảm / Mê tín / Hư cấu / Spam: quẩy banh nóc, khăn quàng quẩy (-59)]"
+      ]
+    },
+    {
+      "title": "Bộ KIT xét nghiệm Covid -19 của Việt Nam sản xuất vừa được Tổ chức Y tế Thế giới",
+      "score": 100,
+      "caught": false,
+      "reasons": [
+        "[Ngôn ngữ gây hoảng loạn: khẩn cấp (-35)]",
+        "[Giật tít câu view: khẩn cấp (-40)]"
+      ]
+    },
+    {
+      "title": "Nhặt được chiếc hộp kì lạ trên biển, người đàn ông phải vào viện ngay lập tức kh",
+      "score": 43,
+      "caught": true,
+      "reasons": [
+        "[Ngôn ngữ gây hoảng loạn: ngay lập tức (-35)]"
+      ]
+    },
+    {
+      "title": "5 mẹo 'thần thánh' đánh bay mụn trong một đêm",
+      "score": 38,
+      "caught": true,
+      "reasons": [
+        "[Giật tít câu view: thần thánh (-40)]"
+      ]
+    },
+    {
+      "title": "Tưởng nhặt được trứng khủng long giữa vườn, mang vào nhà sợ hãi tột độ khi thấy ",
+      "score": 38,
+      "caught": true,
+      "reasons": [
+        "[Giật tít câu view: trứng khủng long (-40)]"
+      ]
+    },
+    {
+      "title": "CCTV: Nga 2 lần yêu cầu HĐBA họp khẩn nhưng bất thành, sẽ nộp bằng chứng \"thảm s",
+      "score": 100,
+      "caught": false,
+      "reasons": [
+        "[Ngôn ngữ gây hoảng loạn: khẩn cấp (-35)]",
+        "[Giật tít câu view: khẩn cấp (-40)]"
+      ]
+    },
+    {
+      "title": "Không đủ tiền tiêu hủy, Chi cục Thú y đề nghị Thảo Cầm Viên mua lại chó hoang là",
+      "score": 100,
+      "caught": false,
+      "reasons": []
+    }
+  ]
+}
