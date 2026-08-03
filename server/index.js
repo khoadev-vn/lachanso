@@ -12,12 +12,29 @@ const { isLLMConfigured, getLLMStatus } = require('./services/llmClient');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// ---- Tin cậy proxy trung gian (Vercel / Nginx) để req.ip đúng IP thật ----
+app.set('trust proxy', true);
+
+// ---- Secret gate: backend CHỈ chấp nhận yêu cầu có header x-lcs-backend-secret đúng ----
+// Vercel proxy function sẽ chèn header này. Nếu chưa set LCS_BACKEND_SECRET (bản dev local)
+// thì mở cho toàn bộ (chỉ nên dùng khi chạy local).
+const BACKEND_SECRET = process.env.LCS_BACKEND_SECRET || '';
+const secretGate = (req, res, next) => {
+  if (!BACKEND_SECRET) return next();
+  const received = req.get('x-lcs-backend-secret');
+  if (received !== BACKEND_SECRET) {
+    return res.status(403).json({ error: 'Forbidden: backend access denied' });
+  }
+  next();
+};
+
 // ---- CORS: chỉ cho phép frontend dev/prod, không mở bừa ----
 const ALLOWED_ORIGINS = new Set([
   'http://localhost:3000',
   'http://127.0.0.1:3000',
   'http://localhost:3001',
   'https://la-chan-so.vercel.app',
+  'https://lachansovn.vercel.app',
   process.env.APP_ORIGIN
 ].filter(Boolean));
 
@@ -29,7 +46,7 @@ app.use(cors({
     return callback(null, false);
   },
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Accept']
+  allowedHeaders: ['Content-Type', 'Accept', 'x-lcs-backend-secret']
 }));
 
 app.use(express.json({ limit: '2mb' }));
@@ -48,7 +65,7 @@ app.use((req, res, next) => {
 const rateLimitBuckets = new Map();
 function rateLimiter(maxRequests, windowMs) {
   return (req, res, next) => {
-    const key = req.ip || 'unknown';
+    const key = req.ip || req.headers['x-forwarded-for'] || 'unknown';
     const now = Date.now();
     const bucket = rateLimitBuckets.get(key) || { count: 0, resetAt: now + windowMs };
     if (bucket.resetAt <= now) {
@@ -65,6 +82,9 @@ function rateLimiter(maxRequests, windowMs) {
 }
 const throttleAnalysis = rateLimiter(20, 60 * 1000);
 const throttleGeneral = rateLimiter(60, 60 * 1000);
+
+// Secret gate áp cho toàn bộ /api/* (trừ khi chạy local không có LCS_BACKEND_SECRET)
+app.use('/api', secretGate);
 app.use('/api/full-scan', throttleAnalysis);
 app.use('/api/verify-news', throttleAnalysis);
 app.use('/api/verify-news/ai', throttleAnalysis);

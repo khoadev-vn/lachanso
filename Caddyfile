@@ -1,0 +1,7 @@
+# Caddy tự động cấp + gia hạn HTTPS (Let's Encrypt) và reverse proxy tới backend.
+# Sửa `api.lachansovn.vn` thành domain/subdomain bạn trỏ về server Vietnix.
+# Vercel sẽ gọi tới https://api.lachansovn.vn (không phải IP http).
+api.lachansovn.vn {
+	encode gzip
+	reverse_proxy 127.0.0.1:3001
+}
