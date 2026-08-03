@@ -8,19 +8,13 @@ set -euo pipefail
 APP_DIR="/opt/lachanso"
 REPO_URL="https://github.com/khoadev-vn/lachanso.git"
 
-echo "==> 1. Cài đặt Node.js 20 + PM2 + Caddy (nếu chưa có)"
+echo "==> 1. Cài đặt Node.js 20 + PM2 (nếu chưa có)"
 if ! command -v node >/dev/null 2>&1; then
   curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
   apt-get install -y nodejs
 fi
 if ! command -v pm2 >/dev/null 2>&1; then
   npm install -g pm2
-fi
-if ! command -v caddy >/dev/null 2>&1; then
-  apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl
-  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list
-  apt-get update && apt-get install -y caddy
 fi
 
 echo "==> 2. Lấy mã nguồn"
@@ -38,26 +32,26 @@ npm install --omit=dev
 echo "==> 4. Tạo file .env nếu chưa có"
 if [ ! -f "$APP_DIR/.env" ]; then
   cp "$APP_DIR/.env.example" "$APP_DIR/.env"
-  echo "!!!! Tạo $APP_DIR/.env xong. BẠN PHẢI điền LCS_BACKEND_SECRET + các API key rồi chạy lại lệnh này."
+  echo "!!!! Đã tạo $APP_DIR/.env. BẠN PHẢI điền LCS_BACKEND_SECRET + các API key rồi chạy lại."
   echo "!!!! Lệnh gợi ý:  nano $APP_DIR/.env   rồi  bash deploy-vietnix.sh"
   exit 1
 fi
 
-echo "==> 5. Khởi động backend bằng PM2"
+echo "==> 5. Mở port 3001 trên firewall (nếu có ufw)"
+ufw allow 3001/tcp >/dev/null 2>&1 || true
+
+echo "==> 6. Khởi động backend bằng PM2"
 cd "$APP_DIR"
 pm2 start ecosystem.config.cjs && pm2 save
-
-echo "==> 6. Copy Caddyfile và khởi động HTTPS"
-if [ -f "$APP_DIR/Caddyfile" ]; then
-  cp "$APP_DIR/Caddyfile" /etc/caddy/Caddyfile
-  systemctl reload caddy
-fi
+pm2 startup systemd >/dev/null 2>&1 || true
 
 echo ""
-echo "✅ XONG. Kiểm tra:"
-echo "   curl https://api.lachansovn.vn/health"
-echo "   pm2 logs lachanso-backend"
+echo "✅ XONG. Backend đang chạy tại:"
+echo "   http://$(hostname -I | awk '{print $1}'):3001/health"
 echo ""
-echo "⚠️  Đừng quên trên Vercel set 2 biến:"
-echo "   LCS_BACKEND_URL    = https://api.lachansovn.vn"
-echo "   LCS_BACKEND_SECRET = (giống hệt trong .env server)"
+echo "⚠️  TRÊN VERCEL set 2 biến (Settings -> Environment Variables):"
+echo "   LCS_BACKEND_URL    = http://42.1.112.100:3001"
+echo "   LCS_BACKEND_SECRET = (giống hệt LCS_BACKEND_SECRET trong .env server)"
+echo ""
+echo "ℹ️  LƯU Ý BẢO MẬT: chạy bằng IP qua http chỉ là tạm thời."
+echo "   Khi có domain, chạy Caddy (HTTPS) rồi đổi LCS_BACKEND_URL sang https://domain."
