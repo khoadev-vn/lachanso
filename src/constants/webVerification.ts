@@ -432,15 +432,6 @@ export async function analyzeWebsite(input: string): Promise<WebVerificationResu
       scoreDelta: -20
     });
   }
-  reasons.push({
-    id: "WEB_VN_OFFICIAL_LOOKUP",
-    name: "Cổng tra cứu nhà nước",
-    detail: `Có thể đối chiếu thủ công domain này tại ${WEB_API_CONFIG.vietnamOfficialScamLookup.lookupUrl}. Hiện chưa có API public ổn định để tích hợp trực tiếp từ frontend.`,
-    status: "warning",
-    icon: Globe,
-    category: "reference",
-    scoreDelta: 0
-  });
   if (hyphenCount >= 3 || isLongHost) {
     score -= 12;
     reasons.push({

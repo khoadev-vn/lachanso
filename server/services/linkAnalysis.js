@@ -41,6 +41,8 @@ function isTrustedDomain(hostname) {
 const DESTROYLIST_CHECK_ENDPOINT = 'https://api.destroy.tools/v1/check';
 const DESTROYLIST_RAW_URL = 'https://raw.githubusercontent.com/phishdestroy/destroylist/main/rootlist/formats/primary_active/hosts.txt';
 const RDAP_LOOKUP_URL = 'https://rdap.org/domain/';
+const WAYBACK_MACHINE_API = 'https://web.archive.org/web/timemap/json/';
+const CT_LOGS_API = 'https://crt.sh/?q=';
 
 const SUSPICIOUS_TLDS = [
   '.ml', '.ga', '.cf', '.gq', '.tk', '.xyz', '.top', '.icu', '.cc', '.biz',
@@ -512,6 +514,8 @@ async function checkWhoisAge(hostname) {
   if (cached) return cached;
 
   let result = { available: false };
+
+  // Method 1: RDAP
   try {
     const response = await axios.get(`${RDAP_LOOKUP_URL}${encodeURIComponent(hostname)}`, {
       timeout: 4000,
@@ -543,7 +547,158 @@ async function checkWhoisAge(hostname) {
     result = { available: false };
   }
 
+  // Method 2: Fallback - Wayback Machine (first archived date)
+  if (!result.available || result.noDate) {
+    try {
+      const wbUrl = `${WAYBACK_MACHINE_API}${hostname}`;
+      const wbResponse = await axios.get(wbUrl, {
+        timeout: 5000,
+        headers: { Accept: 'application/json' },
+        validateStatus: (s) => s < 400
+      });
+      if (wbResponse.data && Array.isArray(wbResponse.data) && wbResponse.data.length > 1) {
+        // First row is header, second row is oldest snapshot
+        const oldest = wbResponse.data[1];
+        if (oldest && oldest[1]) {
+          const firstSeen = new Date(oldest[1]);
+          const ageDays = Math.floor((Date.now() - firstSeen.getTime()) / 86400000);
+          result = {
+            available: true,
+            registrationDate: oldest[1],
+            ageDays: Math.max(0, ageDays),
+            isNew: ageDays < 90,
+            source: 'wayback'
+          };
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // Method 3: Fallback - Certificate Transparency logs (crt.sh)
+  if (!result.available || result.noDate) {
+    try {
+      const ctUrl = `${CT_LOGS_API}${encodeURIComponent(hostname)}&output=json`;
+      const ctResponse = await axios.get(ctUrl, {
+        timeout: 5000,
+        headers: { Accept: 'application/json' },
+        validateStatus: (s) => s < 400
+      });
+      if (ctResponse.data && Array.isArray(ctResponse.data) && ctResponse.data.length > 0) {
+        // Find earliest not_before date
+        const dates = ctResponse.data
+          .map((entry) => entry.not_before)
+          .filter(Boolean)
+          .map((d) => new Date(d))
+          .filter((d) => !isNaN(d.getTime()));
+        if (dates.length > 0) {
+          const earliest = new Date(Math.min(...dates.map((d) => d.getTime())));
+          const ageDays = Math.floor((Date.now() - earliest.getTime()) / 86400000);
+          result = {
+            available: true,
+            registrationDate: earliest.toISOString(),
+            ageDays: Math.max(0, ageDays),
+            isNew: ageDays < 90,
+            source: 'crt.sh'
+          };
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // Method 4: Final fallback - check if domain resolves at all
+  if (!result.available) {
+    const resolves = await resolveHostExists(hostname);
+    if (resolves) {
+      result = { available: true, noDate: true, source: 'dns' };
+    }
+  }
+
   cacheSet(cacheKey, result, result.available ? CACHE_TTL.whois : 10 * 60 * 1000);
+  return result;
+}
+
+// ============ Tinnhiemmang.vn Blacklist Check ============
+async function checkTinnhiemmang(hostname) {
+  const cacheKey = `tnmm:${hostname}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  const result = { available: false, isBlacklisted: false, details: null };
+
+  try {
+    // Try the search API first
+    const searchUrl = `https://tinnhiemmang.vn/tim-kiem?q=${encodeURIComponent(hostname)}`;
+    const response = await axios.get(searchUrl, {
+      timeout: 8000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml'
+      },
+      validateStatus: (s) => s < 400
+    });
+
+    const html = String(response.data || '');
+    const cheerio = require('cheerio');
+    const $ = cheerio.load(html);
+
+    // Look for domain in search results
+    const found = $('table tbody tr, .result-item, .item').filter((i, el) => {
+      const text = $(el).text().toLowerCase();
+      return text.includes(hostname.toLowerCase()) || text.includes(hostname.replace(/^www\./, '').toLowerCase());
+    }).length > 0;
+
+    // Also check for blacklist indicators
+    const blacklistIndicators = [
+      'lừa đảo', 'phishing', 'giả mạo', 'cảnh báo', 'đen', 'blacklist',
+      'fake', 'scam', 'fraud', 'malicious'
+    ];
+
+    const hasBlacklistIndicator = blacklistIndicators.some(indicator =>
+      html.toLowerCase().includes(indicator)
+    );
+
+    if (found || hasBlacklistIndicator) {
+      result.available = true;
+      result.isBlacklisted = true;
+      result.details = `Domain "${hostname}" được tìm thấy trên tinnhiemmang.vn - cổng cảnh báo tin nhắn lừa đảo của Việt Nam.`;
+    } else {
+      result.available = true;
+      result.isBlacklisted = false;
+    }
+  } catch (e) {
+    // If search fails, try direct lookup
+    try {
+      const directUrl = `https://tinnhiemmang.vn/website-lua-dao`;
+      const directResponse = await axios.get(directUrl, {
+        timeout: 8000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'text/html,application/xhtml+xml'
+        },
+        validateStatus: (s) => s < 400
+      });
+
+      const directHtml = String(directResponse.data || '');
+      const domainInPage = directHtml.toLowerCase().includes(hostname.toLowerCase());
+
+      if (domainInPage) {
+        result.available = true;
+        result.isBlacklisted = true;
+        result.details = `Domain "${hostname}" có mặt trong danh sách cảnh báo trên tinnhiemmang.vn.`;
+      } else {
+        result.available = true;
+        result.isBlacklisted = false;
+      }
+    } catch {
+      result.available = false;
+    }
+  }
+
+  cacheSet(cacheKey, result, CACHE_TTL.destroylist);
   return result;
 }
 
@@ -743,14 +898,34 @@ async function analyzeLink(input) {
     });
   }
 
-  // --- PARALLEL: Destroylist + WHOIS + SSL + DNS + Redirects ---
-  const [destroylist, whois, sslCert, dnsRep, redirectInfo] = await Promise.all([
+  // --- PARALLEL: Destroylist + WHOIS + SSL + DNS + Redirects + Tinnhiemmang ---
+  const [destroylist, whois, sslCert, dnsRep, redirectInfo, tinnhiemmang] = await Promise.all([
     checkDestroylist(hostname),
     checkWhoisAge(hostname),
     checkSSLCertificate(hostname),
     checkDnsReputation(hostname),
-    followRedirects(fullInput)
+    followRedirects(fullInput),
+    checkTinnhiemmang(hostname)
   ]);
+
+  // --- 11. Tinnhiemmang.vn Blacklist ---
+  if (tinnhiemmang.available && tinnhiemmang.isBlacklisted) {
+    addReason({
+      id: 'LINK_TINNHIEMMANG',
+      name: 'CẢNH BÁO: Tinnhiemmang.vn',
+      detail: tinnhiemmang.details,
+      status: 'danger',
+      scoreDelta: -50
+    });
+  } else if (tinnhiemmang.available && !tinnhiemmang.isBlacklisted) {
+    addReason({
+      id: 'LINK_TINNHIEMMANG_CLEAR',
+      name: 'Không có trong Tinnhiemmang.vn',
+      detail: 'Domain không nằm trong danh sách cảnh báo của cổng thông tin nhà nước.',
+      status: 'success',
+      scoreDelta: 5
+    });
+  }
 
   // --- 11. Destroylist ---
   if (destroylist.available) {
@@ -809,10 +984,11 @@ async function analyzeLink(input) {
       scoreDelta: -15
     });
   } else if (whois.available && whois.noDate) {
+    const sourceInfo = whois.source ? ` (nguồn: ${whois.source})` : '';
     addReason({
       id: 'LINK_DOMAIN_AGE_UNKNOWN',
       name: 'Chưa xác định tuổi tên miền',
-      detail: 'RDAP không hỗ trợ đuôi tên miền này nên chưa thể xác định thời điểm đăng ký. Tên miền vẫn đang hoạt động (DNS có phản hồi), không tính là domain mới hay chưa đăng ký.',
+      detail: `Không thể xác định thời gian đăng ký${sourceInfo}. Tên miền vẫn đang hoạt động (DNS có phản hồi), không tính là domain mới hay chưa đăng ký.`,
       status: 'warning',
       scoreDelta: 0
     });
@@ -999,7 +1175,8 @@ async function analyzeLink(input) {
     ssl: sslCert.available ? { valid: sslCert.valid, issuer: sslCert.issuer, selfSigned: sslCert.selfSigned, daysLeft: sslCert.daysLeft, isExpired: sslCert.isExpired, isTrustedIssuer: sslCert.isTrustedIssuer } : null,
     dns: dnsRep.available ? { hasMx: dnsRep.hasMx, hasSpf: dnsRep.hasSpf, hasDmarc: dnsRep.hasDmarc, legitimacyScore: dnsRep.legitimacyScore } : null,
     redirect: redirectInfo.chainLength >= 2 ? { chainLength: redirectInfo.chainLength, domainChanged: redirectInfo.domainChanged, finalHostname: redirectInfo.finalHostname, redirects: redirectInfo.redirects.map(r => r.hostname) } : null,
-    pageAnalysis: pageAnalysis && pageAnalysis.available ? { hasLoginForm: pageAnalysis.hasLoginForm, urgencyScore: pageAnalysis.urgencyScore, cryptoWalletDetected: pageAnalysis.cryptoWalletDetected, obfuscatedScripts: pageAnalysis.obfuscatedScripts, phishingSignals: pageAnalysis.phishingSignals } : null
+    pageAnalysis: pageAnalysis && pageAnalysis.available ? { hasLoginForm: pageAnalysis.hasLoginForm, urgencyScore: pageAnalysis.urgencyScore, cryptoWalletDetected: pageAnalysis.cryptoWalletDetected, obfuscatedScripts: pageAnalysis.obfuscatedScripts, phishingSignals: pageAnalysis.phishingSignals } : null,
+    tinnhiemmang: tinnhiemmang.available ? { isBlacklisted: tinnhiemmang.isBlacklisted, details: tinnhiemmang.details } : null
   };
 }
 
