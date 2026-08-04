@@ -83,56 +83,6 @@ function WebReasonGroupCard({ group, reasons }: { group: { key: string; label: s
   </div>;
 }
 
-function WebScoringCard({ score, reasons }: { score: number; reasons: any[] }) {
-  const deltas = (reasons ?? []).filter((r: any) => typeof r.scoreDelta === "number");
-  const positiveCount = deltas.filter((r: any) => r.scoreDelta > 0).length;
-  const negativeCount = deltas.filter((r: any) => r.scoreDelta < 0).length;
-  const positiveSum = deltas.filter((r: any) => r.scoreDelta > 0).reduce((s: number, r: any) => s + r.scoreDelta, 0);
-  const negativeSum = deltas.filter((r: any) => r.scoreDelta < 0).reduce((s: number, r: any) => s + r.scoreDelta, 0);
-  const baseScore = 70;
-  const estimated = Math.max(0, Math.min(100, baseScore + positiveSum + negativeSum));
-  const adjustment = score - estimated;
-  return <div className="overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-white">
-    <div className="flex items-center gap-2.5 border-b border-indigo-100 px-4 py-3">
-      <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-600">
-        <Target className="h-4 w-4" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-black uppercase tracking-wide text-gray-800">Chấm điểm chi tiết</p>
-        <p className="truncate text-[10px] font-medium text-gray-500">Phân rã điểm từ các tín hiệu đã phân tích.</p>
-      </div>
-      <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-black text-indigo-700">{score}/100</span>
-    </div>
-    <div className="space-y-2 p-4">
-      <div className="flex items-center justify-between text-sm">
-        <span className="font-semibold text-gray-500">Điểm khởi điểm</span>
-        <span className="font-black text-gray-800">{baseScore}</span>
-      </div>
-      <div className="flex items-center justify-between text-sm">
-        <span className="font-semibold text-gray-500">Tín hiệu tích cực ({positiveCount})</span>
-        <span className="font-black text-emerald-600">+{positiveSum}</span>
-      </div>
-      <div className="flex items-center justify-between text-sm">
-        <span className="font-semibold text-gray-500">Tín hiệu tiêu cực ({negativeCount})</span>
-        <span className="font-black text-red-600">{negativeSum}</span>
-      </div>
-      <div className="my-1 h-px bg-indigo-100" />
-      <div className="flex items-center justify-between text-sm">
-        <span className="font-semibold text-gray-500">Điểm ước tính</span>
-        <span className="font-black text-gray-800">{estimated}</span>
-      </div>
-      {Math.abs(adjustment) >= 1 && <div className="flex items-center justify-between text-sm">
-        <span className="font-semibold text-gray-500">Điều chỉnh AI / Backend</span>
-        <span className={`font-black ${adjustment >= 0 ? "text-emerald-600" : "text-red-600"}`}>{adjustment >= 0 ? `+${adjustment}` : adjustment}</span>
-      </div>}
-      <div className="flex items-center justify-between border-t border-indigo-100 pt-2 text-sm">
-        <span className="text-xs font-black uppercase tracking-wide text-gray-700">Điểm chính thức</span>
-        <span className={`text-base font-black ${score >= 75 ? "text-emerald-600" : score >= 50 ? "text-orange-500" : "text-red-600"}`}>{score}/100</span>
-      </div>
-    </div>
-  </div>;
-}
-
 function CountingNumber({ value }: { value: number; }) {
   const nodeRef = useRef<HTMLSpanElement>(null);
 
@@ -1683,55 +1633,6 @@ export default function App() {
                             </div>
                           </div>;
                         })}
-                        {(() => {
-                          const deltas = (resultData.analysisReasons ?? []).filter((r: any) => typeof r.scoreDelta === "number");
-                          const positiveCount = deltas.filter((r: any) => r.scoreDelta > 0).length;
-                          const negativeCount = deltas.filter((r: any) => r.scoreDelta < 0).length;
-                          const positiveSum = deltas.filter((r: any) => r.scoreDelta > 0).reduce((s: number, r: any) => s + r.scoreDelta, 0);
-                          const negativeSum = deltas.filter((r: any) => r.scoreDelta < 0).reduce((s: number, r: any) => s + r.scoreDelta, 0);
-                          const baseScore = 70;
-                          const estimated = Math.max(0, Math.min(100, baseScore + positiveSum + negativeSum));
-                          const adjustment = resultData.score - estimated;
-                          return <div className="overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-white">
-                            <div className="flex items-center gap-2.5 border-b border-indigo-100 px-4 py-3">
-                              <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-600">
-                                <Target className="h-4 w-4" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs font-black uppercase tracking-wide text-gray-800">Chấm điểm chi tiết</p>
-                                <p className="truncate text-[10px] font-medium text-gray-500">Phân rã điểm từ các tín hiệu đã phân tích.</p>
-                              </div>
-                              <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-black text-indigo-700">{resultData.score}/100</span>
-                            </div>
-                            <div className="space-y-2 p-4">
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="font-semibold text-gray-500">Điểm khởi điểm</span>
-                                <span className="font-black text-gray-800">{baseScore}</span>
-                              </div>
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="font-semibold text-gray-500">Tín hiệu tích cực ({positiveCount})</span>
-                                <span className="font-black text-emerald-600">+{positiveSum}</span>
-                              </div>
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="font-semibold text-gray-500">Tín hiệu tiêu cực ({negativeCount})</span>
-                                <span className="font-black text-red-600">{negativeSum}</span>
-                              </div>
-                              <div className="my-1 h-px bg-indigo-100" />
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="font-semibold text-gray-500">Điểm ước tính</span>
-                                <span className="font-black text-gray-800">{estimated}</span>
-                              </div>
-                              {Math.abs(adjustment) >= 1 && <div className="flex items-center justify-between text-sm">
-                                <span className="font-semibold text-gray-500">Điều chỉnh AI / Backend</span>
-                                <span className={`font-black ${adjustment >= 0 ? "text-emerald-600" : "text-red-600"}`}>{adjustment >= 0 ? `+${adjustment}` : adjustment}</span>
-                              </div>}
-                              <div className="flex items-center justify-between border-t border-indigo-100 pt-2 text-sm">
-                                <span className="text-xs font-black uppercase tracking-wide text-gray-700">Điểm chính thức</span>
-                                <span className={`text-base font-black ${resultData.score >= 75 ? "text-emerald-600" : resultData.score >= 50 ? "text-orange-500" : "text-red-600"}`}>{resultData.score}/100</span>
-                              </div>
-                            </div>
-                          </div>;
-                        })()}
                       </div> : <div className="max-h-[690px] space-y-3 overflow-y-auto pr-1 custom-scrollbar">
                         {resultData.analysisReasons.map((res: any, idx: number) => <div key={idx} className={`rounded-2xl border p-4 ${res.status === "danger" ? "border-red-200 bg-red-50/70" :
                           res.status === "warning" ? "border-amber-200 bg-amber-50/70" :
