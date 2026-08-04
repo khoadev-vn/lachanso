@@ -923,21 +923,21 @@ async function analyzeLink(input) {
       });
     }
 
-    if (pageAnalysis.urgencyScore >= 3) {
+    if (pageAnalysis.urgencyScore >= 5) {
       addReason({
         id: 'LINK_CONTENT_URGENCY',
         name: `Nhiều ngôn ngữ khẩn cấp (${pageAnalysis.urgencyScore} tín hiệu)`,
-        detail: 'Trang sử dụng nhiều cụm từ gây áp lực ("xác minh ngay", "tài khoản bị khóa", "hạn cuối") - kỹ thuật social engineering kinh điển.',
+        detail: 'Trang sử dụng rất nhiều cụm từ gây áp lực - kỹ thuật social engineering kinh điển.',
         status: 'danger',
-        scoreDelta: Math.round(-20 * contentPenaltyScale)
+        scoreDelta: Math.round(-12 * contentPenaltyScale)
       });
-    } else if (pageAnalysis.urgencyScore >= 1) {
+    } else if (pageAnalysis.urgencyScore >= 3) {
       addReason({
         id: 'LINK_CONTENT_URGENCY_LOW',
-        name: 'Có ngôn ngữ khẩn cấp',
-        detail: 'Trang chứa một số cụm từ gây áp lực tinh vi.',
+        name: `Có ngôn ngữ khẩn cấp (${pageAnalysis.urgencyScore} tín hiệu)`,
+        detail: 'Trang chứa một số cụm từ gây áp lực. Cần kết hợp thêm dấu hiệu khác để xác định.',
         status: 'warning',
-        scoreDelta: Math.round(-8 * contentPenaltyScale)
+        scoreDelta: Math.round(-5 * contentPenaltyScale)
       });
     }
 
@@ -946,10 +946,10 @@ async function analyzeLink(input) {
         id: 'LINK_CONTENT_CRYPTO_WALLET',
         name: 'Phát hiện địa chỉ ví crypto',
         detail: hasTrustSignals
-          ? 'Trang chứa địa chỉ ví crypto nhưng là trang có tín hiệu hợp pháp (có thể là bài viết/báo cáo).'
-          : 'Trang chứa địa chỉ ví Bitcoin/Ethereum - dấu hiệu scam lừa tiền mã hóa.',
-        status: hasTrustSignals ? 'warning' : 'danger',
-        scoreDelta: Math.round(-30 * contentPenaltyScale)
+          ? 'Trang có đề cập địa chỉ ví crypto (bài viết/báo cáo).'
+          : 'Trang chứa địa chỉ ví crypto - kết hợp với các dấu hiệu khác có thể là scam.',
+        status: 'warning',
+        scoreDelta: Math.round(-5 * contentPenaltyScale)
       });
     }
 
