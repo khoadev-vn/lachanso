@@ -1,113 +1,84 @@
-
-
-
-
-
-
-const FACT_CHECK_API_KEY = process.env.VITE_GOOGLE_FACT_CHECK_API_KEY;
-const FACT_CHECK_BASE_URL = 'https://factchecktools.googleapis.com/v1alpha1/claims:search';
-
-
-
-
-
-
+const axios = require('axios');
+const cheerio = require('cheerio');
 
 async function checkFact(query, languageCode = 'vi') {
-  if (!FACT_CHECK_API_KEY) {
-    console.warn('[FactCheck] Thiếu VITE_GOOGLE_FACT_CHECK_API_KEY trong .env');
-    return { found: false, claims: [] };
-  }
-
-
-  const trimmedQuery = query.trim().substring(0, 200);
-
-  const url = new URL(FACT_CHECK_BASE_URL);
-  url.searchParams.set('query', trimmedQuery);
-  url.searchParams.set('languageCode', languageCode);
-  url.searchParams.set('pageSize', '5');
-  url.searchParams.set('key', FACT_CHECK_API_KEY);
-
   try {
-    const res = await fetch(url.toString(), { timeout: 5000 });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error(`[FactCheck] API lỗi ${res.status}: ${errText.substring(0, 200)}`);
-      return { found: false, claims: [] };
-    }
-
-    const data = await res.json();
-    const claims = data.claims || [];
-
-    if (claims.length === 0) {
-
-      if (languageCode === 'vi') {
-        return checkFact(query, 'en');
-      }
-      return { found: false, claims: [] };
-    }
-
-
-    const normalizedClaims = claims.map((claim) => {
-      const review = claim.claimReview?.[0] || {};
-      return {
-        text: claim.text || '',
-        claimant: claim.claimant || '',
-        claimDate: claim.claimDate || '',
-        publisher: review.publisher?.name || '',
-        publisherSite: review.publisher?.site || '',
-        rating: review.textualRating || '',
-        title: review.title || '',
-        url: review.url || '',
-        languageCode: review.languageCode || languageCode
-      };
+    const url = `https://www.bing.com/news/search?q=${encodeURIComponent(query + " fact check")}&format=rss&setlang=vi`;
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Accept': 'application/rss+xml, application/xml, text/xml'
+      },
+      timeout: 8000
     });
 
+    const $xml = cheerio.load(response.data, { xmlMode: true });
+    const claims = [];
 
-    const verdict = analyzeVerdict(normalizedClaims);
+    $xml('item').slice(0, 5).each((i, el) => {
+      const title = $xml(el).find('title').text().trim();
+      const link = $xml(el).find('link').text().trim();
+      const source = $xml(el).find('source').text().trim() || 'Bing News';
 
-    console.log(`[FactCheck] Tìm thấy ${claims.length} fact-check. Verdict: ${verdict.label}`);
+      if (title) {
+        const rating = analyzeTitle(title);
+        claims.push({
+          text: title,
+          publisher: source,
+          url: link,
+          rating: rating.label,
+          ratingScore: rating.score
+        });
+      }
+    });
 
-    return {
-      found: true,
-      claims: normalizedClaims,
-      verdict
-    };
+    if (claims.length === 0) {
+      return { found: false, claims: [] };
+    }
 
+    const verdict = analyzeVerdict(claims);
+    console.log(`[FactCheck] Tìm thấy ${claims.length} bài liên quan. Verdict: ${verdict.label}`);
+
+    return { found: true, claims, verdict };
   } catch (err) {
     console.error('[FactCheck] Lỗi kết nối:', err.message);
     return { found: false, claims: [] };
   }
 }
 
+function analyzeTitle(title) {
+  const lower = title.toLowerCase();
+  const fakeKeywords = ['giả', 'fake', 'sai', 'lừa đảo', 'cảnh báo', 'không đúng', 'bịa đặt', 'thất thiệt', 'misleading', 'false'];
+  const trueKeywords = ['đúng', 'xác nhận', 'chính xác', 'thực tế', 'verified', 'true', 'chính thống'];
 
+  const fakeScore = fakeKeywords.filter(k => lower.includes(k)).length;
+  const trueScore = trueKeywords.filter(k => lower.includes(k)).length;
 
-
-
+  if (fakeScore > trueScore) return { label: 'MIGHT_BE_FAKE', score: -0.3 };
+  if (trueScore > fakeScore) return { label: 'MIGHT_BE_TRUE', score: 0.3 };
+  return { label: 'UNVERIFIED', score: 0 };
+}
 
 function analyzeVerdict(claims) {
-
   const fakeKeywords = [
-  'false', 'fake', 'incorrect', 'inaccurate', 'misleading', 'fabricated',
-  'sai', 'sai sự thật', 'không đúng', 'giả mạo', 'bịa đặt', 'không chính xác',
-  'tin giả', 'phần lớn sai', 'largely false', 'mostly false', 'pants on fire',
-  'four pinocchios', 'thông tin sai', 'thất thiệt'];
-
-
+    'false', 'fake', 'incorrect', 'inaccurate', 'misleading', 'fabricated',
+    'sai', 'sai sự thật', 'không đúng', 'giả mạo', 'bịa đặt', 'không chính xác',
+    'tin giả', 'phần lớn sai', 'largely false', 'mostly false', 'pants on fire',
+    'four pinocchios', 'thông tin sai', 'thất thiệt', 'might_be_fake'
+  ];
 
   const trueKeywords = [
-  'true', 'correct', 'accurate', 'verified',
-  'đúng', 'chính xác', 'xác nhận', 'sự thật',
-  'mostly true', 'largely true', 'phần lớn đúng'];
-
+    'true', 'correct', 'accurate', 'verified',
+    'đúng', 'chính xác', 'xác nhận', 'sự thật',
+    'mostly true', 'largely true', 'phần lớn đúng', 'might_be_true'
+  ];
 
   let fakeCount = 0;
   let trueCount = 0;
 
   for (const claim of claims) {
     const rating = (claim.rating || '').toLowerCase();
-    if (fakeKeywords.some((k) => rating.includes(k))) fakeCount++;else
+    if (fakeKeywords.some((k) => rating.includes(k))) fakeCount++; else
     if (trueKeywords.some((k) => rating.includes(k))) trueCount++;
   }
 

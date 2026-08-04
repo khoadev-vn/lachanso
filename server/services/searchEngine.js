@@ -235,53 +235,45 @@ async function scrapeGoogleNewsRSS(query, limit = 15) {
   }
 }
 
-async function searchGoogleCSE(query) {
-  if (!GOOGLE_CSE_KEY || !GOOGLE_CSE_ID) {
-    console.warn('[Search Engine] Thiếu GOOGLE_CSE_KEY hoặc GOOGLE_CSE_ID. Đang dùng fallback VnExpress Scraper.');
-    return null;
-  }
-
+async function scrapeBingNews(query, limit = 15) {
   try {
-    const url = `https://customsearch.googleapis.com/customsearch/v1`;
+    const url = `https://www.bing.com/news/search?q=${encodeURIComponent(query)}&format=rss&setlang=vi`;
     const response = await axios.get(url, {
-      params: {
-        key: GOOGLE_CSE_KEY,
-        cx: GOOGLE_CSE_ID,
-        q: query,
-        num: 10,
-        hl: 'vi'
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Accept': 'application/rss+xml, application/xml, text/xml'
       },
-      timeout: 5000
+      timeout: 8000
     });
 
-    if (response.data && response.data.items) {
-      return response.data.items.map((item) => ({
-        title: item.title,
-        description: item.snippet,
-        link: item.link,
-        source: new URL(item.link).hostname.replace('www.', '')
-      }));
-    }
+    const $xml = cheerio.load(response.data, { xmlMode: true });
+    const results = [];
 
-    return [];
+    $xml('item').each((i, el) => {
+      if (i >= limit) return;
+      const title = $xml(el).find('title').text().trim();
+      const link = $xml(el).find('link').text().trim();
+      const source = $xml(el).find('source').text().trim() || 'Bing News';
+      const description = $xml(el).find('description').text().trim() || title;
+
+      if (title && link) {
+        results.push({ title, description, link, source });
+      }
+    });
+    return results;
   } catch (error) {
-    console.error('[Search Engine] Lỗi khi gọi Google CSE:', error.response?.data?.error?.message || error.message);
-    return null;
+    console.error('[Search Engine] Lỗi khi scrape Bing News:', error.message);
+    return [];
   }
 }
 
 async function searchVietnameseNews(query) {
-  const cseArticles = await searchGoogleCSE(query);
-
-  if (cseArticles && cseArticles.length > 0) {
-    return dedupeArticles(cseArticles);
-  }
-
   const fallbackQuery = query.replace(/"/g, '');
 
-  console.warn('[Search Engine] Đang chạy scrape đa nguồn song song (Google News + VnExpress + Dân Trí + VietnamNet + Tuổi Trẻ)...');
+  console.warn('[Search Engine] Đang tìm kiếm đa nguồn (Bing News + Google News + VnExpress + Dân Trí + VietnamNet + Tuổi Trẻ)...');
 
-  const [googleNews, vnexpress, dantri, vietnamnet, tuoitre] = await Promise.allSettled([
+  const [bingNews, googleNews, vnexpress, dantri, vietnamnet, tuoitre] = await Promise.allSettled([
+    scrapeBingNews(fallbackQuery),
     scrapeGoogleNewsRSS(fallbackQuery),
     scrapeVnExpress(fallbackQuery),
     scrapeDantri(fallbackQuery),
@@ -290,6 +282,7 @@ async function searchVietnameseNews(query) {
   ]);
 
   const merged = [
+    ...(bingNews.status === 'fulfilled' ? bingNews.value : []),
     ...(googleNews.status === 'fulfilled' ? googleNews.value : []),
     ...(vnexpress.status === 'fulfilled' ? vnexpress.value : []),
     ...(dantri.status === 'fulfilled' ? dantri.value : []),
@@ -297,7 +290,9 @@ async function searchVietnameseNews(query) {
     ...(tuoitre.status === 'fulfilled' ? tuoitre.value : [])
   ];
 
-  return dedupeArticles(merged).slice(0, 20);
+  const deduped = dedupeArticles(merged).slice(0, 20);
+  console.log(`[Search Engine] Tìm thấy ${deduped.length} bài báo.`);
+  return deduped;
 }
 
 module.exports = {
