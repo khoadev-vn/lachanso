@@ -12,7 +12,7 @@ export default function FactCheckBanner() {
             CẢNH BÁO NGUY HIỂM
           </h3>
           <p className="mt-1 text-base font-medium leading-relaxed text-red-900">
-            Nội dung này đã được xác nhận là <span className="font-bold underline decoration-2 underline-offset-4">SAI SỰ THẬT HOẶC LỪA ĐẢO</span>. Tuyệt đối không chia sẻ!
+            Nội dung này đã được xác nhận là <span className="font-bold underline decoration-2 underline-offset-4">SAI SỰ THẬT/LỪA ĐẢO</span>. Tuyệt đối không chia sẻ!
           </p>
         </div>
       </div>
