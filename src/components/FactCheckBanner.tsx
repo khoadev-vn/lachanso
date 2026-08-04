@@ -1,4 +1,4 @@
-import { AlertTriangle, ExternalLink } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 export default function FactCheckBanner() {
   return (
@@ -9,22 +9,11 @@ export default function FactCheckBanner() {
         </div>
         <div className="flex-1 text-center md:text-left">
           <h3 className="text-xl font-black uppercase tracking-tight text-red-700">
-            CẢNH BÁO ĐỎ TỪ GOOGLE FACT CHECK
+            CẢNH BÁO NGUY HIỂM
           </h3>
           <p className="mt-1 text-base font-medium leading-relaxed text-red-900">
-            Nội dung này đã bị các tổ chức kiểm chứng độc lập quốc tế xác nhận là <span className="font-bold underline decoration-2 underline-offset-4">SAI SỰ THẬT HOẶC XUYÊN TẠC</span>. Tuyệt đối không chia sẻ!
+            Nội dung này đã được xác nhận là <span className="font-bold underline decoration-2 underline-offset-4">SAI SỰ THẬT HOẶC LỪA ĐẢO</span>. Tuyệt đối không chia sẻ!
           </p>
-        </div>
-        <div className="shrink-0">
-          <a
-            href="https://toolbox.google.com/factcheck/explorer"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-black text-white hover:bg-red-700 transition-colors shadow-lg shadow-red-200"
-          >
-            Xem Dữ Liệu
-            <ExternalLink className="h-4 w-4" />
-          </a>
         </div>
       </div>
     </div>
