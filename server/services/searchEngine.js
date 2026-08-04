@@ -299,8 +299,8 @@ module.exports = {
   searchVietnameseNews,
   scrapeVnExpress,
   scrapeGoogleNewsRSS,
+  scrapeBingNews,
   scrapeDantri,
   scrapeVietnamNet,
-  scrapeTuoitre,
-  searchGoogleCSE
+  scrapeTuoitre
 };
