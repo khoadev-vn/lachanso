@@ -968,7 +968,7 @@ export default function App() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#f5f4f0]/90 backdrop-blur-md border-b border-black/10">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <button type="button" onClick={() => navigateToPage("home")} className="flex items-center gap-2">
-            <span className="text-2xl">🇻🇳</span>
+            <img src="/logo.svg" alt="Lá Chắn Số" className="w-8 h-8" />
             <span className="font-bold text-[27px] tracking-tight text-[#ff8904]">Lá Chắn Số</span>
           </button>
 
@@ -1022,7 +1022,7 @@ export default function App() {
               { }
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="mb-10">
                 <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-black/10 text-sm font-semibold text-[#333] shadow-sm backdrop-blur">
-                  <span className="text-base">🇻🇳</span>
+                  <img src="/logo.svg" alt="" className="w-4 h-4" />
                   Nền tảng xác thực thông tin Việt Nam
                   <ChevronRight className="w-3.5 h-3.5 opacity-40" />
                 </span>
@@ -2253,7 +2253,7 @@ export default function App() {
       <footer className="py-12 border-t border-black/10 bg-white">
         <div className="max-w-[1600px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-xl">🇻🇳</span>
+            <img src="/logo.svg" alt="Lá Chắn Số" className="w-6 h-6" />
             <span className="text-xl font-bold tracking-tighter text-[#ff8904]">Lá Chắn Số</span>
           </div>
           <p className="text-sm text-[#4a5565]">
