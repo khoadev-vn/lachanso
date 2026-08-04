@@ -6,6 +6,19 @@ const semanticFilter = require('./semanticFilter');
 const nliChecker = require('./nliChecker');
 const vectorCache = require('./vectorCache');
 
+// Domain impersonation detection patterns
+const DOMAIN_IMPERSONATION_PATTERNS = [
+  /(facebook|google|microsoft|apple|instagram|zalo|viettel|vinaphone|mobifone)\.(com\.)?(xy|xyz|club|top|icu|buzz|info|site|online|click|link|live|cam)/i,
+  /https?:\/\/[^\s]*(login|dang-nhap|signin|verify|xac-nhan)[^\s]*\.(xy|xyz|club|top|icu|buzz)/i
+];
+
+// Phishing link detection patterns
+const PHISHING_LINK_PATTERNS = [
+  /truy cập.{0,60}(đăng nhập|đăng ký|xác nhận|cập nhật).{0,80}(https?:\/\/|www\.|\.com|\.net|\.xyz|\.club|\.top|\.icu|\.buzz)/i,
+  /tài khoản.{0,40}(bị truy cập|bị xâm nhập|bị hack|bị chiếm đoạt|bị khóa|bị chặn)/i,
+  /(vui lòng|nhắc nhở|hãy|ngay|hỏa tốc).{0,40}(truy cập|đăng nhập|đăng ký|xác nhận|cập nhật).{0,40}(ngay|lập tức|nhanh chóng|trong vòng|sớm nhất)/i
+];
+
 // Weight configuration for different signal types
 const WEIGHTS = {
   // Keyword-based penalties (already computed as totalWeight)
@@ -49,6 +62,18 @@ function calculateBaseContentScore(text) {
     totalWeight += match.penalty;
   });
 
+  // Check for domain impersonation
+  const hasDomainImpersonation = DOMAIN_IMPERSONATION_PATTERNS.some(p => p.test(text));
+  if (hasDomainImpersonation) {
+    totalWeight += 80; // Heavy penalty for domain impersonation
+  }
+
+  // Check for phishing patterns
+  const hasPhishingLink = PHISHING_LINK_PATTERNS.some(p => p.test(text));
+  if (hasPhishingLink) {
+    totalWeight += 60; // Heavy penalty for phishing patterns
+  }
+
   const k = WEIGHTS.keywordBase.k;
   let baseScore = 0;
   if (totalWeight > 0) {
@@ -56,11 +81,11 @@ function calculateBaseContentScore(text) {
   }
 
   baseScore = Math.min(100, Math.max(0, baseScore));
-  return { score: baseScore, weight: totalWeight, keywordMatches: allFindings };
+  return { score: baseScore, weight: totalWeight, keywordMatches: allFindings, hasDomainImpersonation, hasPhishingLink };
 }
 
 // Analyze keyword findings to extract structured signals
-function extractKeywordSignals(keywordMatches) {
+function extractKeywordSignals(keywordMatches, baseContent) {
   const signals = {
     hasFinancialScam: false,
     hasPhishing: false,
@@ -69,6 +94,8 @@ function extractKeywordSignals(keywordMatches) {
     hasPhoneScam: false,
     hasUrgency: false,
     hasFakeNews: false,
+    hasDomainImpersonation: baseContent?.hasDomainImpersonation || false,
+    hasPhishingLink: baseContent?.hasPhishingLink || false,
     severityCount: 0,
     categories: new Set()
   };
@@ -105,6 +132,8 @@ function applyCascadeMultiplier(baseScore, keywordSignals, nliResults, articleCo
   if (keywordSignals.hasCryptoScam) dangerSignals++;
   if (keywordSignals.hasPhoneScam) dangerSignals++;
   if (keywordSignals.hasFakeNews) dangerSignals++;
+  if (keywordSignals.hasDomainImpersonation) dangerSignals += 2; // Extra weight for domain impersonation
+  if (keywordSignals.hasPhishingLink) dangerSignals += 2; // Extra weight for phishing links
   if (nliResults.maxContradiction > 0.5) dangerSignals++;
   if (keywordSignals.severityCount >= 3) dangerSignals++;
   if (articleCount === 0) dangerSignals++; // No press coverage at all
@@ -133,7 +162,7 @@ async function analyzeAndScore(text) {
   // --- Phase 1: Base content scoring via keywords ---
   logs.push("Phase 1: Keyword analysis...");
   const baseContent = calculateBaseContentScore(text);
-  const keywordSignals = extractKeywordSignals(baseContent.keywordMatches);
+  const keywordSignals = extractKeywordSignals(baseContent.keywordMatches, baseContent);
   let finalScore = baseContent.score;
   let verdict = "SAFE";
   let isFactCheckedFake = false;
@@ -266,6 +295,8 @@ async function analyzeAndScore(text) {
       hasGambling: keywordSignals.hasGambling,
       hasCryptoScam: keywordSignals.hasCryptoScam,
       hasFakeNews: keywordSignals.hasFakeNews,
+      hasDomainImpersonation: keywordSignals.hasDomainImpersonation,
+      hasPhishingLink: keywordSignals.hasPhishingLink,
       severityCount: keywordSignals.severityCount
     },
     filteredArticles: filtered,
