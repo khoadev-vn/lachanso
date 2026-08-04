@@ -2,9 +2,41 @@ const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
 const dns = require('dns').promises;
+const tls = require('tls');
+const { URL } = require('url');
 
 const scamDataPath = path.join(__dirname, '../data/scamDomains.json');
 const { SCAM_DOMAINS, SCAM_BRAND_PATTERNS } = JSON.parse(fs.readFileSync(scamDataPath, 'utf8'));
+
+// ============ TRUSTED DOMAINS WHITELIST ============
+const trustedDomainsPath = path.join(__dirname, '../data/trustedDomains.json');
+let TRUSTED_ROOT_DOMAINS = new Set();
+try {
+  const trustedData = JSON.parse(fs.readFileSync(trustedDomainsPath, 'utf8'));
+  const allCategories = Object.values(trustedData.whitelist || {});
+  for (const domains of allCategories) {
+    if (Array.isArray(domains)) {
+      for (const d of domains) {
+        TRUSTED_ROOT_DOMAINS.add(d.toLowerCase().replace(/^www\./, ''));
+      }
+    }
+  }
+  console.log(`[LinkAnalysis] Loaded ${TRUSTED_ROOT_DOMAINS.size} trusted domains from whitelist.`);
+} catch (e) {
+  console.warn('[LinkAnalysis] Could not load trustedDomains.json:', e.message);
+}
+
+function isTrustedDomain(hostname) {
+  const h = hostname.toLowerCase().replace(/^www\./, '');
+  if (TRUSTED_ROOT_DOMAINS.has(h)) return true;
+  // Check if subdomain of trusted root (e.g., mail.google.com → google.com)
+  const parts = h.split('.');
+  for (let i = 1; i < parts.length - 1; i++) {
+    const candidate = parts.slice(i).join('.');
+    if (TRUSTED_ROOT_DOMAINS.has(candidate)) return true;
+  }
+  return false;
+}
 
 const DESTROYLIST_CHECK_ENDPOINT = 'https://api.destroy.tools/v1/check';
 const DESTROYLIST_RAW_URL = 'https://raw.githubusercontent.com/phishdestroy/destroylist/main/rootlist/formats/primary_active/hosts.txt';
@@ -31,7 +63,15 @@ const CONFUSABLE_RANGES = [
 ];
 
 const cache = new Map();
-const CACHE_TTL = { destroylist: 12 * 60 * 60 * 1000, whois: 24 * 60 * 60 * 1000, feed: 6 * 60 * 60 * 1000 };
+const CACHE_TTL = {
+  destroylist: 12 * 60 * 60 * 1000,
+  whois: 24 * 60 * 60 * 1000,
+  feed: 6 * 60 * 60 * 1000,
+  ssl: 6 * 60 * 60 * 1000,
+  content: 4 * 60 * 60 * 1000,
+  redirect: 30 * 60 * 1000,
+  dns: 12 * 60 * 60 * 1000
+};
 
 function cacheGet(key) {
   const item = cache.get(key);
@@ -137,6 +177,275 @@ function detectTyposquat(hostname) {
   return null;
 }
 
+// ============ NEW: SSL Certificate Analysis ============
+async function checkSSLCertificate(hostname) {
+  const cacheKey = `ssl:${hostname}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  return new Promise((resolve) => {
+    const timeout = setTimeout(() => {
+      resolve({ available: false, valid: false, error: 'timeout' });
+    }, 5000);
+
+    try {
+      const socket = tls.connect(443, hostname, {
+        servername: hostname,
+        rejectUnauthorized: false,
+        timeout: 4000
+      }, () => {
+        const cert = socket.getPeerCertificate();
+        socket.destroy();
+        clearTimeout(timeout);
+
+        if (!cert || !cert.subject) {
+          resolve({ available: true, valid: false, error: 'no_cert', issuer: null, expiry: null, daysLeft: null, selfSigned: true });
+          return;
+        }
+
+        const issuer = cert.issuer?.CN || cert.issuer?.O || 'Unknown';
+        const subject = cert.subject?.CN || hostname;
+        const validFrom = cert.valid_from ? new Date(cert.valid_from) : null;
+        const validTo = cert.valid_to ? new Date(cert.valid_to) : null;
+        const daysLeft = validTo ? Math.floor((validTo.getTime() - Date.now()) / 86400000) : null;
+        const isExpired = validTo ? validTo.getTime() < Date.now() : false;
+        const selfSigned = issuer === subject || issuer === 'Unknown';
+        const trustedIssuers = ['Let\'s Encrypt', 'DigiCert', 'Cloudflare', 'Google Trust Services', 'Sectigo', 'GlobalSign', 'Amazon', 'Microsoft'];
+        const isTrustedIssuer = trustedIssuers.some(t => issuer.toLowerCase().includes(t.toLowerCase()));
+
+        resolve({
+          available: true,
+          valid: !isExpired && !selfSigned,
+          issuer,
+          subject,
+          validFrom: validFrom?.toISOString(),
+          validTo: validTo?.toISOString(),
+          daysLeft,
+          isExpired,
+          selfSigned,
+          isTrustedIssuer,
+          error: null
+        });
+      });
+
+      socket.on('error', () => {
+        clearTimeout(timeout);
+        resolve({ available: false, valid: false, error: 'connection_failed' });
+      });
+
+      socket.on('timeout', () => {
+        socket.destroy();
+        clearTimeout(timeout);
+        resolve({ available: false, valid: false, error: 'timeout' });
+      });
+    } catch (e) {
+      clearTimeout(timeout);
+      resolve({ available: false, valid: false, error: e.message });
+    }
+  });
+}
+
+// ============ NEW: Redirect Chain Analysis ============
+async function followRedirects(inputUrl, maxRedirects = 5) {
+  const cacheKey = `redirect:${inputUrl}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  const chain = [];
+  let currentUrl = inputUrl;
+  const visited = new Set();
+
+  try {
+    for (let i = 0; i < maxRedirects; i++) {
+      if (visited.has(currentUrl)) break;
+      visited.add(currentUrl);
+
+      const parsed = new URL(currentUrl);
+      chain.push({
+        url: currentUrl,
+        hostname: parsed.hostname.replace(/^www\./, ''),
+        protocol: parsed.protocol
+      });
+
+      const response = await axios.head(currentUrl, {
+        timeout: 5000,
+        maxRedirects: 0,
+        validateStatus: (s) => s >= 200 && s < 400,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+      }).catch(() => null);
+
+      if (!response || !response.headers?.location) break;
+      const nextUrl = new URL(response.headers.location, currentUrl).toString();
+      currentUrl = nextUrl;
+    }
+  } catch {
+    // ignore
+  }
+
+  const result = {
+    chainLength: chain.length,
+    redirects: chain,
+    domainChanged: chain.length >= 2 && chain[0].hostname !== chain[chain.length - 1].hostname,
+    finalHostname: chain.length > 0 ? chain[chain.length - 1].hostname : null,
+    suspiciousRedirect: chain.length >= 3,
+    crossDomainRedirect: chain.length >= 2 ? chain.filter((c, i) => i > 0 && c.hostname !== chain[0].hostname).length > 0 : false
+  };
+
+  cacheSet(cacheKey, result, CACHE_TTL.redirect);
+  return result;
+}
+
+// ============ NEW: DNS Reputation Check ============
+async function checkDnsReputation(hostname) {
+  const cacheKey = `dns:${hostname}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  const result = { available: false, hasMx: false, hasSpf: false, hasDmarc: false, mxRecords: [], txtRecords: [] };
+
+  try {
+    const [mxRecords, txtRecords] = await Promise.all([
+      dns.resolveMx(hostname).catch(() => []),
+      dns.resolveTxt(hostname).catch(() => [])
+    ]);
+
+    result.available = true;
+    result.mxRecords = (mxRecords || []).map(r => ({ exchange: r.exchange, priority: r.priority }));
+    result.hasMx = result.mxRecords.length > 0;
+
+    const allTxt = (txtRecords || []).flat().map(t => t.toLowerCase());
+    result.txtRecords = allTxt;
+    result.hasSpf = allTxt.some(t => t.includes('v=spf1'));
+    result.hasDmarc = false;
+
+    try {
+      const dmarcRecords = await dns.resolveTxt(`_dmarc.${hostname}`).catch(() => []);
+      const dmarcFlat = (dmarcRecords || []).flat().map(t => t.toLowerCase());
+      result.hasDmarc = dmarcFlat.some(t => t.includes('v=dmarc1'));
+    } catch {
+      // ignore
+    }
+
+    result.legitimacyScore = (result.hasMx ? 1 : 0) + (result.hasSpf ? 1 : 0) + (result.hasDmarc ? 1 : 0);
+  } catch {
+    result.available = false;
+  }
+
+  cacheSet(cacheKey, result, CACHE_TTL.dns);
+  return result;
+}
+
+// ============ NEW: Page Content Phishing Detection ============
+async function analyzePageContent(url, hostname) {
+  const cacheKey = `content:${hostname}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  const result = {
+    available: false,
+    hasLoginForm: false,
+    hasPasswordField: false,
+    urgencyScore: 0,
+    cryptoWalletDetected: false,
+    externalResources: 0,
+    obfuscatedScripts: 0,
+    suspiciousIframes: 0,
+    contactInfo: null,
+    pageLanguage: null,
+    title: null,
+    phishingSignals: []
+  };
+
+  try {
+    const response = await axios.get(url.toString(), {
+      timeout: 8000,
+      maxRedirects: 3,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml'
+      },
+      validateStatus: (s) => s < 400
+    });
+
+    const html = String(response.data || '');
+    result.available = true;
+
+    // Login form detection
+    const loginPatterns = /type=["']password["']|name=["'](pass|pwd|password|mat_khau)["']|<form[^>]*(login|signin|dang-nhap|đăng nhập)/i;
+    result.hasLoginForm = loginPatterns.test(html);
+    result.hasPasswordField = /type=["']password["']/i.test(html);
+
+    // Urgency language detection
+    const urgencyPatterns = [
+      /urgent|khẩn cấp|cấp bách/i,
+      /verify\s*(now|your|account)|xác\s*minh\s*(ngay|tài\s*khoản)/i,
+      /suspended|đình\s*chỉ|khóa|blocked/i,
+      /expire|expir|hết\s*hạn|sắp\s*hết/i,
+      /act\s*now|hành\s*động\s*ngay/i,
+      /click\s*here|nhấp\s*vào\s*đây/i,
+      /limited\s*time|thời\s*gian\s*hạn\s*chế/i,
+      /congratulations|xin\s*chúc\s*mừng|bạn\s*đã\s*trúng/i,
+      /your\s*account\s*will|tài\s*khoản\s*sẽ\s*bị/i,
+      /immediate\s*action|canh\s*báo\s*nghiêm\s*trọng/i
+    ];
+    result.urgencyScore = urgencyPatterns.filter(p => p.test(html)).length;
+
+    // Crypto wallet detection
+    const walletPatterns = /(?:0x[a-fA-F0-9]{40}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-zA-HJ-NP-Z0-9]{39,59})/i;
+    result.cryptoWalletDetected = walletPatterns.test(html);
+
+    // External resources
+    const externalDomains = html.match(/(?:src|href|action)=["']https?:\/\/[^"']+["']/gi) || [];
+    const externalHosts = new Set();
+    for (const match of externalDomains) {
+      try {
+        const mUrl = new URL(match.match(/https?:\/\/[^"']+/i)?.[0] || '');
+        if (mUrl.hostname !== hostname && !mUrl.hostname.endsWith(`.${hostname}`)) {
+          externalHosts.add(mUrl.hostname);
+        }
+      } catch { /* skip */ }
+    }
+    result.externalResources = externalHosts.size;
+
+    // Obfuscated scripts
+    result.obfuscatedScripts = (html.match(/eval\(|document\.write\(|unescape\(|String\.fromCharCode\(/gi) || []).length;
+
+    // Suspicious iframes
+    const iframes = html.match(/<iframe[^>]*>/gi) || [];
+    result.suspiciousIframes = iframes.filter(f => /hidden|visibility:\s*none|width=["']0|height=["']0/i.test(f)).length;
+
+    // Phone/contact detection
+    const phoneMatch = html.match(/(?:tel:|href=["']tel:|0\d{9,10}|\+84\d{9,10})/i);
+    const emailMatch = html.match(/mailto:|[\w.-]+@[\w.-]+\.\w+/i);
+    result.contactInfo = {
+      hasPhone: !!phoneMatch,
+      hasEmail: !!emailMatch
+    };
+
+    // Page language
+    const langMatch = html.match(/lang=["']([a-z]{2}(?:-[a-z]{2})?)["']/i);
+    result.pageLanguage = langMatch ? langMatch[1] : null;
+
+    // Title
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    result.title = titleMatch ? titleMatch[1].trim().substring(0, 150) : null;
+
+    // Phishing signal aggregation
+    if (result.hasLoginForm) result.phishingSignals.push('Trang có form đăng nhập');
+    if (result.urgencyScore >= 3) result.phishingSignals.push(`Nhiều ngôn ngữ khẩn cấp (${result.urgencyScore} tín hiệu)`);
+    if (result.cryptoWalletDetected) result.phishingSignals.push('Phát hiện địa chỉ ví crypto');
+    if (result.obfuscatedScripts > 0) result.phishingSignals.push(`Có ${result.obfuscatedScripts} script bị mã hóa/ẩn`);
+    if (result.suspiciousIframes > 0) result.phishingSignals.push(`Có ${result.suspiciousIframes} iframe ẩn`);
+
+  } catch (e) {
+    result.available = false;
+  }
+
+  cacheSet(cacheKey, result, CACHE_TTL.content);
+  return result;
+}
+
+// ============ EXISTING: Destroylist Check ============
 async function checkDestroylist(hostname) {
   const cacheKey = `dl:${hostname}`;
   const cached = cacheGet(cacheKey);
@@ -182,6 +491,7 @@ async function checkDestroylist(hostname) {
   return result;
 }
 
+// ============ EXISTING: WHOIS Age Check ============
 async function resolveHostExists(hostname) {
   try {
     await dns.resolve4(hostname);
@@ -237,13 +547,14 @@ async function checkWhoisAge(hostname) {
   return result;
 }
 
+// ============ MAIN: Weighted Analyze Link ============
 async function analyzeLink(input) {
   const reasons = [];
-  let score = 70;
+  let rawScore = 70; // Starting trust score (neutral = 70, lower = more dangerous)
 
   const addReason = (reason) => {
     reasons.push(reason);
-    score += reason.scoreDelta || 0;
+    rawScore += reason.scoreDelta || 0;
   };
 
   const parsed = extractHostname(input);
@@ -255,13 +566,40 @@ async function analyzeLink(input) {
       status: 'warning',
       scoreDelta: -10
     });
-    return { reasons, score: Math.max(0, Math.min(100, score)), hostname: null, url: null, scamMatch: null, whois: null, destroylist: null };
+    return buildResult(reasons, rawScore, null, null, null, null, null, null, null);
   }
 
   const { url, hostname, protocol } = parsed;
   const fullInput = url.toString();
   const isHttps = protocol === 'https:';
 
+  // ============ FAST PATH: WHITELIST BYPASS ============
+  if (isTrustedDomain(hostname)) {
+    return {
+      reasons: [
+        {
+          id: 'LINK_TRUSTED_DOMAIN',
+          name: 'Website uy tín',
+          detail: `"${hostname}" nằm trong danh sách ${TRUSTED_ROOT_DOMAINS.size}+ website uy tín được xác nhận. Bỏ qua kiểm tra chi tiết.`,
+          status: 'success',
+          scoreDelta: 25
+        }
+      ],
+      score: 96,
+      hostname,
+      url: fullInput,
+      scamMatch: null,
+      whois: null,
+      destroylist: null,
+      ssl: null,
+      dns: null,
+      redirect: null,
+      pageAnalysis: null,
+      trustedDomain: true
+    };
+  }
+
+  // --- 1. HTTPS ---
   addReason({
     id: 'LINK_HTTPS',
     name: isHttps ? 'HTTPS hợp lệ' : 'Không dùng HTTPS',
@@ -272,6 +610,7 @@ async function analyzeLink(input) {
     scoreDelta: isHttps ? 8 : -20
   });
 
+  // --- 2. Scam Dataset ---
   const scamMatch = matchScamDataset(hostname);
   if (scamMatch) {
     const severityScore = scamMatch.severity === 'critical' ? -80 : scamMatch.severity === 'high' ? -65 : -40;
@@ -284,6 +623,7 @@ async function analyzeLink(input) {
     });
   }
 
+  // --- 3. Typosquatting ---
   const typosquat = detectTyposquat(hostname);
   if (typosquat) {
     addReason({
@@ -295,6 +635,7 @@ async function analyzeLink(input) {
     });
   }
 
+  // --- 4. Suspicious TLD ---
   if (isSuspiciousTld(hostname)) {
     addReason({
       id: 'LINK_SUSPICIOUS_TLD',
@@ -305,6 +646,7 @@ async function analyzeLink(input) {
     });
   }
 
+  // --- 5. Obfuscation (IP, punycode, auth injection) ---
   if (isIpHostname(hostname) || hasPunycode(hostname) || hasAuthInjection(fullInput)) {
     addReason({
       id: 'LINK_OBFUSCATED',
@@ -315,6 +657,7 @@ async function analyzeLink(input) {
     });
   }
 
+  // --- 6. Homoglyph ---
   if (hasHomoglyph(hostname)) {
     addReason({
       id: 'LINK_HOMOGLYPH',
@@ -325,6 +668,7 @@ async function analyzeLink(input) {
     });
   }
 
+  // --- 7. URL Shortener ---
   if (URL_SHORTENERS.has(hostname)) {
     addReason({
       id: 'LINK_SHORTENER',
@@ -335,6 +679,7 @@ async function analyzeLink(input) {
     });
   }
 
+  // --- 8. Complex hostname ---
   const hyphenCount = (hostname.match(/-/g) ?? []).length;
   const isLongHost = hostname.length > 42 || hostname.split('.').some((part) => part.length > 24);
   if (hyphenCount >= 3 || isLongHost) {
@@ -347,6 +692,7 @@ async function analyzeLink(input) {
     });
   }
 
+  // --- 9. Machine-generated hostname ---
   const hasDigitsAndHyphens = /\d{2,}/.test(hostname) && hyphenCount > 0;
   if (hasDigitsAndHyphens) {
     addReason({
@@ -358,8 +704,28 @@ async function analyzeLink(input) {
     });
   }
 
-  const [destroylist, whois] = await Promise.all([checkDestroylist(hostname), checkWhoisAge(hostname)]);
+  // --- 10. Dot count (too many subdomains = suspicious) ---
+  const dotCount = (hostname.match(/\./g) ?? []).length;
+  if (dotCount >= 4) {
+    addReason({
+      id: 'LINK_DEEP_SUBDOMAIN',
+      name: 'Quá nhiều subdomain',
+      detail: `Hostname có ${dotCount} dấu chấm - nhiều subdomain thường là chiến thuật che giấu domain gốc trong phishing.`,
+      status: 'warning',
+      scoreDelta: -12
+    });
+  }
 
+  // --- PARALLEL: Destroylist + WHOIS + SSL + DNS + Redirects ---
+  const [destroylist, whois, sslCert, dnsRep, redirectInfo] = await Promise.all([
+    checkDestroylist(hostname),
+    checkWhoisAge(hostname),
+    checkSSLCertificate(hostname),
+    checkDnsReputation(hostname),
+    followRedirects(fullInput)
+  ]);
+
+  // --- 11. Destroylist ---
   if (destroylist.available) {
     if (destroylist.threat) {
       addReason({
@@ -388,6 +754,7 @@ async function analyzeLink(input) {
     });
   }
 
+  // --- 12. WHOIS ---
   if (whois.available && whois.ageDays !== undefined) {
     if (whois.isNew) {
       addReason({
@@ -424,6 +791,163 @@ async function analyzeLink(input) {
     });
   }
 
+  // --- 13. SSL Certificate (NEW) ---
+  if (sslCert.available) {
+    if (sslCert.selfSigned && !sslCert.isTrustedIssuer) {
+      addReason({
+        id: 'LINK_SSL_SELFSIGNED',
+        name: 'Chứng chỉ SSL tự ký',
+        detail: `SSL certificate do "${sslCert.issuer}" cấp - không phải CA uy tín. Trang có thể giả mạo để thu thập dữ liệu.`,
+        status: 'danger',
+        scoreDelta: -30
+      });
+    } else if (sslCert.isExpired) {
+      addReason({
+        id: 'LINK_SSL_EXPIRED',
+        name: 'Chứng chỉ SSL hết hạn',
+        detail: `SSL certificate đã hết hạn từ ${sslCert.validTo}. Trang không được bảo mật và có thể đã bị bỏ rơi hoặc đang được vận hành trái phép.`,
+        status: 'danger',
+        scoreDelta: -25
+      });
+    } else if (sslCert.valid && sslCert.isTrustedIssuer) {
+      addReason({
+        id: 'LINK_SSL_VALID',
+        name: `SSL hợp lệ (${sslCert.issuer})`,
+        detail: `Certificate do ${sslCert.issuer} cấp, hết hạn ${sslCert.daysLeft} ngày nữa.`,
+        status: 'success',
+        scoreDelta: 10
+      });
+    } else if (sslCert.valid && sslCert.daysLeft !== null && sslCert.daysLeft < 30) {
+      addReason({
+        id: 'LINK_SSL_EXPIRING',
+        name: 'SSL sắp hết hạn',
+        detail: `Certificate hết hạn trong ${sslCert.daysLeft} ngày - trang có thể không được duy trì.`,
+        status: 'warning',
+        scoreDelta: -5
+      });
+    }
+  }
+
+  // --- 14. DNS Reputation (NEW) ---
+  if (dnsRep.available) {
+    if (dnsRep.legitimacyScore >= 2) {
+      addReason({
+        id: 'LINK_DNS_LEGIT',
+        name: 'DNS có cấu hình hợp pháp',
+        detail: `Domain có${dnsRep.hasMx ? ' MX (email)' : ''}${dnsRep.hasSpf ? ' SPF' : ''}${dnsRep.hasDmarc ? ' DMARC' : ''} - dấu hiệu doanh nghiệp thật.`,
+        status: 'success',
+        scoreDelta: 8
+      });
+    } else if (dnsRep.legitimacyScore === 0 && !scamMatch) {
+      addReason({
+        id: 'LINK_DNS_MINIMAL',
+        name: 'DNS tối giản',
+        detail: 'Domain không có MX/SPF/DMARC - có thể chỉ là trang phishing tạm thời không cần email.',
+        status: 'warning',
+        scoreDelta: -8
+      });
+    }
+  }
+
+  // --- 15. Redirect Chain (NEW) ---
+  if (redirectInfo.chainLength >= 2) {
+    if (redirectInfo.domainChanged) {
+      addReason({
+        id: 'LINK_REDIRECT_DOMAIN_CHANGE',
+        name: `Chuyển hướng qua ${redirectInfo.chainLength} domain`,
+        detail: `URL gốc redirect sang domain khác: ${redirectInfo.redirects[redirectInfo.redirects.length - 1]?.hostname}. Đây là kỹ thuật common trong phishing để ẩn destination.`,
+        status: 'danger',
+        scoreDelta: -35
+      });
+    } else if (redirectInfo.suspiciousRedirect) {
+      addReason({
+        id: 'LINK_REDIRECT_CHAIN',
+        name: `Chuỗi redirect dài (${redirectInfo.chainLength} bước)`,
+        detail: 'URL phải qua nhiều bước redirect mới đến trang đích - có thể dùng để che giấu domain thật.',
+        status: 'warning',
+        scoreDelta: -15
+      });
+    }
+  }
+
+  // --- 16. Page Content Analysis (NEW) ---
+  let pageAnalysis = null;
+  try {
+    pageAnalysis = await analyzePageContent(url, hostname);
+  } catch { /* ignore */ }
+
+  if (pageAnalysis && pageAnalysis.available) {
+    // Trust signal: if SSL valid + old domain + legit DNS, reduce page content penalties
+    // (news sites legitimately have login forms, urgency language, crypto articles)
+    const hasTrustSignals = sslCert.valid && sslCert.isTrustedIssuer
+      && whois.available && whois.ageDays > 180
+      && dnsRep.available && dnsRep.legitimacyScore >= 2;
+    const contentPenaltyScale = hasTrustSignals ? 0.3 : 1.0; // Reduce 70% for trusted sites
+
+    if (pageAnalysis.hasLoginForm && !scamMatch) {
+      addReason({
+        id: 'LINK_CONTENT_LOGIN_FORM',
+        name: 'Trang có form đăng nhập',
+        detail: hasTrustSignals
+          ? 'Phát hiện form đăng nhập (trang có tín hiệu hợp pháp - có thể là tính năng chính thống).'
+          : 'Phát hiện form nhập mật khẩu. Kết hợp với các dấu hiệu khác, đây có thể là trang đánh cắp tài khoản.',
+        status: hasTrustSignals ? 'success' : 'warning',
+        scoreDelta: Math.round(-15 * contentPenaltyScale)
+      });
+    }
+
+    if (pageAnalysis.urgencyScore >= 3) {
+      addReason({
+        id: 'LINK_CONTENT_URGENCY',
+        name: `Nhiều ngôn ngữ khẩn cấp (${pageAnalysis.urgencyScore} tín hiệu)`,
+        detail: 'Trang sử dụng nhiều cụm từ gây áp lực ("xác minh ngay", "tài khoản bị khóa", "hạn cuối") - kỹ thuật social engineering kinh điển.',
+        status: 'danger',
+        scoreDelta: Math.round(-20 * contentPenaltyScale)
+      });
+    } else if (pageAnalysis.urgencyScore >= 1) {
+      addReason({
+        id: 'LINK_CONTENT_URGENCY_LOW',
+        name: 'Có ngôn ngữ khẩn cấp',
+        detail: 'Trang chứa một số cụm từ gây áp lực tinh vi.',
+        status: 'warning',
+        scoreDelta: Math.round(-8 * contentPenaltyScale)
+      });
+    }
+
+    if (pageAnalysis.cryptoWalletDetected) {
+      addReason({
+        id: 'LINK_CONTENT_CRYPTO_WALLET',
+        name: 'Phát hiện địa chỉ ví crypto',
+        detail: hasTrustSignals
+          ? 'Trang chứa địa chỉ ví crypto nhưng là trang có tín hiệu hợp pháp (có thể là bài viết/báo cáo).'
+          : 'Trang chứa địa chỉ ví Bitcoin/Ethereum - dấu hiệu scam lừa tiền mã hóa.',
+        status: hasTrustSignals ? 'warning' : 'danger',
+        scoreDelta: Math.round(-30 * contentPenaltyScale)
+      });
+    }
+
+    if (pageAnalysis.obfuscatedScripts > 0) {
+      addReason({
+        id: 'LINK_CONTENT_OBFUSCATED',
+        name: `Có ${pageAnalysis.obfuscatedScripts} script mã hóa`,
+        detail: 'Phát hiện eval()/document.write()/unescape() - script bị obfuscate để tránh bị phát hiện.',
+        status: 'danger',
+        scoreDelta: Math.round(-15 * contentPenaltyScale)
+      });
+    }
+
+    if (pageAnalysis.suspiciousIframes > 0) {
+      addReason({
+        id: 'LINK_CONTENT_HIDDEN_IFRAME',
+        name: `${pageAnalysis.suspiciousIframes} iframe ẩn`,
+        detail: 'Trang nhúng iframe ẩn (width=0/height=0) - kỹ thuật inject nội dung độc hại hoặc keylogger.',
+        status: 'danger',
+        scoreDelta: Math.round(-20 * contentPenaltyScale)
+      });
+    }
+  }
+
+  // --- Baseline ---
   if (reasons.length === 0) {
     addReason({
       id: 'LINK_BASELINE',
@@ -434,14 +958,61 @@ async function analyzeLink(input) {
     });
   }
 
+  // --- Weighted Scoring ---
+  const finalScore = calculateWeightedScore(reasons, rawScore);
+
   return {
     reasons,
-    score: Math.max(0, Math.min(100, score)),
+    score: finalScore,
     hostname,
     url: fullInput,
     scamMatch: scamMatch ? { brand: scamMatch.brand, type: scamMatch.type, severity: scamMatch.severity } : null,
     whois: whois.available ? { ageDays: whois.ageDays ?? null, registrationDate: whois.registrationDate ?? null, isNew: whois.isNew ?? false, notFound: whois.notFound ?? false } : null,
-    destroylist: destroylist.available ? { threat: destroylist.threat, riskScore: destroylist.riskScore, severity: destroylist.severity, source: destroylist.source } : null
+    destroylist: destroylist.available ? { threat: destroylist.threat, riskScore: destroylist.riskScore, severity: destroylist.severity, source: destroylist.source } : null,
+    ssl: sslCert.available ? { valid: sslCert.valid, issuer: sslCert.issuer, selfSigned: sslCert.selfSigned, daysLeft: sslCert.daysLeft, isExpired: sslCert.isExpired, isTrustedIssuer: sslCert.isTrustedIssuer } : null,
+    dns: dnsRep.available ? { hasMx: dnsRep.hasMx, hasSpf: dnsRep.hasSpf, hasDmarc: dnsRep.hasDmarc, legitimacyScore: dnsRep.legitimacyScore } : null,
+    redirect: redirectInfo.chainLength >= 2 ? { chainLength: redirectInfo.chainLength, domainChanged: redirectInfo.domainChanged, finalHostname: redirectInfo.finalHostname, redirects: redirectInfo.redirects.map(r => r.hostname) } : null,
+    pageAnalysis: pageAnalysis && pageAnalysis.available ? { hasLoginForm: pageAnalysis.hasLoginForm, urgencyScore: pageAnalysis.urgencyScore, cryptoWalletDetected: pageAnalysis.cryptoWalletDetected, obfuscatedScripts: pageAnalysis.obfuscatedScripts, phishingSignals: pageAnalysis.phishingSignals } : null
+  };
+}
+
+function calculateWeightedScore(reasons, rawScore) {
+  // Weight multiplier: critical signals count more than warnings
+  const dangerCount = reasons.filter(r => r.status === 'danger').length;
+  const warningCount = reasons.filter(r => r.status === 'warning').length;
+  const successCount = reasons.filter(r => r.status === 'success').length;
+
+  // Danger cascade: multiple danger signals compound
+  let dangerMultiplier = 1.0;
+  if (dangerCount >= 4) dangerMultiplier = 1.5;
+  else if (dangerCount >= 3) dangerMultiplier = 1.3;
+  else if (dangerCount >= 2) dangerMultiplier = 1.15;
+
+  // Apply cascade to danger deltas
+  let adjustedScore = 70;
+  for (const reason of reasons) {
+    if (reason.status === 'danger') {
+      adjustedScore += reason.scoreDelta * dangerMultiplier;
+    } else {
+      adjustedScore += reason.scoreDelta;
+    }
+  }
+
+  // Floor/ceiling
+  return Math.max(0, Math.min(100, Math.round(adjustedScore)));
+}
+
+function buildResult(reasons, rawScore, hostname, url, scamMatch, whois, destroylist, ssl, dns) {
+  return {
+    reasons,
+    score: calculateWeightedScore(reasons, rawScore),
+    hostname,
+    url,
+    scamMatch,
+    whois,
+    destroylist,
+    ssl,
+    dns
   };
 }
 
@@ -451,5 +1022,11 @@ module.exports = {
   detectTyposquat,
   hasHomoglyph,
   isSuspiciousTld,
+  checkSSLCertificate,
+  checkDnsReputation,
+  analyzePageContent,
+  followRedirects,
+  isTrustedDomain,
+  TRUSTED_ROOT_DOMAINS,
   SCAM_DOMAINS
 };

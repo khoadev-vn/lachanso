@@ -42,7 +42,10 @@ async function checkOllama(force = false) {
       ollamaStatus = {
         available: true,
         models: models.map((m) => m.name),
-        modelReady: models.some((m) => m.name === OLLAMA_MODEL || m.name.startsWith(OLLAMA_MODEL.split(':')[0]))
+        modelReady: models.some((m) => {
+          const name = typeof m === 'string' ? m : m?.name;
+          return name === OLLAMA_MODEL || (name && name.startsWith(OLLAMA_MODEL.split(':')[0]));
+        })
       };
       console.log(`[LLM Client] Ollama OK tại ${OLLAMA_BASE_URL}. Model có sẵn: ${ollamaStatus.models.join(', ') || '(chưa pull model)'}`);
     } catch (e) {
@@ -133,7 +136,11 @@ async function llmChat(messages, options = {}) {
   const ollama = await checkOllama();
   if (ollama.available) {
     const requestedModel = options.model || OLLAMA_MODEL;
-    const hasModel = ollama.models.some((m) => m.name === requestedModel || m.name.startsWith(requestedModel.split(':')[0]));
+    const baseName = requestedModel ? requestedModel.split(':')[0] : '';
+    const hasModel = ollama.models.some((m) => {
+      const name = typeof m === 'string' ? m : m?.name;
+      return name === requestedModel || (baseName && name?.startsWith(baseName));
+    });
     if (hasModel) {
       result = await ollamaChat(messages, options);
       if (result) mode = 'ollama';
