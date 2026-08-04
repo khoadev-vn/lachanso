@@ -301,7 +301,6 @@ export default function App() {
       title: "Nhóm 3: Fact-Check & Global Media",
       subtitle: "(Xác thực & Báo chí quốc tế)",
       items: [
-        { name: "Google Fact", description: "Công cụ kiểm tra thông tin chính xác từ Google Fact Check.", link: "https://toolbox.google.com/factcheck/explorer" },
         { name: "Google News", description: "Nguồn tin tức và cập nhật thời sự từ Google News.", link: "https://news.google.com/" },
         { name: "AP News", description: "Thông tin thời sự từ Associated Press.", link: "https://apnews.com/" },
         { name: "AFP", description: "Đài tin tức quốc tế AFP cung cấp dữ liệu báo chí toàn cầu.", link: "https://www.afp.com/" },
@@ -858,7 +857,7 @@ export default function App() {
             reasons.push({
               id: "FACT_CHECK_FAKE",
               name: "Fact Check Cảnh báo ĐỎ",
-              detail: "Các tổ chức xác thực quốc tế (Google Fact Check) đã xác nhận nội dung này là SAI SỰ THẬT.",
+              detail: "Nội dung này đã được xác nhận là SAI SỰ THẬT bởi các nguồn xác thực uy tín.",
               status: "danger",
               icon: AlertTriangle
             });
@@ -1385,7 +1384,6 @@ export default function App() {
                   <span className="text-2xl font-bold text-[#111] opacity-30 hover:opacity-80 transition-opacity cursor-default">BÁO THANH NIÊN</span>
                   <span className="text-2xl font-bold text-[#111] opacity-30 hover:opacity-80 transition-opacity cursor-default">DANTRI</span>
                   <span className="text-2xl font-bold text-[#111] opacity-30 hover:opacity-80 transition-opacity cursor-default">PhishTank</span>
-                  <span className="text-2xl font-bold text-[#111] opacity-30 hover:opacity-80 transition-opacity cursor-default">Google Fact</span>
                   <span className="text-2xl font-bold text-[#111] opacity-30 hover:opacity-80 transition-opacity cursor-default">Google News</span>
                   <span className="text-2xl font-bold text-[#111] opacity-30 hover:opacity-80 transition-opacity cursor-default">GITHUB COMMUNITY</span>
                   <span className="text-2xl font-bold text-[#111] opacity-30 hover:opacity-80 transition-opacity cursor-default">OpenPhish</span>
@@ -1725,18 +1723,6 @@ export default function App() {
                         <div className="p-6 rounded-[24px] bg-slate-900/85 backdrop-blur-md border border-white/10 hover:border-white/20 hover:bg-slate-900 shadow-xl transition-all duration-300 h-full min-h-[140px]">
                           <p className="text-[15px] text-slate-300 leading-relaxed font-analysis-body">
                             {resultData.analysis.heuristics}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-[#ff8904]">
-                          <Search className="w-5 h-5" />
-                          <span className="text-xs font-black uppercase tracking-[0.2em]">Google Fact Check</span>
-                        </div>
-                        <div className="p-6 rounded-[24px] bg-slate-900/85 backdrop-blur-md border border-white/10 hover:border-white/20 hover:bg-slate-900 shadow-xl transition-all duration-300 h-full min-h-[140px]">
-                          <p className="text-[15px] text-slate-300 leading-relaxed font-analysis-body">
-                            {resultData.analysis.google_fact_check}
                           </p>
                         </div>
                       </div>
