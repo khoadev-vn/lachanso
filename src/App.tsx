@@ -420,7 +420,7 @@ export default function App() {
       analysis: {
         internal_verdict: "Đang khởi tạo phán quyết nội sinh của LCS...",
         heuristics: "Đang phân tích cấu trúc văn bản...",
-        google_fact_check: "Đang chờ đối chiếu fact-check...",
+        trust_analysis: "Đang chờ đối chiếu trust graph...",
         url_verification: "Đang kiểm tra liên kết và nguồn...",
         source_audit: "Đang dựng chuỗi nguồn...",
         press_comparison: "Đang chuẩn bị đối chiếu đa báo...",
@@ -529,7 +529,7 @@ export default function App() {
         const analysisDetails = {
           internal_verdict: "LCS đang xây dựng phán quyết nội bộ...",
           heuristics: "Đang phân tích cấu trúc văn bản...",
-          google_fact_check: "Chưa tìm thấy dữ liệu đối soát thực tế.",
+          trust_analysis: "Chưa tìm thấy dữ liệu đối soát thực tế.",
           url_verification: "Không phát hiện liên kết trong văn bản.",
           source_audit: "Đang dựng chuỗi nguồn...",
           press_comparison: "Đang chuẩn bị đối chiếu đa báo...",
@@ -718,12 +718,12 @@ export default function App() {
             status: "danger",
             icon: Landmark
           });
-          analysisDetails.google_fact_check = "MÂU THUẪN: Không tìm thấy bất kỳ thông báo tương tự trên các trang tin chính thống (mps.gov.vn, chinhphu.vn).";
+          analysisDetails.trust_analysis = "MÂU THUẪN: Không tìm thấy bất kỳ thông báo tương tự trên các trang tin chính thống (mps.gov.vn, chinhphu.vn).";
         } else
           if (mentionsAuthority && (hasGovLink || hasTrustedLink)) {
-            analysisDetails.google_fact_check = "KHỚP: Nội dung có tham chiếu tới các địa chỉ tin cậy của cơ quan chức năng.";
+            analysisDetails.trust_analysis = "KHỚP: Nội dung có tham chiếu tới các địa chỉ tin cậy của cơ quan chức năng.";
           } else {
-            analysisDetails.google_fact_check = "KHÔNG TÌM THẤY: Tin tức không xuất hiện trên các trang báo lớn trong 48h qua.";
+            analysisDetails.trust_analysis = "KHÔNG TÌM THẤY: Tin tức không xuất hiện trên các trang báo lớn trong 48h qua.";
           }
         const hasPanic = reasons.some((r) => r.id === "KG_PANIC" || r.id === "L042");
         const hasFinancial = reasons.some((r) => r.id === "KG_FINANCIAL" || r.id === "L081");
@@ -744,13 +744,13 @@ export default function App() {
         analysisDetails.press_comparison = verificationLayers.summary.press_comparison;
         analysisDetails.search_trace = verificationLayers.summary.search_trace;
         if (!hasTrustedLink && verificationLayers.hasTrustedEvidence) {
-          analysisDetails.google_fact_check = verificationLayers.summary.fact_check;
+          analysisDetails.trust_analysis = verificationLayers.summary.fact_check;
         } else
           if (verificationLayers.summary.fact_check) {
-            if (analysisDetails.google_fact_check === "KHÔNG TÌM THẤY: Tin tức không xuất hiện trên các trang báo lớn trong 48h qua.") {
-              analysisDetails.google_fact_check = `KHÔNG TÌM THẤY: Tin tức không xuất hiện trên các trang báo lớn trong 48h qua. ${verificationLayers.summary.fact_check}`;
+            if (analysisDetails.trust_analysis === "KHÔNG TÌM THẤY: Tin tức không xuất hiện trên các trang báo lớn trong 48h qua.") {
+              analysisDetails.trust_analysis = `KHÔNG TÌM THẤY: Tin tức không xuất hiện trên các trang báo lớn trong 48h qua. ${verificationLayers.summary.fact_check}`;
             } else {
-              analysisDetails.google_fact_check = `${analysisDetails.google_fact_check} ${verificationLayers.summary.fact_check}`;
+              analysisDetails.trust_analysis = `${analysisDetails.trust_analysis} ${verificationLayers.summary.fact_check}`;
             }
           }
         verificationLayers.reasons.forEach((reason) => {
@@ -948,7 +948,7 @@ export default function App() {
           analysis: {
             internal_verdict: "Phán quyết nội sinh chưa hoàn tất vì tiến trình đã lỗi.",
             heuristics: "Pipeline nội bộ bị gián đoạn trước khi hoàn tất chấm điểm.",
-            google_fact_check: "Không có kết quả fact-check vì tiến trình đã lỗi.",
+            trust_analysis: "Không có kết quả trust analysis vì tiến trình đã lỗi.",
             url_verification: "Chưa hoàn tất.",
             source_audit: "Chưa hoàn tất.",
             press_comparison: "Chưa hoàn tất.",

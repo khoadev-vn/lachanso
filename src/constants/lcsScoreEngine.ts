@@ -272,7 +272,9 @@ const TRUSTED_ENTITIES: Record<string, {
 const HIGH_RISK_ENTITIES = [
 /t\.me\//i, /zalo\.me\/s\//i,
 /bit\.ly/i, /tinyurl/i, /cutt\.ly/i,
-/4rum\b/i, /forum\b.*tin/i];
+/4rum\b/i, /forum\b.*tin/i,
+/(facebook|google|microsoft|apple|instagram|zalo|viettel)\.(com\.)?(xy|xyz|club|top|icu|buzz|info|site|online|click|link|live|cam)/i,
+/https?:\/\/[^\s]*(login|dang-nhap|signin|verify|xac-nhan)[^\s]*\.(xy|xyz|club|top|icu|buzz)/i];
 
 function runTrustLayer(text: string): LCSLayerResult {
   const signals: LCSSignal[] = [];
@@ -330,6 +332,17 @@ function runTrustLayer(text: string): LCSLayerResult {
       severity: "danger"
     });
   }
+  const fakeDomainMatch = /(facebook|google|microsoft|apple|instagram|zalo|viettel|vinaphone|mobifone)\.(com\.)?(xy|xyz|club|top|icu|buzz|info|site|online|click|link|live|cam)/i.test(text);
+  if (fakeDomainMatch) {
+    signals.push({
+      id: "TG_DOMAIN_IMPERSONATION",
+      layer: "trust",
+      name: "Phát hiện tên miền giả mạo",
+      detail: "Tên miền giả mạo thương hiệu nổi tiếng (thêm hậu tố .xyz, .club, .top...). Kỹ thuật phishing phổ biến để đánh cắp tài khoản.",
+      impact: -50,
+      severity: "danger"
+    });
+  }
   if (/\.gov\.vn/i.test(text)) {
     signals.push({
       id: "TG_GOV_DOMAIN",
@@ -371,6 +384,34 @@ const VN_SCAM_PATTERNS: Array<{
   detail: string;
   impact: number;
 }> = [
+{
+  id: "BP_PHISHING_LINK",
+  name: "Phishing — Liên kết đăng nhập giả mạo",
+  pattern: /truy cập.{0,60}(đăng nhập|đăng ký|xác nhận|cập nhật).{0,80}(https?:\/\/|www\.|\.com|\.net|\.xyz|\.club|\.top|\.icu|\.buzz)/i,
+  detail: "Nội dung yêu cầu truy cập liên kết để đăng nhập/xác nhận — kỹ thuật phishing phổ biến để đánh cắp tài khoản.",
+  impact: -55
+},
+{
+  id: "BP_ACCOUNT_COMPROMISED",
+  name: "Thông báo tài khoản bị truy cập giả",
+  pattern: /tài khoản.{0,40}(bị truy cập|bị xâm nhập|bị hack|bị chiếm đoạt|bị khóa|bị chặn)/i,
+  detail: "Kịch bản thông báo tài khoản bị truy cập để gây sợ hãi, ép nạn nhân click link lạ và nhập thông tin đăng nhập.",
+  impact: -50
+},
+{
+  id: "BP_DOMAIN_IMPERSONATION",
+  name: "Giả mạo tên miền uy tín",
+  pattern: /(facebook|google|microsoft|apple|instagram|zalo|viettel|vinaphone|mobifone)\.(com\.)?(xy|xyz|club|top|icu|buzz|info|site|online|click|link|live|cam)/i,
+  detail: "Tên miền giả mạo thương hiệu nổi tiếng bằng cách thêm hậu tố lạ (.xyz, .club, .top...). Đây là kỹ thuật phishing cổ điển.",
+  impact: -60
+},
+{
+  id: "BP_URGENCY_LOGIN",
+  name: "Tạo áp lực đăng nhập khẩn cấp",
+  pattern: /(vui lòng|nhắc nhở|hãy|ngay|hỏa tốc).{0,40}(truy cập|đăng nhập|đăng ký|xác nhận|cập nhật).{0,40}(ngay|lập tức|nhanh chóng|trong vòng|sớm nhất)/i,
+  detail: "Tạo cảm giác cấp bách để nạn nhân hành động mà không suy nghĩ — đặc trưng của lừa đảo phishing.",
+  impact: -45
+},
 {
   id: "BP_VNEID_SCAM",
   name: "Lừa đảo VNeID / Định danh điện tử",
@@ -510,6 +551,14 @@ function inferNarrativeProfile(text: string, signals: LCSSignal[]): LCSNarrative
       riskBand: "critical"
     };
   }
+  if (signalIds.has("TG_DOMAIN_IMPERSONATION") || signalIds.has("BP_PHISHING_LINK") || signalIds.has("BP_ACCOUNT_COMPROMISED") || signalIds.has("BP_DOMAIN_IMPERSONATION")) {
+    return {
+      archetype: "authority_impersonation",
+      label: "Phishing — Giả mạo thương hiệu",
+      summary: "Nội dung giả mạo thương hiệu nổi tiếng (Facebook, Google...) để đánh cắp tài khoản qua liên kết đăng nhập giả. Hệ thống phát hiện tên miền giả và yêu cầu đăng nhập bất thường.",
+      riskBand: "critical"
+    };
+  }
   if (matches(/\b(chua|tri).{0,30}\b(benh|ung thu|virus|covid|dich benh)\b/i) ||
   matches(/\b(thuoc than ky|khong tac dung phu|thuc pham chuc nang|who khuyen cao|fda cong nhan)\b/i)) {
     return {
@@ -553,11 +602,22 @@ function inferNarrativeProfile(text: string, signals: LCSSignal[]): LCSNarrative
     riskBand: "medium"
   };
 }
-function computeVerdict(score: number): {
+function computeVerdict(score: number, allSignals: LCSSignal[]): {
   verdict: LCSEngineResult["verdict"];
   verdictLabel: string;
   confidence: number;
 } {
+  const hasCriticalPhishing = allSignals.some(s => 
+    s.id === "TG_DOMAIN_IMPERSONATION" || 
+    s.id === "BP_PHISHING_LINK" || 
+    s.id === "BP_ACCOUNT_COMPROMISED" ||
+    s.id === "BP_DOMAIN_IMPERSONATION"
+  );
+  
+  if (hasCriticalPhishing) {
+    return { verdict: "DANGER", verdictLabel: "Nguy hiểm — Lừa đảo", confidence: 0.95 };
+  }
+  
   if (score >= 78)
   return { verdict: "VERIFIED", verdictLabel: "Đã xác minh", confidence: 0.88 };
   if (score >= 60)
@@ -580,7 +640,7 @@ export async function runLCSEngine(text: string): Promise<LCSEngineResult> {
   ...behavioral.signals];
 
   const narrativeProfile = inferNarrativeProfile(text, allSignals);
-  const { verdict, verdictLabel, confidence } = computeVerdict(lcsScore);
+  const { verdict, verdictLabel, confidence } = computeVerdict(lcsScore, allSignals);
   const layerImpacts = [
   { name: "Linguistic Fingerprint", abs: Math.abs(linguistic.score) },
   { name: "Trust Graph", abs: Math.abs(trust.score) },
@@ -610,10 +670,7 @@ export function lcsEngineToAnalysisDetails(result: LCSEngineResult): Record<stri
   const behavioralSignals = layers.behavioral.signals;
   return {
     heuristics: `LCS Linguistic Fingerprint phát hiện ${linguisticSignals.filter((s) => s.severity !== "safe").length} tín hiệu bất thường. ${layers.linguistic.label}. Input: ${processingMeta.inputLength} ký tự — tầng ảnh hưởng lớn nhất: ${processingMeta.dominantLayer}.`,
-    google_fact_check: trustSignals.length > 0 ?
-    trustSignals.map((s) => s.detail).join(" | ") :
-    "LCS Trust Graph không tìm thấy thực thể đã biết trong văn bản này.",
-    url_verification: trustSignals.find((s) => s.id === "TG_GOV_DOMAIN" || s.id === "TG_HIGHRISK_PLATFORM")?.detail ??
+    url_verification: trustSignals.find((s) => s.id === "TG_GOV_DOMAIN" || s.id === "TG_HIGHRISK_PLATFORM" || s.id === "TG_DOMAIN_IMPERSONATION")?.detail ??
     "Không phát hiện địa chỉ web đặc biệt cần kiểm tra trong văn bản.",
     source_audit: `LCS Trust Graph — ${layers.trust.label}. Điểm tầng: ${layers.trust.score > 0 ? "+" : ""}${layers.trust.score}.`,
     press_comparison: behavioralSignals.length > 0 ?
