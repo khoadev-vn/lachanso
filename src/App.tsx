@@ -968,7 +968,7 @@ export default function App() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#f5f4f0]/90 backdrop-blur-md border-b border-black/10">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <button type="button" onClick={() => navigateToPage("home")} className="flex items-center">
-            <img src="/logo.png" alt="Lá Chắn Số" className="w-16 h-16 -mr-1 -mt-1" />
+            <img src="/logo.png" alt="Lá Chắn Số" className="w-16 h-16 -mr-1 -mt-2" />
             <span className="font-bold text-[27px] tracking-tight text-[#ff8904]">Lá Chắn Số</span>
           </button>
 
@@ -2253,7 +2253,7 @@ export default function App() {
       <footer className="py-12 border-t border-black/10 bg-white">
         <div className="max-w-[1600px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center">
-            <img src="/logo.png" alt="Lá Chắn Số" className="w-12 h-12 -mr-1 -mt-1" />
+            <img src="/logo.png" alt="Lá Chắn Số" className="w-12 h-12 -mr-1 -mt-2" />
             <span className="text-xl font-bold tracking-tighter text-[#ff8904]">Lá Chắn Số</span>
           </div>
           <p className="text-sm text-[#4a5565]">
