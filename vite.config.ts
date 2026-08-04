@@ -2,11 +2,13 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+import obfuscatorPlugin from "rollup-plugin-obfuscator";
 
 export default defineConfig({
   plugins: [
-  react(),
-  tailwindcss()],
+    react(),
+    tailwindcss()
+  ],
 
   resolve: {
     alias: {
@@ -18,7 +20,55 @@ export default defineConfig({
   root: path.resolve(import.meta.dirname),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist"),
-    emptyOutDir: true
+    emptyOutDir: true,
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ["console.log", "console.info", "console.warn"]
+      },
+      mangle: {
+        toplevel: true
+      },
+      format: {
+        comments: false
+      }
+    },
+    rollupOptions: {
+      plugins: [
+        obfuscatorPlugin({
+          compact: true,
+          controlFlowFlattening: true,
+          controlFlowFlatteningThreshold: 0.5,
+          deadCodeInjection: true,
+          deadCodeInjectionThreshold: 0.2,
+          debugProtection: false,
+          disableConsoleOutput: true,
+          identifierNamesGenerator: "hexadecimal",
+          log: false,
+          numbersToExpressions: true,
+          renameGlobals: false,
+          selfDefending: false,
+          simplify: true,
+          splitStrings: true,
+          splitStringsChunkLength: 10,
+          stringArray: true,
+          stringArrayCallsTransform: true,
+          stringArrayEncoding: ["rc4"],
+          stringArrayIndexShift: true,
+          stringArrayRotate: true,
+          stringArrayShuffle: true,
+          stringArrayWrappersCount: 1,
+          stringArrayWrappersChainedCalls: true,
+          stringArrayWrappersParametersMaxCount: 2,
+          stringArrayWrappersType: "function",
+          stringArrayThreshold: 0.75,
+          transformObjectKeys: true,
+          unicodeEscapeSequence: false
+        })
+      ]
+    }
   },
   server: {
     port: 3000,
