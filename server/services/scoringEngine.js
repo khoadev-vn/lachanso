@@ -124,8 +124,15 @@ async function analyzeAndScore(text) {
         nliModifier = 0.1;
         finalScore = baseContent.score * nliModifier;
     } else {
-        logs.push(`NLI Neutral. Modifier = 1.2`);
-        nliModifier = 1.2;
+        // Có bài báo trùng khớp nhưng NLI neutral → giảm rủi ro mạnh
+        const pressMatch = filtered.length > 0;
+        if (pressMatch) {
+            logs.push(`NLI Neutral + Press Match (${filtered.length} bài). Modifier = 0.25`);
+            nliModifier = 0.25;
+        } else {
+            logs.push(`NLI Neutral. Modifier = 1.0`);
+            nliModifier = 1.0;
+        }
         finalScore = baseContent.score * nliModifier;
     }
 
