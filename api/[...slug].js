@@ -14,13 +14,51 @@ export const config = {
 const BACKEND_URL = (process.env.LCS_BACKEND_URL || "").replace(/\/+$/, "");
 const BACKEND_SECRET = process.env.LCS_BACKEND_SECRET || "";
 
+// ============ RATE LIMITING (in-memory per instance) ============
+const rateLimitBuckets = new Map();
+function rateLimiter(maxRequests, windowMs) {
+  return (req, res, next) => {
+    const key = req.headers["x-real-ip"] || req.socket?.remoteAddress || req.ip || "unknown";
+    const now = Date.now();
+    let bucket = rateLimitBuckets.get(key);
+    if (!bucket || bucket.resetAt <= now) {
+      bucket = { count: 0, resetAt: now + windowMs };
+      rateLimitBuckets.set(key, bucket);
+    }
+    bucket.count += 1;
+    if (bucket.count > maxRequests) {
+      return res.status(429).json({ error: "Quá nhiều yêu cầu. Vui lòng thử lại sau." });
+    }
+    next();
+  };
+}
+const throttleAnalysis = rateLimiter(10, 60 * 1000);
+const throttleGeneral = rateLimiter(30, 60 * 1000);
+
+// Cleanup old buckets every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, bucket] of rateLimitBuckets) {
+    if (bucket.resetAt <= now) rateLimitBuckets.delete(key);
+  }
+}, 5 * 60 * 1000);
+
 const app = express();
 
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
+// ============ SECURITY HEADERS ============
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  next();
+});
+
 // 1. Check Domain Cờ Bạc / Lừa Đảo
-app.post("/api/check-domain", (req, res) => {
+app.post("/api/check-domain", throttleGeneral, (req, res) => {
   try {
     const { url } = req.body || {};
     if (!url) return res.status(400).json({ error: "Missing url input" });
@@ -32,7 +70,7 @@ app.post("/api/check-domain", (req, res) => {
 });
 
 // 2. Phân Tích Văn Bản
-app.post("/api/analyze-text", (req, res) => {
+app.post("/api/analyze-text", throttleGeneral, (req, res) => {
   try {
     const { text } = req.body || {};
     if (!text) return res.status(400).json({ error: "Missing text input" });
@@ -45,7 +83,7 @@ app.post("/api/analyze-text", (req, res) => {
 });
 
 // 3. Phân Tích Liên Kết Chi Tiết
-app.post("/api/analyze-link", async (req, res) => {
+app.post("/api/analyze-link", throttleAnalysis, async (req, res) => {
   try {
     const { url } = req.body || {};
     if (!url) return res.status(400).json({ error: "Missing url input" });
@@ -78,7 +116,7 @@ app.post("/api/analyze-link", async (req, res) => {
 });
 
 // 4. Kiểm Tra Sự Thật Cục Bộ
-app.post("/api/fact-check", async (req, res) => {
+app.post("/api/fact-check", throttleGeneral, async (req, res) => {
   try {
     const { text } = req.body || {};
     if (!text) return res.status(400).json({ error: "Missing text input" });
@@ -102,16 +140,10 @@ app.all("/api/proxy/*", (req, res) => {
   }
 });
 
-// 6. Trạng Thái AI
-app.get("/api/ai/status", (req, res) => {
+// 6. Trạng Thái AI (không lộ chi tiết infrastructure)
+app.get("/api/ai/status", throttleGeneral, (req, res) => {
   return res.json({
-    status: "OK",
-    data: {
-      backend: BACKEND_URL ? "vietnix-hybrid" : "serverless-lite",
-      ollama: { available: false },
-      deepseekConfigured: Boolean(process.env.DEEPSEEK_API_KEY),
-      enabled: Boolean(process.env.DEEPSEEK_API_KEY)
-    }
+    status: "OK"
   });
 });
 
@@ -153,9 +185,14 @@ async function forwardToBackend(req, res) {
     "content-type": req.headers["content-type"] || "application/json",
     accept: req.headers["accept"] || "application/json, text/plain, */*",
     "x-lcs-backend-secret": BACKEND_SECRET,
-    "user-agent": req.headers["user-agent"] || "lachanso-vercel-proxy",
-    "x-forwarded-for": req.headers["x-forwarded-for"] || req.socket?.remoteAddress || ""
+    "user-agent": req.headers["user-agent"] || "lachanso-vercel-proxy"
   };
+
+  // Use Vercel's verified client IP, not user-supplied X-Forwarded-For
+  const clientIp = req.headers["x-real-ip"] || req.socket?.remoteAddress;
+  if (clientIp) {
+    forwardHeaders["x-forwarded-for"] = clientIp;
+  }
 
   try {
     const rawBody = ["POST", "PUT", "PATCH", "DELETE"].includes(req.method)

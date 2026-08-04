@@ -38,6 +38,50 @@ function isTrustedDomain(hostname) {
   return false;
 }
 
+// ============ SSRF PROTECTION ============
+const PRIVATE_IP_RANGES = [
+  /^10\./,
+  /^172\.(1[6-9]|2[0-9]|3[01])\./,
+  /^192\.168\./,
+  /^127\./,
+  /^0\./,
+  /^169\.254\./,
+  /^::1$/,
+  /^fc00:/i,
+  /^fd00:/i,
+  /^fe80:/i,
+  /^localhost$/i,
+  /^0\.0\.0\.0$/,
+  /^\[::1\]$/,
+];
+
+function isPrivateOrInternalIP(hostname) {
+  const h = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  for (const pattern of PRIVATE_IP_RANGES) {
+    if (pattern.test(h)) return true;
+  }
+  return false;
+}
+
+async function resolveAndCheckSSRF(hostname) {
+  try {
+    const addresses = await dns.resolve4(hostname);
+    for (const addr of addresses) {
+      for (const pattern of PRIVATE_IP_RANGES) {
+        if (pattern.test(addr)) return true;
+      }
+    }
+  } catch {}
+  try {
+    const addresses = await dns.resolve6(hostname);
+    for (const addr of addresses) {
+      const h = addr.toLowerCase();
+      if (h === '::1' || h.startsWith('fc00:') || h.startsWith('fd00:') || h.startsWith('fe80:')) return true;
+    }
+  } catch {}
+  return false;
+}
+
 const DESTROYLIST_CHECK_ENDPOINT = 'https://api.destroy.tools/v1/check';
 const DESTROYLIST_RAW_URL = 'https://raw.githubusercontent.com/phishdestroy/destroylist/main/rootlist/formats/primary_active/hosts.txt';
 const RDAP_LOOKUP_URL = 'https://rdap.org/domain/';
@@ -185,6 +229,10 @@ async function checkSSLCertificate(hostname) {
   const cached = cacheGet(cacheKey);
   if (cached) return cached;
 
+  if (isPrivateOrInternalIP(hostname)) {
+    return { available: false, valid: false, error: 'blocked_private_ip' };
+  }
+
   return new Promise((resolve) => {
     const timeout = setTimeout(() => {
       resolve({ available: false, valid: false, error: 'timeout' });
@@ -263,6 +311,12 @@ async function followRedirects(inputUrl, maxRedirects = 5) {
       visited.add(currentUrl);
 
       const parsed = new URL(currentUrl);
+
+      if (isPrivateOrInternalIP(parsed.hostname) || await resolveAndCheckSSRF(parsed.hostname)) {
+        console.warn(`[SSRF] Blocked redirect to internal/private host: ${parsed.hostname}`);
+        break;
+      }
+
       chain.push({
         url: currentUrl,
         hostname: parsed.hostname.replace(/^www\./, ''),
@@ -359,6 +413,12 @@ async function analyzePageContent(url, hostname) {
   };
 
   try {
+    if (isPrivateOrInternalIP(hostname) || await resolveAndCheckSSRF(hostname)) {
+      console.warn(`[SSRF] Blocked fetch to internal/private host: ${hostname}`);
+      result.available = false;
+      return result;
+    }
+
     const response = await axios.get(url.toString(), {
       timeout: 8000,
       maxRedirects: 3,
