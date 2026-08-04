@@ -2,21 +2,20 @@ import express from "express";
 import threatDetection from "../server/services/threatDetection.js";
 import linkAnalysis from "../server/services/linkAnalysis.js";
 import factCheckService from "../server/services/factCheckService.js";
+import apiProxy from "../server/services/apiProxy.js";
 
 export const config = {
   runtime: "nodejs",
   api: {
-    bodyParser: false // Tắt bodyParser mặc định của Vercel để hỗ trợ stream raw body mượt mà
+    bodyParser: false
   }
 };
 
-// Cấu hình URL Backend Vietnix và Secret Key kết nối
 const BACKEND_URL = (process.env.LCS_BACKEND_URL || "").replace(/\/+$/, "");
 const BACKEND_SECRET = process.env.LCS_BACKEND_SECRET || "";
 
 const app = express();
 
-// Middleware hỗ trợ parse JSON cho các endpoint xử lý nội bộ trên Vercel
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
@@ -32,7 +31,7 @@ app.post("/api/check-domain", (req, res) => {
   }
 });
 
-// 2. Phân Tích Văn Bản Bằng Từ Khóa / Mẫu Câu Lừa Đảo Cục Bộ
+// 2. Phân Tích Văn Bản
 app.post("/api/analyze-text", (req, res) => {
   try {
     const { text } = req.body || {};
@@ -91,12 +90,24 @@ app.post("/api/fact-check", async (req, res) => {
   }
 });
 
-// 5. Kiểm Tra Trạng Thái Hệ Thống AI
+// 5. Proxy API Cào Báo Trực Tiếp Ngay Trên Vercel (Nếu không dùng Backend Vietnix)
+app.all("/api/proxy/*", (req, res) => {
+  try {
+    if (apiProxy && typeof apiProxy.handleProxy === "function") {
+      return apiProxy.handleProxy(req, res);
+    }
+    return res.status(404).json({ error: "Proxy handler not found" });
+  } catch (err) {
+    return res.status(500).json({ error: "Proxy execution error", details: err.message });
+  }
+});
+
+// 6. Trạng Thái AI
 app.get("/api/ai/status", (req, res) => {
   return res.json({
     status: "OK",
     data: {
-      backend: "serverless-lite",
+      backend: BACKEND_URL ? "vietnix-hybrid" : "serverless-lite",
       ollama: { available: false },
       deepseekConfigured: Boolean(process.env.DEEPSEEK_API_KEY),
       enabled: Boolean(process.env.DEEPSEEK_API_KEY)
@@ -104,12 +115,11 @@ app.get("/api/ai/status", (req, res) => {
   });
 });
 
-// 6. Cache Tin Tức Mặc Định
 app.get("/api/cached-news", (req, res) => {
   return res.json({ status: "OK", data: [] });
 });
 
-// Danh Sách Các Endpoints Nặng & Proxy Cần Chuyển Tiếp Sang Backend Vietnix
+// Danh Sách Endpoint Nặng & Proxy Bắt Buộc Cần Chuyển Tiếp Sang Backend Vietnix
 const HEAVY_PREFIXES = [
   "/api/verify-news",
   "/api/full-scan",
@@ -117,7 +127,6 @@ const HEAVY_PREFIXES = [
   "/api/proxy"
 ];
 
-// Hàm Đọc Stream Body Chuẩn Cho Vercel Serverless
 async function readRawBody(req) {
   const chunks = [];
   for await (const chunk of req) {
@@ -126,21 +135,18 @@ async function readRawBody(req) {
   return Buffer.concat(chunks);
 }
 
-// Hàm Forward Request Sang Backend Vietnix
 async function forwardToBackend(req, res) {
   if (!BACKEND_URL) {
     return res.status(503).json({
-      error: "Backend Vietnix chưa được cấu hình. Vui lòng thêm LCS_BACKEND_URL trên Vercel."
+      error: "Backend Vietnix chưa được kết nối. Hệ thống tự động chuyển sang chế độ Client AI Fallback."
     });
   }
 
-  // Lấy chính xác path và query string
   const fullUrl = req.url || "";
   const queryIndex = fullUrl.indexOf("?");
   const path = queryIndex >= 0 ? fullUrl.slice(0, queryIndex) : fullUrl;
   const query = queryIndex >= 0 ? fullUrl.slice(queryIndex) : "";
 
-  // Tạo Header gửi tới Vietnix Backend
   const forwardHeaders = {
     "content-type": req.headers["content-type"] || "application/json",
     accept: req.headers["accept"] || "application/json, text/plain, */*",
@@ -156,14 +162,14 @@ async function forwardToBackend(req, res) {
 
     const targetUrl = `${BACKEND_URL}${path}${query}`;
 
+    // Vercel Serverless Free Tier timeout ở 10s -> Đặt Timeout 9500ms để bắt lỗi trước khi Vercel kill
     const upstreamResponse = await fetch(targetUrl, {
       method: req.method,
       headers: forwardHeaders,
       body: rawBody,
-      signal: AbortSignal.timeout(60000) // Timeout 60 giây cho các tác vụ phân tích AI nặng
+      signal: AbortSignal.timeout(9500)
     });
 
-    // Trả Header & Status Code từ Vietnix về lại cho Client
     res.status(upstreamResponse.status);
     const contentType = upstreamResponse.headers.get("content-type");
     if (contentType) res.setHeader("content-type", contentType);
@@ -172,7 +178,15 @@ async function forwardToBackend(req, res) {
     const responseData = await upstreamResponse.text();
     return res.send(responseData);
   } catch (error) {
-    console.error("[Vercel Proxy] Lỗi kết nối tới Backend Vietnix:", error.message);
+    console.error("[Vercel Proxy] Lỗi kết nối Vietnix:", error.message);
+    
+    if (error.name === "TimeoutError" || error.message.includes("timeout")) {
+      return res.status(504).json({
+        error: "Gateway Timeout: Backend Vietnix xử lý quá 9.5 giây (Giới hạn Vercel Serverless)",
+        details: error.message
+      });
+    }
+
     return res.status(502).json({
       error: "Không thể kết nối tới máy chủ Vietnix",
       details: error.message
@@ -180,20 +194,18 @@ async function forwardToBackend(req, res) {
   }
 }
 
-// Entrypoint Chính Cho Vercel Serverless Function
 export default async function handler(req, res) {
   const urlPath = (req.url || "").split("?")[0];
 
-  // Kiểm tra nếu route khớp với danh sách Nặng / Proxy -> Forward sang Vietnix
-  const isHeavyOrProxy = HEAVY_PREFIXES.some(
-    (prefix) => urlPath === prefix || urlPath.startsWith(prefix + "/") || urlPath.startsWith(prefix + "?")
+  // Chỉ forward sang Vietnix nếu route thuộc HEAVY_PREFIXES VÀ đã cấu hình BACKEND_URL
+  const isHeavy = HEAVY_PREFIXES.some(
+    (prefix) => urlPath === prefix || urlPath.startsWith(prefix + "/")
   );
 
-  if (isHeavyOrProxy) {
+  if (isHeavy && BACKEND_URL) {
     return forwardToBackend(req, res);
   }
 
-  // Nếu là request nhẹ -> Parse body và cho Express xử lý local
   if (["POST", "PUT", "PATCH"].includes(req.method) && !req.body) {
     try {
       const raw = await readRawBody(req);

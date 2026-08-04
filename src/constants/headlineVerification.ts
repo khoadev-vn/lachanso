@@ -204,21 +204,25 @@ async function searchHeadlineInGoogle(headline: string): Promise<ArticleMatch[]>
 }
 async function searchHeadlineInNewsApi(headline: string): Promise<ArticleMatch[]> {
   try {
-    const url = new URL("/api/proxy/newsapi/v2/everything", window.location.origin);
+    const url = new URL("/api/proxy/bing-news/", window.location.origin);
     url.searchParams.set("q", headline);
-    url.searchParams.set("searchIn", "title");
-    url.searchParams.set("sortBy", "relevancy");
-    url.searchParams.set("pageSize", "8");
+    url.searchParams.set("format", "rss");
+    url.searchParams.set("setlang", "vi");
     const response = await fetch(url.toString());
     if (!response.ok)
     return [];
-    const data = await response.json();
-    const articles: ArticleMatch[] = (data.articles ?? []).
-    map((article: any) => {
-      const title = article.title ?? "";
-      const source = article.source?.name ?? "NewsAPI";
-      const link = article.url;
-      const publishedAt = article.publishedAt;
+    const xmlText = await response.text();
+    if (!xmlText)
+    return [];
+    const xml = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (xml.getElementsByTagName("parsererror").length > 0)
+    return [];
+    const items = Array.from(xml.querySelectorAll("item")).slice(0, 8);
+    return items.map((item) => {
+      const title = item.querySelector("title")?.textContent?.trim() ?? "";
+      const link = item.querySelector("link")?.textContent?.trim();
+      const source = item.querySelector("News\\:Source")?.textContent?.trim() ?? item.querySelector("source")?.textContent?.trim() ?? "Bing News";
+      const publishedAt = item.querySelector("pubDate")?.textContent?.trim();
       const similarity = calculateSimilarity(headline, title);
       return {
         title,
@@ -228,11 +232,9 @@ async function searchHeadlineInNewsApi(headline: string): Promise<ArticleMatch[]
         similarityScore: similarity,
         stance: getArticleClaimStance(title)
       };
-    }).
-    filter((article) => article.title && article.similarityScore > 0.5).
+    }).filter((article) => article.title && article.similarityScore > 0.5).
     sort((a, b) => b.similarityScore - a.similarityScore).
     slice(0, 5);
-    return articles;
   }
   catch {
     return [];
@@ -240,35 +242,34 @@ async function searchHeadlineInNewsApi(headline: string): Promise<ArticleMatch[]
 }
 async function searchHeadlineInFactCheck(headline: string): Promise<ArticleMatch[]> {
   try {
-    const url = new URL("/api/proxy/factcheck/v1alpha1/claims:search", window.location.origin);
-    url.searchParams.set("query", headline);
-    url.searchParams.set("languageCode", "vi");
-    url.searchParams.set("pageSize", "5");
+    const url = new URL("/api/proxy/bing-news/", window.location.origin);
+    url.searchParams.set("q", headline + " fact check");
+    url.searchParams.set("format", "rss");
+    url.searchParams.set("setlang", "vi");
     const response = await fetch(url.toString());
     if (!response.ok)
     return [];
-    const data = await response.json();
-    const claims = data.claims ?? [];
-    const articles: ArticleMatch[] = claims.
-    filter((claim: any) => claim.claimReview && claim.claimReview.length > 0).
-    slice(0, 3).
-    map((claim: any) => {
-      const title = claim.text ?? "Fact Check Result";
-      const review = claim.claimReview[0];
-      const source = review?.publisher?.name ?? "Google Fact Check";
-      const link = review?.url;
+    const xmlText = await response.text();
+    if (!xmlText)
+    return [];
+    const xml = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (xml.getElementsByTagName("parsererror").length > 0)
+    return [];
+    const items = Array.from(xml.querySelectorAll("item")).slice(0, 5);
+    return items.map((item) => {
+      const title = item.querySelector("title")?.textContent?.trim() ?? "";
+      const link = item.querySelector("link")?.textContent?.trim();
+      const source = item.querySelector("News\\:Source")?.textContent?.trim() ?? item.querySelector("source")?.textContent?.trim() ?? "Bing News";
       const similarity = calculateSimilarity(headline, title);
       return {
         title,
         source,
         link,
-        publishedAt: undefined,
+        publishedAt: item.querySelector("pubDate")?.textContent?.trim(),
         similarityScore: similarity,
         stance: getArticleClaimStance(title)
       };
-    }).
-    filter((article) => article.similarityScore > 0.45);
-    return articles;
+    }).filter((article) => article.similarityScore > 0.45);
   }
   catch {
     return [];

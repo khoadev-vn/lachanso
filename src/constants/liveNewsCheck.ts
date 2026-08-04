@@ -646,23 +646,27 @@ async function fetchGoogleNewsArticles(query: string): Promise<PressArticle[]> {
 }
 async function fetchNewsApiArticles(query: string): Promise<PressArticle[]> {
   try {
-    const url = new URL("/api/proxy/newsapi/v2/everything", window.location.origin);
+    const url = new URL("/api/proxy/bing-news/", window.location.origin);
     url.searchParams.set("q", query);
-    url.searchParams.set("searchIn", "title,description");
-    url.searchParams.set("sortBy", "relevancy");
-    url.searchParams.set("pageSize", "15");
-    const payload = await fetchJsonWithCorsFallback(url.toString());
-    if (!payload || !Array.isArray(payload.articles))
+    url.searchParams.set("format", "rss");
+    url.searchParams.set("setlang", "vi");
+    const response = await fetch(url.toString());
+    if (!response.ok)
     return [];
-    return payload.articles ?
-    payload.articles.map((article: any) => ({
-      title: article.title ?? "",
-      source: article.source?.name ?? "News API",
-      link: article.url ?? undefined,
-      publishedAt: article.publishedAt ?? undefined,
-      stance: getArticleClaimStance(article.title ?? "")
-    })).filter((article: PressArticle) => article.title) :
-    [];
+    const xmlText = await response.text();
+    if (!xmlText)
+    return [];
+    const xml = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (xml.getElementsByTagName("parsererror").length > 0)
+    return [];
+    const items = Array.from(xml.querySelectorAll("item")).slice(0, 15);
+    return items.map((item) => ({
+      title: item.querySelector("title")?.textContent?.trim() ?? "",
+      source: item.querySelector("News\\:Source")?.textContent?.trim() ?? item.querySelector("source")?.textContent?.trim() ?? "Bing News",
+      link: item.querySelector("link")?.textContent?.trim() ?? undefined,
+      publishedAt: item.querySelector("pubDate")?.textContent?.trim() ?? undefined,
+      stance: getArticleClaimStance(item.querySelector("title")?.textContent?.trim() ?? "")
+    })).filter((item) => item.title);
   }
   catch {
     return [];
@@ -705,25 +709,7 @@ async function fetchBingFactChecks(query: string): Promise<FactCheckClaim[]> {
   }
 }
 async function fetchFactChecks(queries: string[]): Promise<FactCheckClaim[]> {
-  const results = await Promise.all(queries.slice(0, 3).flatMap((query) => [
-  ["vi", query],
-  ["en", query]]
-  ).map(async ([languageCode, query]) => {
-    const googleClaims = await (async () => {
-      try {
-        const url = new URL("/api/proxy/factcheck/v1alpha1/claims:search", window.location.origin);
-        url.searchParams.set("query", query);
-        url.searchParams.set("languageCode", languageCode);
-        url.searchParams.set("pageSize", "5");
-        const payload = await fetchJsonWithCorsFallback(url.toString());
-        return Array.isArray(payload?.claims) ? payload.claims : [];
-      }
-      catch {
-        return [];
-      }
-    })();
-    if (googleClaims.length > 0)
-    return googleClaims;
+  const results = await Promise.all(queries.slice(0, 3).map(async (query) => {
     return fetchBingFactChecks(query);
   }));
   const flattened = results.flat();
