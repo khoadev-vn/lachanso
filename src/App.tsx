@@ -967,8 +967,8 @@ export default function App() {
     <div className="min-h-screen text-[#111111] selection:bg-orange-200/50">
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#f5f4f0]/90 backdrop-blur-md border-b border-black/10">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <button type="button" onClick={() => navigateToPage("home")} className="flex items-center gap-2">
-            <img src="/logo.png" alt="Lá Chắn Số" className="w-12 h-12" />
+          <button type="button" onClick={() => navigateToPage("home")} className="flex items-center gap-1">
+            <img src="/logo.png" alt="Lá Chắn Số" className="w-16 h-16" />
             <span className="font-bold text-[27px] tracking-tight text-[#ff8904]">Lá Chắn Số</span>
           </button>
 
@@ -1022,7 +1022,7 @@ export default function App() {
               { }
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="mb-10">
                 <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-black/10 text-sm font-semibold text-[#333] shadow-sm backdrop-blur">
-                  <img src="/logo.png" alt="" className="w-5 h-5" />
+                  <img src="/logo.png" alt="" className="w-8 h-8" />
                   Nền tảng xác thực thông tin Việt Nam
                   <ChevronRight className="w-3.5 h-3.5 opacity-40" />
                 </span>
@@ -2252,8 +2252,8 @@ export default function App() {
       </AnimatePresence>
       <footer className="py-12 border-t border-black/10 bg-white">
         <div className="max-w-[1600px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Lá Chắn Số" className="w-8 h-8" />
+          <div className="flex items-center gap-1">
+            <img src="/logo.png" alt="Lá Chắn Số" className="w-12 h-12" />
             <span className="text-xl font-bold tracking-tighter text-[#ff8904]">Lá Chắn Số</span>
           </div>
           <p className="text-sm text-[#4a5565]">
