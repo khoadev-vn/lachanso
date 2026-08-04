@@ -191,6 +191,10 @@ export default function App() {
   const [showResults, setShowResults] = useState(false);
   const [resultData, setResultData] = useState<any>(null);
 
+  const checkTimestamps = useRef<number[]>([]);
+  const RATE_LIMIT_MAX = 5;
+  const RATE_LIMIT_WINDOW = 60000;
+
   const [cachedNewsItems, setCachedNewsItems] = useState<any[]>([]);
 
   useEffect(() => {
@@ -336,6 +340,14 @@ export default function App() {
       e.preventDefault();
     if (!searchQuery.trim())
       return;
+
+    const now = Date.now();
+    checkTimestamps.current = checkTimestamps.current.filter(t => now - t < RATE_LIMIT_WINDOW);
+    if (checkTimestamps.current.length >= RATE_LIMIT_MAX) {
+      alert("Bạn đã kiểm tra quá nhiều lần. Vui lòng chờ 1 phút trước khi thử lại.");
+      return;
+    }
+    checkTimestamps.current.push(now);
 
 
     let isGambling = false;
