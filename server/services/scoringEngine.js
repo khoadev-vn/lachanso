@@ -56,8 +56,8 @@ async function analyzeAndScore(text) {
     if (factCheckResult && factCheckResult.claims && factCheckResult.claims.length > 0) {
         
         const hasFakeClaim = factCheckResult.claims.some(claim => {
-            const rating = (claim.claimReview[0]?.textualRating || "").toLowerCase();
-            return rating.includes("false") || rating.includes("fake") || rating.includes("sai") || rating.includes("không đúng") || rating.includes("chưa chính xác");
+            const rating = (claim.claimReview?.[0]?.textualRating || claim.rating || "").toLowerCase();
+            return rating.includes("false") || rating.includes("fake") || rating.includes("sai") || rating.includes("không đúng") || rating.includes("chưa chính xác") || rating.includes("might_be_fake");
         });
         
         if (hasFakeClaim) {
