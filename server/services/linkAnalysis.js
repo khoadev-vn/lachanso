@@ -573,6 +573,33 @@ async function analyzeLink(input) {
   const fullInput = url.toString();
   const isHttps = protocol === 'https:';
 
+  // ============ FAST PATH: OWN PROJECTS ============
+  const OWN_PROJECTS = new Set(['lachansovn.vercel.app', 'la-chan-so.vercel.app']);
+  if (OWN_PROJECTS.has(hostname)) {
+    return {
+      reasons: [
+        {
+          id: 'LINK_OWN_PROJECT',
+          name: 'Website chính thức Lá Chắn Số',
+          detail: `"${hostname}" là website chính thức của Lá Chắn Số - hệ thống chống tin giả hàng đầu Việt Nam.`,
+          status: 'success',
+          scoreDelta: 30
+        }
+      ],
+      score: 100,
+      hostname,
+      url: fullInput,
+      scamMatch: null,
+      whois: null,
+      destroylist: null,
+      ssl: null,
+      dns: null,
+      redirect: null,
+      pageAnalysis: null,
+      trustedDomain: true
+    };
+  }
+
   // ============ FAST PATH: WHITELIST BYPASS ============
   if (isTrustedDomain(hostname)) {
     return {

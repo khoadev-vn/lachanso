@@ -3,6 +3,10 @@
   "whitelist": {
     "_note": "Keys là root domains. Subdomain con cũng được chấp nhận (vd: mail.google.com → google.com).",
 
+    "own_projects": [
+      "lachansovn.vercel.app", "la-chan-so.vercel.app"
+    ],
+
     "vn_banks": [
       "vietcombank.com.vn", "vietcombank.com", "mbbank.com.vn", "mbbank.com",
       "techcombank.com.vn", "techcombank.com", "tcb-bank.vn",
