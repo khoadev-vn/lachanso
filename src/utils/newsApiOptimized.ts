@@ -1,6 +1,6 @@
 import { apiOrchestrator } from "./apiOrchestrator";
 import { withTimeout, RateLimiter } from "./performanceOptimizer";
-const NEWS_API_BASE = "/api/proxy/newsapi/v2";
+const BING_NEWS_BASE = "/api/proxy/bing-news/";
 export interface NewsArticle {
   title: string;
   description?: string;
@@ -42,28 +42,29 @@ export async function searchNews(query: string, options?: {
     }
     const params = new URLSearchParams({
       q: query,
-      sortBy: options?.sortBy || "relevancy",
-      pageSize: String(options?.pageSize || 15),
-      language: options?.language || "en"
+      format: "rss",
+      setlang: options?.language || "vi"
     });
     const startTime = performance.now();
-    const response = await withTimeout(fetch(`${NEWS_API_BASE}/everything?${params}`), 5000);
+    const response = await withTimeout(fetch(`${BING_NEWS_BASE}?${params}`), 5000);
     if (!response || !response.ok) {
-      console.error(`[v0] News API error: ${response?.statusText}`);
+      console.error(`[v0] Bing News error: ${response?.statusText}`);
       return [];
     }
-    const data = await response.json();
-    const articles: NewsArticle[] = (data.articles || []).
-    slice(0, 15).
-    map((article: any) => ({
-      title: article.title,
-      description: article.description,
-      url: article.url,
-      source: article.source,
-      author: article.author,
-      publishedAt: article.publishedAt,
-      content: article.content?.substring(0, 500),
-      image: article.urlToImage
+    const xmlText = await response.text();
+    if (!xmlText) return [];
+    const xml = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (xml.getElementsByTagName("parsererror").length > 0) return [];
+    const items = Array.from(xml.querySelectorAll("item")).slice(0, options?.pageSize || 15);
+    const articles: NewsArticle[] = items.map((item) => ({
+      title: item.querySelector("title")?.textContent?.trim() ?? "",
+      description: undefined,
+      url: item.querySelector("link")?.textContent?.trim() ?? "",
+      source: { name: item.querySelector("News\\:Source")?.textContent?.trim() ?? item.querySelector("source")?.textContent?.trim() ?? "Bing News" },
+      author: undefined,
+      publishedAt: item.querySelector("pubDate")?.textContent?.trim() ?? new Date().toISOString(),
+      content: undefined,
+      image: undefined
     }));
     const responseTime = performance.now() - startTime;
     apiOrchestrator.recordAPICall("newsApi", responseTime, true);

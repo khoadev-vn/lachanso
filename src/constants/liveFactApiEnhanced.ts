@@ -66,43 +66,7 @@ export function extractClaimsFromText(text: string): ClaimExtractionResult[] {
   return claims.slice(0, 10);
 }
 export async function verifyClaimWithGoogle(claim: string): Promise<FactCheckResult | null> {
-  const cacheKey = `fact_check_google_${hashClaim(claim)}`;
-  const cached = factCheckCache.get<FactCheckResult>(cacheKey);
-  if (cached) {
-    return cached;
-  }
-  try {
-    await rateLimiter.acquire();
-    const url = `/api/proxy/factcheck/v1alpha1/claims:search?query=${encodeURIComponent(claim)}&languageCode=vi`;
-    const response = await withTimeout(fetch(url), 3000);
-    if (!response)
-    return null;
-    const data = await response.json();
-    const claims = data.claims || [];
-    if (claims.length === 0) {
-      return null;
-    }
-    const topClaim = claims[0];
-    const claimReview = (topClaim.claimReview || [])[0];
-    if (!claimReview) {
-      return null;
-    }
-    const result: FactCheckResult = {
-      claim: topClaim.text || claim,
-      rating: mapFactCheckRating(claimReview.textualRating),
-      confidence: getConfidenceForRating(claimReview.textualRating),
-      source: claimReview.publisher?.name || "Google Fact Check",
-      url: claimReview.url,
-      explanation: claimReview.title,
-      publishedDate: claimReview.claimDate
-    };
-    factCheckCache.set(cacheKey, result, 30 * 60 * 1000);
-    return result;
-  }
-  catch (error) {
-    console.error("[v0] Google Fact Check API error:", error);
-    return null;
-  }
+  return null;
 }
 export async function verifyClaimsInBatch(claims: string[]): Promise<FactCheckResult[]> {
   const tasks = claims.map((claim) => () => verifyClaimWithGoogle(claim));
