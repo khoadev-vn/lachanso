@@ -41,8 +41,123 @@ export interface LCSEngineResult {
 
 import { aiEngine } from "../utils/transformerEngine";
 
+// Educational content detection — distinguish articles ABOUT fake news FROM fake news
+const EDUCATIONAL_INDICATORS = [
+  /cách (nhận biết|phát hiện|nhận ra|tránh|phòng)/i,
+  /hướng dẫn.*(?:nhận biết|phát hiện|phòng tránh|tránh)/i,
+  /làm sao để (nhận biết|phát hiện|tránh|nhận ra)/i,
+  /làm thế nào để (nhận biết|phát hiện|tránh|nhận ra)/i,
+  /dấu hiệu.*(?:tin giả|lừa đảo|fake|scam|gian lận)/i,
+  /biết.*(?:tin giả|lừa đảo|fake|scam)/i,
+  /nhận dạng.*(?:tin giả|lừa đảo|thông tin sai)/i,
+  /tránh.*(?:tin giả|bị lừa|bị lừa đảo)/i,
+  /phòng.*(?:tin giả|lừa đảo)/i,
+  /kiểm tra.*(?:tin giả|thông tin|tin tức)/i,
+  /xác minh.*(?:tin tức|thông tin)/i,
+  /cảnh báo.*(?:tin giả|lừa đảo)/i,
+  /biểu hiện.*(?:tin giả|lừa đảo)/i,
+  /đặc điểm.*(?:tin giả|lừa đảo)/i,
+  /mẹo.*(?:nhận biết|phát hiện|tránh)/i,
+  /thủ đoạn.*(?:tin giả|lừa đảo)/i,
+  /các bước.*(?:kiểm tra|xác minh|nhận biết)/i,
+  /bài viết.*(?:hướng dẫn|chia sẻ|giới thiệu)/i,
+  /giới thiệu.*(?:cách|phương pháp|biện pháp)/i,
+];
 
+// Context patterns — keywords used in EXAMPLE/QUOTE context (not actual claims)
+const EXAMPLE_CONTEXT_PATTERNS = [
+  /(?:ví dụ|ví dụ như|chẳng hạn|thí dụ|vd)[:\s].*\b(sốc|kinh hoàng|gây sốc|chấn động)\b/i,
+  /(?:điển hình|thường thấy|phổ biến|hay gặp)[:\s].*\b(sốc|kinh hoàng)\b/i,
+  /(?:tiêu đề|tin nhắn|thông báo).*(?:sốc|kinh hoàng|gây sốc)/i,
+  /(?:ví dụ|ví dụ về).*(?:tiêu đề giật gân|tin giật gân)/i,
+  /\b(sốc|kinh hoàng)\b.*(?:đây là|đó là|được xem là|thường là)/i,
+  /(?:không|đừng|tránh|cẩn thận).*(?:tin|bài).*(?:sốc|kinh hoàng|gây sốc)/i,
+];
 
+function detectEducationalContent(text: string): {
+  isEducational: boolean;
+  confidence: number;
+  indicators: string[];
+} {
+  const indicators: string[] = [];
+  let confidence = 0;
+
+  for (const pattern of EDUCATIONAL_INDICATORS) {
+    if (pattern.test(text)) {
+      indicators.push(pattern.source);
+      confidence += 0.15;
+    }
+  }
+
+  // Check for example contexts — keywords used in example/quote
+  let exampleContextCount = 0;
+  for (const pattern of EXAMPLE_CONTEXT_PATTERNS) {
+    if (pattern.test(text)) {
+      exampleContextCount++;
+    }
+  }
+  if (exampleContextCount > 0) {
+    confidence += exampleContextCount * 0.1;
+  }
+
+  // Structural signals — numbered lists, step-by-step = educational
+  const hasNumberedList = /(?:1\.|2\.|3\.|4\.|5\.|6\.|7\.|8\.|9\.|10\.)/g.test(text);
+  if (hasNumberedList) {
+    confidence += 0.05;
+  }
+
+  // Article with question format = educational
+  const hasQuestion = /\?|(?:như thế nào|như nào|ra sao|thế nào)/i.test(text);
+  if (hasQuestion) {
+    confidence += 0.05;
+  }
+
+  return {
+    isEducational: confidence >= 0.25,
+    confidence: Math.min(confidence, 1),
+    indicators
+  };
+}
+
+// Context-aware keyword analysis — check if keywords are used as examples vs actual claims
+function analyzeKeywordContext(text: string, keyword: string): {
+  isExample: boolean;
+  isClaim: boolean;
+  contextType: 'example' | 'claim' | 'warning' | 'neutral';
+} {
+  const lower = text.toLowerCase();
+  const kwLower = keyword.toLowerCase();
+  const idx = lower.indexOf(kwLower);
+
+  if (idx === -1) {
+    return { isExample: false, isClaim: false, contextType: 'neutral' };
+  }
+
+  // Get surrounding context (100 chars before and after)
+  const start = Math.max(0, idx - 100);
+  const end = Math.min(text.length, idx + keyword.length + 100);
+  const context = text.substring(start, end).toLowerCase();
+
+  // Warning context — "avoid", "beware", "don't trust"
+  const warningPatterns = /(?:tránh|cảnh báo|đừng|không nên|cẩn thận|kiểm tra|đối chiếu|xác minh|nhận biết|phát hiện|làm sao|làm thế nào)/i;
+  if (warningPatterns.test(context)) {
+    return { isExample: false, isClaim: false, contextType: 'warning' };
+  }
+
+  // Example context — "for example", "such as", "typically"
+  const examplePatterns = /(?:ví dụ|chẳng hạn|thí dụ|vd|điển hình|thường thấy|phổ biến|như|tức là|ý là|đây là)/i;
+  if (examplePatterns.test(context)) {
+    return { isExample: true, isClaim: false, contextType: 'example' };
+  }
+
+  // Quote context — within quotes or reported speech
+  const quotePatterns = /["""][^""]*["""]|'.*?'|「.*?」|\(.*?\)/i;
+  if (quotePatterns.test(context)) {
+    return { isExample: true, isClaim: false, contextType: 'example' };
+  }
+
+  return { isExample: false, isClaim: true, contextType: 'claim' };
+}
 
 const EMOTIONAL_WORDS_VI = [
 "khẩn", "gấp", "ngay", "lập tức", "ngay bây giờ", "không chậm trễ",
@@ -71,13 +186,35 @@ const URGENCY_TRIGGERS = [
 async function runLinguisticLayer(text: string): Promise<LCSLayerResult> {
   const signals: LCSSignal[] = [];
 
+  // Detect educational content first
+  const educational = detectEducationalContent(text);
+
+  if (educational.isEducational) {
+    signals.push({
+      id: "EDU_CONTENT",
+      layer: "linguistic",
+      name: "Nội dung giáo dục/hướng dẫn",
+      detail: `Bài viết được xác định là nội dung giáo dục về cách nhận biết tin giả (độ tin cậy: ${(educational.confidence * 100).toFixed(0)}%). Từ khóa cảnh báo trong bối cảnh hướng dẫn KHÔNG được tính là tín hiệu lừa đảo.`,
+      impact: +30,
+      severity: "safe"
+    });
+  }
 
   const nlpResults = await aiEngine.analyze(text);
   if (nlpResults.length > 0) {
     const topMatch = nlpResults[0];
 
-
-    if (topMatch.similarity >= 0.55 && !topMatch.category.startsWith("SAFE_")) {
+    // For educational content, NLP matches are likely discussing scam patterns, not BEING a scam
+    if (educational.isEducational && topMatch.similarity >= 0.55 && !topMatch.category.startsWith("SAFE_")) {
+      signals.push({
+        id: "NLP_NEURAL_MATCH_EDU",
+        layer: "linguistic",
+        name: "AI: Phát hiện thảo luận về kịch bản thao túng",
+        detail: `Văn bản có độ tương đồng ${(topMatch.similarity * 100).toFixed(1)}% với kịch bản [${topMatch.category}] — đây là nội dung thảo luận/hướng dẫn, KHÔNG phải lừa đảo.`,
+        impact: +10,
+        severity: "safe"
+      });
+    } else if (topMatch.similarity >= 0.55 && !topMatch.category.startsWith("SAFE_")) {
       const impactScore = -Math.min(60, Math.round(topMatch.similarity * 80));
       signals.push({
         id: "NLP_NEURAL_MATCH",
@@ -98,8 +235,7 @@ async function runLinguisticLayer(text: string): Promise<LCSLayerResult> {
       });
     }
 
-
-    if (topMatch.similarity >= 0.70 && !topMatch.category.startsWith("SAFE_")) {
+    if (topMatch.similarity >= 0.70 && !topMatch.category.startsWith("SAFE_") && !educational.isEducational) {
       const rawScore = signals.reduce((sum, s) => sum + s.impact, 0);
       return {
         score: Math.max(-100, Math.min(100, rawScore)),
@@ -110,44 +246,84 @@ async function runLinguisticLayer(text: string): Promise<LCSLayerResult> {
     }
   }
 
-
   const words = text.split(/\s+/).filter(Boolean);
   const totalWords = Math.max(words.length, 1);
-  const emotionalCount = EMOTIONAL_WORDS_VI.filter((w) => text.toLowerCase().includes(w.toLowerCase())).length;
-  const emotionalDensity = emotionalCount / totalWords;
-  if (emotionalDensity > 0.04) {
-    signals.push({
-      id: "LF_EMO_HIGH",
-      layer: "linguistic",
-      name: "Mật độ cảm xúc bất thường",
-      detail: `Tỷ lệ từ ngữ kích động chiếm ${(emotionalDensity * 100).toFixed(1)}% văn bản — vượt ngưỡng chuẩn báo chí (≤2%).`,
-      impact: -18,
-      severity: "danger"
-    });
-  } else
-  if (emotionalDensity > 0.02) {
-    signals.push({
-      id: "LF_EMO_MED",
-      layer: "linguistic",
-      name: "Ngôn ngữ có yếu tố cảm xúc",
-      detail: `Phát hiện từ ngữ kích động ở mức vừa (${(emotionalDensity * 100).toFixed(1)}%). Cần đối chiếu thêm.`,
-      impact: -8,
-      severity: "warning"
-    });
+
+  // Context-aware emotional density analysis
+  let emotionalAsExample = 0;
+  let emotionalAsClaim = 0;
+  for (const word of EMOTIONAL_WORDS_VI) {
+    const contexts = analyzeKeywordContext(text, word);
+    if (contexts.contextType === 'example' || contexts.contextType === 'warning') {
+      emotionalAsExample++;
+    } else if (contexts.contextType === 'claim') {
+      emotionalAsClaim++;
+    }
   }
+
+  const emotionalDensity = (emotionalAsExample + emotionalAsClaim) / totalWords;
+
+  if (!educational.isEducational) {
+    // Original behavior for non-educational content
+    if (emotionalDensity > 0.04) {
+      signals.push({
+        id: "LF_EMO_HIGH",
+        layer: "linguistic",
+        name: "Mật độ cảm xúc bất thường",
+        detail: `Tỷ lệ từ ngữ kích động chiếm ${(emotionalDensity * 100).toFixed(1)}% văn bản — vượt ngưỡng chuẩn báo chí (≤2%).`,
+        impact: -18,
+        severity: "danger"
+      });
+    } else if (emotionalDensity > 0.02) {
+      signals.push({
+        id: "LF_EMO_MED",
+        layer: "linguistic",
+        name: "Ngôn ngữ có yếu tố cảm xúc",
+        detail: `Phát hiện từ ngữ kích động ở mức vừa (${(emotionalDensity * 100).toFixed(1)}%). Cần đối chiếu thêm.`,
+        impact: -8,
+        severity: "warning"
+      });
+    }
+  } else {
+    // Educational content — emotional words are explained, not used
+    if (emotionalAsExample > 0) {
+      signals.push({
+        id: "LF_EMO_EDU_EXAMPLE",
+        layer: "linguistic",
+        name: "Từ ngữ cảm xúc trong bối cảnh hướng dẫn",
+        detail: `${emotionalAsExample} từ ngữ cảm xúc được phát hiện trong bối cảnh ví dụ/hướng dẫn — không tính là tín hiệu lừa đảo.`,
+        impact: +5,
+        severity: "safe"
+      });
+    }
+  }
+
+  // Context-aware vague source analysis
+  let vagueAsExample = 0;
+  let vagueAsClaim = 0;
+  const vagueKeywords = ['theo nguồn tin', 'được biết', 'có thông tin', 'nghe nói'];
+  for (const vk of vagueKeywords) {
+    const ctx = analyzeKeywordContext(text, vk);
+    if (ctx.contextType === 'example' || ctx.contextType === 'warning') {
+      vagueAsExample++;
+    } else if (ctx.contextType === 'claim') {
+      vagueAsClaim++;
+    }
+  }
+
   const vagueMatches = VAGUE_SOURCE_PATTERNS.filter((p) => p.test(text));
-  if (vagueMatches.length >= 2) {
-    signals.push({
-      id: "LF_SRC_VAGUE",
-      layer: "linguistic",
-      name: "Nguồn gốc thông tin mơ hồ",
-      detail: `Phát hiện ${vagueMatches.length} cụm trích dẫn mờ nhạt, không rõ danh tính. Tiêu chí báo chí yêu cầu nguồn có thể xác minh.`,
-      impact: -14,
-      severity: "danger"
-    });
-  } else
-  if (vagueMatches.length === 1) {
-    signals.push({
+  if (!educational.isEducational) {
+    if (vagueMatches.length >= 2) {
+      signals.push({
+        id: "LF_SRC_VAGUE",
+        layer: "linguistic",
+        name: "Nguồn gốc thông tin mơ hồ",
+        detail: `Phát hiện ${vagueMatches.length} cụm trích dẫn mờ nhạt, không rõ danh tính. Tiêu chí báo chí yêu cầu nguồn có thể xác minh.`,
+        impact: -14,
+        severity: "danger"
+      });
+    } else if (vagueMatches.length === 1) {
+      signals.push({
       id: "LF_SRC_VAGUE_LOW",
       layer: "linguistic",
       name: "Trích dẫn chưa rõ nguồn",
@@ -156,46 +332,91 @@ async function runLinguisticLayer(text: string): Promise<LCSLayerResult> {
       severity: "warning"
     });
   }
-  const absoluteCount = ABSOLUTISM_WORDS.filter((w) => text.toLowerCase().includes(w.toLowerCase())).length;
-  if (absoluteCount >= 3) {
+  // Context-aware absolutism detection
+  let absoluteAsExample = 0;
+  let absoluteAsClaim = 0;
+  for (const word of ABSOLUTISM_WORDS) {
+    const ctx = analyzeKeywordContext(text, word);
+    if (ctx.contextType === 'example' || ctx.contextType === 'warning') {
+      absoluteAsExample++;
+    } else if (ctx.contextType === 'claim') {
+      absoluteAsClaim++;
+    }
+  }
+
+  if (!educational.isEducational) {
+    const absoluteCount = ABSOLUTISM_WORDS.filter((w) => text.toLowerCase().includes(w.toLowerCase())).length;
+    if (absoluteCount >= 3) {
+      signals.push({
+        id: "LF_ABS_HIGH",
+        layer: "linguistic",
+        name: "Khẳng định tuyệt đối hoá",
+        detail: `${absoluteCount} cụm từ tuyệt đối hoá được phát hiện. Ngôn ngữ đáng tin dùng từ ngữ có sắc thái, không khẳng định cực đoan.`,
+        impact: -12,
+        severity: "danger"
+      });
+    } else if (absoluteCount >= 1) {
+      signals.push({
+        id: "LF_ABS_LOW",
+        layer: "linguistic",
+        name: "Có từ ngữ khẳng định tuyệt đối",
+        detail: `Phát hiện ${absoluteCount} cụm tuyệt đối hoá. Mức độ chưa đáng lo nhưng cần lưu ý.`,
+        impact: -4,
+        severity: "warning"
+      });
+    }
+  } else if (absoluteAsExample > 0) {
     signals.push({
-      id: "LF_ABS_HIGH",
+      id: "LF_ABS_EDU",
       layer: "linguistic",
-      name: "Khẳng định tuyệt đối hoá",
-      detail: `${absoluteCount} cụm từ tuyệt đối hoá được phát hiện. Ngôn ngữ đáng tin dùng từ ngữ có sắc thái, không khẳng định cực đoan.`,
-      impact: -12,
-      severity: "danger"
-    });
-  } else
-  if (absoluteCount >= 1) {
-    signals.push({
-      id: "LF_ABS_LOW",
-      layer: "linguistic",
-      name: "Có từ ngữ khẳng định tuyệt đối",
-      detail: `Phát hiện ${absoluteCount} cụm tuyệt đối hoá. Mức độ chưa đáng lo nhưng cần lưu ý.`,
-      impact: -4,
-      severity: "warning"
+      name: "Từ ngữ tuyệt đối hoá trong bối cảnh hướng dẫn",
+      detail: `${absoluteAsExample} từ ngữ tuyệt đối hóa trong bối cảnh ví dụ/hướng dẫn — không tính là tín hiệu lừa đảo.`,
+      impact: +3,
+      severity: "safe"
     });
   }
+
+  // Context-aware urgency detection
   const urgencyMatches = URGENCY_TRIGGERS.filter((p) => p.test(text));
-  if (urgencyMatches.length >= 2) {
+  let urgencyAsExample = 0;
+  if (educational.isEducational) {
+    const urgencyKeywords = ['trong vòng', 'còn lại', 'hết hạn', 'deadline'];
+    for (const uk of urgencyKeywords) {
+      const ctx = analyzeKeywordContext(text, uk);
+      if (ctx.contextType === 'example' || ctx.contextType === 'warning') {
+        urgencyAsExample++;
+      }
+    }
+  }
+
+  if (!educational.isEducational || urgencyAsExample === 0) {
+    if (urgencyMatches.length >= 2) {
+      signals.push({
+        id: "LF_URG_HIGH",
+        layer: "linguistic",
+        name: "Áp lực thời gian nhân tạo",
+        detail: `${urgencyMatches.length} dấu hiệu tạo áp lực thời gian. Kỹ thuật phổ biến trong lừa đảo tài chính và giả mạo cơ quan.`,
+        impact: -16,
+        severity: "danger"
+      });
+    } else if (urgencyMatches.length === 1) {
+      signals.push({
+        id: "LF_URG_LOW",
+        layer: "linguistic",
+        name: "Dấu hiệu áp lực thời gian nhẹ",
+        detail: "Có một yếu tố tạo cấp bách. Có thể là tin thật nhưng cần đối chiếu.",
+        impact: -7,
+        severity: "warning"
+      });
+    }
+  } else {
     signals.push({
-      id: "LF_URG_HIGH",
+      id: "LF_URG_EDU",
       layer: "linguistic",
-      name: "Áp lực thời gian nhân tạo",
-      detail: `${urgencyMatches.length} dấu hiệu tạo áp lực thời gian. Kỹ thuật phổ biến trong lừa đảo tài chính và giả mạo cơ quan.`,
-      impact: -16,
-      severity: "danger"
-    });
-  } else
-  if (urgencyMatches.length === 1) {
-    signals.push({
-      id: "LF_URG_LOW",
-      layer: "linguistic",
-      name: "Dấu hiệu áp lực thời gian nhẹ",
-      detail: "Có một yếu tố tạo cấp bách. Có thể là tin thật nhưng cần đối chiếu.",
-      impact: -7,
-      severity: "warning"
+      name: "Yếu tố áp lực trong bối cảnh hướng dẫn",
+      detail: `Yếu tố cấp bách được phát hiện trong bối cảnh ví dụ/hướng dẫn — không tính là tín hiệu lừa đảo.`,
+      impact: +3,
+      severity: "safe"
     });
   }
   const hasByline = /phóng viên|biên tập|tác giả:|ghi nhận của/i.test(text);
@@ -283,6 +504,9 @@ function runTrustLayer(text: string): LCSLayerResult {
   let matchedEntity = "";
   let matchedNote = "";
   
+  // Detect educational content
+  const educational = detectEducationalContent(text);
+  
   // Extract all URLs from text for domain matching
   const urlPattern = /https?:\/\/[^\s]+/gi;
   const urls = text.match(urlPattern) || [];
@@ -290,10 +514,21 @@ function runTrustLayer(text: string): LCSLayerResult {
   const domains = text.match(domainPattern) || [];
   const allUrls = [...urls, ...domains].map(u => u.toLowerCase());
   
-  // Check for domain impersonation first
+  // Check for domain impersonation first (but NOT in educational context)
   const fakeDomainDetected = /(facebook|google|microsoft|apple|instagram|zalo|viettel|vinaphone|mobifone)\.(com\.)?(xy|xyz|club|top|icu|buzz|info|site|online|click|link|live|cam)/i.test(text);
   
-  if (fakeDomainDetected) {
+  // Check if domain impersonation is mentioned in educational context
+  const domainImpersonationIsExample = educational.isEducational && (() => {
+    const match = text.match(/(facebook|google|microsoft|apple|instagram|zalo|viettel|vinaphone|mobifone)\.(com\.)?(xy|xyz|club|top|icu|buzz|info|site|online|click|link|live|cam)/i);
+    if (!match) return false;
+    const matchIdx = text.indexOf(match[0]);
+    const contextStart = Math.max(0, matchIdx - 150);
+    const contextEnd = Math.min(text.length, matchIdx + match[0].length + 150);
+    const context = text.substring(contextStart, contextEnd).toLowerCase();
+    return /(?:ví dụ|chẳng hạn|điển hình|cảnh báo|tránh|đừng|nhận biết|phát hiện|thường thấy|phổ biến|thủ đoạn|biểu hiện|dấu hiệu|đặc điểm)/i.test(context);
+  })();
+  
+  if (fakeDomainDetected && !domainImpersonationIsExample) {
     signals.push({
       id: "TG_DOMAIN_IMPERSONATION",
       layer: "trust",
@@ -301,6 +536,15 @@ function runTrustLayer(text: string): LCSLayerResult {
       detail: "Tên miền giả mạo thương hiệu nổi tiếng (thêm hậu tố .xyz, .club, .top...). Kỹ thuật phishing phổ biến để đánh cắp tài khoản.",
       impact: -50,
       severity: "danger"
+    });
+  } else if (fakeDomainDetected && domainImpersonationIsExample) {
+    signals.push({
+      id: "TG_DOMAIN_IMPERSONATION_EDU",
+      layer: "trust",
+      name: "Tên miền giả mạo trong bối cảnh hướng dẫn",
+      detail: "Tên miền giả mạo được nhắc đến trong bối cảnh giáo dục/hướng dẫn — đây là ví dụ minh họa, KHÔNG phải lừa đảo thực tế.",
+      impact: +10,
+      severity: "safe"
     });
   }
   
@@ -330,8 +574,7 @@ function runTrustLayer(text: string): LCSLayerResult {
       impact: +25,
       severity: "safe"
     });
-  } else
-  if (maxTrustScore >= 70) {
+  } else if (maxTrustScore >= 70) {
     signals.push({
       id: "TG_TRUSTED_MED",
       layer: "trust",
@@ -340,15 +583,19 @@ function runTrustLayer(text: string): LCSLayerResult {
       impact: +10,
       severity: "safe"
     });
-  } else
-  if (maxTrustScore === 0) {
+  } else if (maxTrustScore === 0) {
+    // Educational content gets less penalty for no source — it's teaching, not claiming news
+    const noSourceImpact = educational.isEducational ? -5 : -15;
+    const noSourceSeverity = educational.isEducational ? "warning" : "warning";
     signals.push({
       id: "TG_NO_SOURCE",
       layer: "trust",
-      name: "Không tìm thấy nguồn tin trong đồ thị LCS",
-      detail: "Văn bản không tham chiếu tới bất kỳ đơn vị báo chí nào trong cơ sở dữ liệu LCS Trust Graph.",
-      impact: -15,
-      severity: "warning"
+      name: educational.isEducational ? "Nội dung giáo dục — không có nguồn báo chí" : "Không tìm thấy nguồn tin trong đồ thị LCS",
+      detail: educational.isEducational
+        ? "Bài viết giáo dục/hướng dẫn — không bắt buộc phải có nguồn báo chí cụ thể."
+        : "Văn bản không tham chiếu tới bất kỳ đơn vị báo chí nào trong cơ sở dữ liệu LCS Trust Graph.",
+      impact: noSourceImpact,
+      severity: noSourceSeverity
     });
   }
   const highRiskMatches = HIGH_RISK_ENTITIES.filter((p) => p.test(text));
@@ -362,17 +609,6 @@ function runTrustLayer(text: string): LCSLayerResult {
       severity: "danger"
     });
   }
-  const fakeDomainMatch = /(facebook|google|microsoft|apple|instagram|zalo|viettel|vinaphone|mobifone)\.(com\.)?(xy|xyz|club|top|icu|buzz|info|site|online|click|link|live|cam)/i.test(text);
-  if (fakeDomainMatch) {
-    signals.push({
-      id: "TG_DOMAIN_IMPERSONATION",
-      layer: "trust",
-      name: "Phát hiện tên miền giả mạo",
-      detail: "Tên miền giả mạo thương hiệu nổi tiếng (thêm hậu tố .xyz, .club, .top...). Kỹ thuật phishing phổ biến để đánh cắp tài khoản.",
-      impact: -50,
-      severity: "danger"
-    });
-  }
   if (/\.gov\.vn/i.test(text)) {
     signals.push({
       id: "TG_GOV_DOMAIN",
@@ -383,10 +619,31 @@ function runTrustLayer(text: string): LCSLayerResult {
       severity: "safe"
     });
   }
+  
+  // Authority impersonation check — context-aware for educational content
   const claimsAuthority = /Bộ Công an|Bộ Y tế|Cục An ninh|Viện kiểm sát|Tòa án nhân dân|VNeID|Cục Cảnh sát|Bộ Công Thương|Bộ Ngoại giao|Bộ GTVT|Bộ Tài chính|Chính phủ|UBND|Tổng cục Thống kê|Ngân hàng Nhà nước/i.test(text);
   const hasGovDomain = /\.gov\.vn/i.test(text);
   const hasScamIntent = /OTP|mật khẩu|chuyển tiền|cung cấp thông tin tài khoản|truy cập link|bấm vào link|nộp phạt|liên quan đến vụ|rửa tiền|lệnh bắt|phong tỏa tài sản|xác thực danh tính|đăng nhập ngay|khóa tài khoản|bị khóa|gian lận|hoàn thuế|sinh trắc học|thông tin cá nhân/i.test(text) || /https?:\/\/[^\s]+/.test(text);
-  if (claimsAuthority && !hasGovDomain && hasScamIntent) {
+  
+  // Check if authority mention is in educational context
+  const authorityIsExample = educational.isEducational && claimsAuthority && (() => {
+    const authorityPatterns = [/Bộ Công an/i, /Bộ Y tế/i, /Cục An ninh/i, /Viện kiểm sát/i, /Tòa án nhân dân/i, /VNeID/i];
+    for (const ap of authorityPatterns) {
+      const match = text.match(ap);
+      if (match) {
+        const matchIdx = text.indexOf(match[0]);
+        const contextStart = Math.max(0, matchIdx - 150);
+        const contextEnd = Math.min(text.length, matchIdx + match[0].length + 150);
+        const context = text.substring(contextStart, contextEnd).toLowerCase();
+        if (/(?:giả mạo|mạo danh|kịch bản|thủ đoạn|cảnh báo|tránh|đừng|nhận biết|phát hiện|ví dụ)/i.test(context)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  })();
+  
+  if (claimsAuthority && !hasGovDomain && hasScamIntent && !authorityIsExample) {
     signals.push({
       id: "TG_AUTHORITY_FAKE",
       layer: "trust",
@@ -395,7 +652,29 @@ function runTrustLayer(text: string): LCSLayerResult {
       impact: -35,
       severity: "danger"
     });
+  } else if (claimsAuthority && !hasGovDomain && hasScamIntent && authorityIsExample) {
+    signals.push({
+      id: "TG_AUTHORITY_FAKE_EDU",
+      layer: "trust",
+      name: "Mạo danh cơ quan trong bối cảnh hướng dẫn",
+      detail: "Mẫu mạo danh cơ quan nhà nước được nhắc đến trong bối cảnh giáo dục/hướng dẫn — đây là ví dụ minh họa, KHÔNG phải lừa đảo thực tế.",
+      impact: +10,
+      severity: "safe"
+    });
   }
+  
+  // Educational content bonus
+  if (educational.isEducational) {
+    signals.push({
+      id: "TG_EDUCATIONAL",
+      layer: "trust",
+      name: "Nội dung giáo dục phòng chống lừa đảo",
+      detail: `Bài viết được xác định là nội dung hướng dẫn nhận biết tin giả — giá trị cộng đồng, cần được khuyến khích.`,
+      impact: +20,
+      severity: "safe"
+    });
+  }
+  
   const rawScore = signals.reduce((sum, s) => sum + s.impact, 0);
   const normalised = Math.max(-100, Math.min(100, rawScore));
   const hasDanger = signals.some((s) => s.severity === "danger");
@@ -530,16 +809,43 @@ const VN_LEGIT_PATTERNS: Array<{
 
 function runBehavioralLayer(text: string): LCSLayerResult {
   const signals: LCSSignal[] = [];
+
+  // Detect educational content for context-aware scoring
+  const educational = detectEducationalContent(text);
+
   for (const pattern of VN_SCAM_PATTERNS) {
     if (pattern.pattern.test(text)) {
-      signals.push({
-        id: pattern.id,
-        layer: "behavioral",
-        name: pattern.name,
-        detail: pattern.detail,
-        impact: pattern.impact,
-        severity: "danger"
-      });
+      // Check if this pattern match is in an example/warning context
+      const isContextual = educational.isEducational && (() => {
+        const match = text.match(pattern.pattern);
+        if (!match) return false;
+        const matchIdx = text.indexOf(match[0]);
+        const contextStart = Math.max(0, matchIdx - 150);
+        const contextEnd = Math.min(text.length, matchIdx + match[0].length + 150);
+        const context = text.substring(contextStart, contextEnd).toLowerCase();
+        return /(?:ví dụ|chẳng hạn|điển hình|cảnh báo|tránh|đừng|nhận biết|phát hiện|thường thấy|phổ biến|thủ đoạn|biểu hiện|dấu hiệu|đặc điểm)/i.test(context);
+      })();
+
+      if (isContextual) {
+        // Pattern found in educational context — this is a red flag being explained, not used
+        signals.push({
+          id: pattern.id + "_EDU",
+          layer: "behavioral",
+          name: `${pattern.name} (trong bối cảnh hướng dẫn)`,
+          detail: `Mẫu hành vi "${pattern.name}" được phát hiện trong bối cảnh giáo dục/hướng dẫn — đây là ví dụ minh họa, KHÔNG phải lừa đảo thực tế.`,
+          impact: Math.abs(pattern.impact) * 0.3, // Partial positive impact
+          severity: "safe"
+        });
+      } else {
+        signals.push({
+          id: pattern.id,
+          layer: "behavioral",
+          name: pattern.name,
+          detail: pattern.detail,
+          impact: pattern.impact,
+          severity: "danger"
+        });
+      }
     }
   }
   for (const pattern of VN_LEGIT_PATTERNS) {
@@ -554,6 +860,19 @@ function runBehavioralLayer(text: string): LCSLayerResult {
       });
     }
   }
+
+  // Educational content bonus
+  if (educational.isEducational) {
+    signals.push({
+      id: "BP_EDUCATIONAL",
+      layer: "behavioral",
+      name: "Nội dung giáo dục phòng chống lừa đảo",
+      detail: `Bài viết được xác định là nội dung hướng dẫn nhận biết tin giả (độ tin cậy: ${(educational.confidence * 100).toFixed(0)}%). Đây là nội dung có giá trị cộng đồng.`,
+      impact: +25,
+      severity: "safe"
+    });
+  }
+
   const rawScore = signals.reduce((sum, s) => sum + s.impact, 0);
   const normalised = Math.max(-100, Math.min(100, rawScore));
   const dangerSignals = signals.filter((s) => s.severity === "danger");

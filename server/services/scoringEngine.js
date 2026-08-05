@@ -6,6 +6,45 @@ const semanticFilter = require('./semanticFilter');
 const nliChecker = require('./nliChecker');
 const vectorCache = require('./vectorCache');
 
+// Educational content detection — distinguish articles ABOUT fake news FROM fake news
+const EDUCATIONAL_INDICATORS = [
+  /cách (nhận biết|phát hiện|nhận ra|tránh|phòng)/i,
+  /hướng dẫn.*(?:nhận biết|phát hiện|phòng tránh|tránh)/i,
+  /làm sao để (nhận biết|phát hiện|tránh|nhận ra)/i,
+  /làm thế nào để (nhận biết|phát hiện|tránh|nhận ra)/i,
+  /dấu hiệu.*(?:tin giả|lừa đảo|fake|scam|gian lận)/i,
+  /biết.*(?:tin giả|lừa đảo|fake|scam)/i,
+  /nhận dạng.*(?:tin giả|lừa đảo|thông tin sai)/i,
+  /tránh.*(?:tin giả|bị lừa|bị lừa đảo)/i,
+  /phòng.*(?:tin giả|lừa đảo)/i,
+  /kiểm tra.*(?:tin giả|thông tin|tin tức)/i,
+  /xác minh.*(?:tin tức|thông tin)/i,
+  /cảnh báo.*(?:tin giả|lừa đảo)/i,
+  /biểu hiện.*(?:tin giả|lừa đảo)/i,
+  /đặc điểm.*(?:tin giả|lừa đảo)/i,
+  /mẹo.*(?:nhận biết|phát hiện|tránh)/i,
+  /thủ đoạn.*(?:tin giả|lừa đảo)/i,
+  /các bước.*(?:kiểm tra|xác minh|nhận biết)/i,
+  /bài viết.*(?:hướng dẫn|chia sẻ|giới thiệu)/i,
+  /giới thiệu.*(?:cách|phương pháp|biện pháp)/i,
+];
+
+function detectEducationalContent(text) {
+  let confidence = 0;
+  for (const pattern of EDUCATIONAL_INDICATORS) {
+    if (pattern.test(text)) {
+      confidence += 0.15;
+    }
+  }
+  // Structural signals — numbered lists = educational
+  const hasNumberedList = /(?:1\.|2\.|3\.|4\.|5\.|6\.|7\.|8\.|9\.|10\.)/g.test(text);
+  if (hasNumberedList) confidence += 0.05;
+  // Question format = educational
+  const hasQuestion = /\?|(?:như thế nào|như nào|ra sao|thế nào)/i.test(text);
+  if (hasQuestion) confidence += 0.05;
+  return { isEducational: confidence >= 0.25, confidence: Math.min(confidence, 1) };
+}
+
 // Domain impersonation detection patterns
 const DOMAIN_IMPERSONATION_PATTERNS = [
   /(facebook|google|microsoft|apple|instagram|zalo|viettel|vinaphone|mobifone)\.(com\.)?(xy|xyz|club|top|icu|buzz|info|site|online|click|link|live|cam)/i,
@@ -53,25 +92,33 @@ const WEIGHTS = {
 };
 
 function calculateBaseContentScore(text) {
+  const educational = detectEducationalContent(text);
   const analysis = threatDetection.analyzeTextByKeywords(text);
   const contactFindings = threatDetection.detectContactScam(text);
   const allFindings = [...analysis, ...contactFindings];
   let totalWeight = 0;
 
+  // For educational content, reduce penalty weight for keywords used as examples
+  const penaltyMultiplier = educational.isEducational ? 0.3 : 1.0;
+
   allFindings.forEach(match => {
-    totalWeight += match.penalty;
+    totalWeight += match.penalty * penaltyMultiplier;
   });
 
-  // Check for domain impersonation
+  // Check for domain impersonation (reduced for educational content)
   const hasDomainImpersonation = DOMAIN_IMPERSONATION_PATTERNS.some(p => p.test(text));
-  if (hasDomainImpersonation) {
+  if (hasDomainImpersonation && !educational.isEducational) {
     totalWeight += 80; // Heavy penalty for domain impersonation
+  } else if (hasDomainImpersonation && educational.isEducational) {
+    totalWeight += 10; // Reduced penalty — likely an example
   }
 
-  // Check for phishing patterns
+  // Check for phishing patterns (reduced for educational content)
   const hasPhishingLink = PHISHING_LINK_PATTERNS.some(p => p.test(text));
-  if (hasPhishingLink) {
+  if (hasPhishingLink && !educational.isEducational) {
     totalWeight += 60; // Heavy penalty for phishing patterns
+  } else if (hasPhishingLink && educational.isEducational) {
+    totalWeight += 8; // Reduced penalty — likely an example
   }
 
   const k = WEIGHTS.keywordBase.k;
@@ -81,7 +128,13 @@ function calculateBaseContentScore(text) {
   }
 
   baseScore = Math.min(100, Math.max(0, baseScore));
-  return { score: baseScore, weight: totalWeight, keywordMatches: allFindings, hasDomainImpersonation, hasPhishingLink };
+
+  // Educational content gets a bonus
+  if (educational.isEducational) {
+    baseScore = Math.max(0, baseScore - 25); // Reduce score by up to 25 points
+  }
+
+  return { score: baseScore, weight: totalWeight, keywordMatches: allFindings, hasDomainImpersonation, hasPhishingLink, isEducational: educational.isEducational };
 }
 
 // Analyze keyword findings to extract structured signals
@@ -120,7 +173,7 @@ function extractKeywordSignals(keywordMatches, baseContent) {
 }
 
 // Multi-signal cascade scoring: when danger signals compound, amplify
-function applyCascadeMultiplier(baseScore, keywordSignals, nliResults, articleCount) {
+function applyCascadeMultiplier(baseScore, keywordSignals, nliResults, articleCount, isEducational) {
   if (!WEIGHTS.cascade.enabled) return baseScore;
 
   let dangerSignals = 0;
@@ -143,6 +196,11 @@ function applyCascadeMultiplier(baseScore, keywordSignals, nliResults, articleCo
     if (dangerSignals >= threshold.count) {
       multiplier = threshold.multiplier;
     }
+  }
+
+  // Educational content gets reduced cascade multiplier
+  if (isEducational) {
+    multiplier = Math.max(1.0, multiplier * 0.5); // Reduce cascade effect by 50%
   }
 
   return Math.min(100, baseScore * multiplier);
@@ -264,7 +322,7 @@ async function analyzeAndScore(text) {
   // --- Phase 5: Multi-signal cascade ---
   if (WEIGHTS.cascade.enabled) {
     const beforeCascade = finalScore;
-    finalScore = applyCascadeMultiplier(finalScore, keywordSignals, nliSignals, filtered.length);
+    finalScore = applyCascadeMultiplier(finalScore, keywordSignals, nliSignals, filtered.length, baseContent.isEducational);
     if (finalScore !== beforeCascade) {
       logs.push(`Cascade multiplier applied: ${beforeCascade} → ${finalScore}`);
     }
@@ -285,6 +343,7 @@ async function analyzeAndScore(text) {
     baseScore: Math.round(baseContent.score),
     modifier: nliModifier,
     isFactCheckedFake,
+    isEducational: baseContent.isEducational,
     factCheckResult,
     nliDetails: nliSignals,
     keywordMatches: baseContent.keywordMatches,

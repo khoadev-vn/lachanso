@@ -387,6 +387,7 @@ export default function App() {
         isSafe: false,
         isWarning: false,
         isDanger: true,
+        isEducational: false,
         type: "web",
         url: searchQuery.trim(),
         score: 0,
@@ -417,6 +418,7 @@ export default function App() {
       isSafe: false,
       isWarning: true,
       isDanger: false,
+      isEducational: false,
       type: checkType,
       url: searchQuery.trim(),
       score: 12,
@@ -479,6 +481,7 @@ export default function App() {
             isSafe: webCheck.isSafe,
             isWarning: webCheck.isWarning,
             isDanger: webCheck.isDanger,
+            isEducational: false,
             type: "web",
             url: webCheck.normalizedUrl,
             score: webCheck.score,
@@ -926,16 +929,23 @@ export default function App() {
         }
 
         const successReasonCount = reasons.filter((r) => r.status === "success").length;
-        analysisDetails.internal_verdict = score >= 75 ?
-          `Hệ thống nhận định: AN TOÀN. ${successReasonCount} tín hiệu đối chiếu tích cực (fact-check, báo chí, nguồn tin chính thống) củng cố nội dung. Mức tin cậy: cao (${score}%).` :
-          score >= 50 ?
-            `Hệ thống nhận định: CẦN XÁC THỰC. Điểm tin cậy ${score}%. Nội dung chưa có đủ đối chiếu chắc chắn — nên kiểm chứng thêm từ báo chí hoặc cơ quan chính thống.` :
-            `Hệ thống nhận định: NGUY HIỂM. Điểm tin cậy ${score}%. Nội dung mang nhiều dấu hiệu đặc thù của tin giả/lừa đảo — tuyệt đối không tin, chia sẻ hoặc chuyển tiền theo hướng dẫn trong nội dung.`;
+        const isEducational = fullScanResult?.isEducational || false;
+        
+        if (isEducational) {
+          analysisDetails.internal_verdict = `Hệ thống nhận định: NỘI DUNG GIÁO DỤC. Bài viết được xác định là hướng dẫn/cảnh báo về tin giả. Từ khóa cảnh báo xuất hiện trong bối cảnh ví dụ/hướng dẫn — KHÔNG phải tin giả. Điểm tin cậy: ${score}%.`;
+        } else {
+          analysisDetails.internal_verdict = score >= 75 ?
+            `Hệ thống nhận định: AN TOÀN. ${successReasonCount} tín hiệu đối chiếu tích cực (fact-check, báo chí, nguồn tin chính thống) củng cố nội dung. Mức tin cậy: cao (${score}%).` :
+            score >= 50 ?
+              `Hệ thống nhận định: CẦN XÁC THỰC. Điểm tin cậy ${score}%. Nội dung chưa có đủ đối chiếu chắc chắn — nên kiểm chứng thêm từ báo chí hoặc cơ quan chính thống.` :
+              `Hệ thống nhận định: NGUY HIỂM. Điểm tin cậy ${score}%. Nội dung mang nhiều dấu hiệu đặc thù của tin giả/lừa đảo — tuyệt đối không tin, chia sẻ hoặc chuyển tiền theo hướng dẫn trong nội dung.`;
+        }
 
         setResultData({
           isSafe: score >= 75,
           isWarning: score >= 50 && score < 75,
           isDanger: score < 50,
+          isEducational: fullScanResult?.isEducational || false,
           type: "news",
           url: articleExtraction?.originalUrl ?? searchQuery.substring(0, 50) + (searchQuery.length > 50 ? "..." : ""),
           score: score,
@@ -973,6 +983,7 @@ export default function App() {
           isSafe: false,
           isWarning: true,
           isDanger: false,
+          isEducational: false,
           type: checkType,
           url: searchQuery.trim(),
           score: 35,
@@ -1572,6 +1583,12 @@ export default function App() {
                           {resultData.isSafe ? <ShieldCheck className="h-4 w-4" /> : resultData.isWarning ? <AlertTriangle className="h-4 w-4" /> : <X className="h-4 w-4" />}
                           {resultData.isSafe ? "An toàn" : resultData.isWarning ? "Cần xác thực" : "Nguy hiểm"}
                         </div>
+                        {resultData.isEducational && (
+                          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-black uppercase text-blue-700 ml-2">
+                            <Info className="h-4 w-4" />
+                            Nội dung giáo dục
+                          </div>
+                        )}
                         <h3 className="truncate text-2xl font-black tracking-tight text-gray-950">{resultData.title}</h3>
                         <p className="mt-2 line-clamp-2 text-sm leading-6 text-gray-600">{resultData.description}</p>
                       </div>
@@ -1925,6 +1942,15 @@ export default function App() {
                         {resultData.isSafe ? "AN TOÀN" : resultData.isWarning ? "CẦN XÁC THỰC" : "NGUY HIỂM"}
                       </span>
                     </div>
+
+                    {resultData.isEducational && (
+                      <div className="w-full py-4 rounded-3xl mb-6 flex items-center justify-center gap-3 bg-blue-500/10 text-blue-600 border border-blue-100">
+                        <Info className="w-5 h-5" />
+                        <span className="text-lg font-bold tracking-wide">
+                          NỘI DUNG GIÁO DỤC — Từ khóa cảnh báo trong bối cảnh hướng dẫn
+                        </span>
+                      </div>
+                    )}
 
                     <div className="w-full space-y-4 mb-10">
                       <div className="flex justify-between text-[11px] font-bold text-gray-500 uppercase tracking-widest">
