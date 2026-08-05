@@ -90,6 +90,8 @@ app.use('/api', secretGate);
 app.use('/api/full-scan', throttleAnalysis);
 app.use('/api/verify-news', throttleAnalysis);
 app.use('/api/verify-news/ai', throttleAnalysis);
+app.use('/api/verify-comprehensive', throttleAnalysis);
+app.use('/api/verify-fast', throttleAnalysis);
 app.use('/api/analyze-link', throttleAnalysis);
 app.use('/api/analyze-text', throttleGeneral);
 app.use('/api/fact-check', throttleGeneral);
@@ -427,6 +429,7 @@ app.post('/api/fact-check', async (req, res) => {
 });
 
 const scoringEngine = require('./services/scoringEngine');
+const { verifyNewsComprehensive } = require('./services/newsVerificationEngine');
 
 app.post('/api/full-scan', async (req, res) => {
     try {
@@ -439,6 +442,106 @@ app.post('/api/full-scan', async (req, res) => {
         res.json(result);
     } catch (error) {
         console.error('[API] Lỗi Full Scan:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============ COMPREHENSIVE VERIFICATION ENDPOINT ============
+app.post('/api/verify-comprehensive', async (req, res) => {
+    try {
+        const { text } = req.body;
+        if (!text) return res.status(400).json({ error: 'Missing text input' });
+        
+        console.log(`\n[API] 🔍 Bắt đầu Comprehensive Verify: "${text.substring(0, 50)}..."`);
+        const startTime = Date.now();
+        
+        // Run comprehensive verification
+        const verification = await verifyNewsComprehensive(text);
+        
+        // Also run existing systems for comparison
+        let legacyScoring = null;
+        try {
+            legacyScoring = await scoringEngine.analyzeAndScore(text);
+        } catch {}
+        
+        let factCheck = null;
+        try {
+            factCheck = await factCheckService.checkFact(text);
+        } catch {}
+        
+        const responseData = {
+            success: true,
+            comprehensive: verification,
+            legacy_scoring: legacyScoring,
+            fact_check: factCheck,
+            execution_time_ms: Date.now() - startTime
+        };
+        
+        console.log(`[API] ✅ Comprehensive Verify completed in ${responseData.execution_time_ms}ms`);
+        res.json(responseData);
+    } catch (error) {
+        console.error('[API] ❌ Lỗi Comprehensive Verify:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============ FAST VERIFY WITH ENHANCED TOOLS ============
+app.post('/api/verify-fast', async (req, res) => {
+    try {
+        const { text } = req.body;
+        if (!text) return res.status(400).json({ error: 'Missing text input' });
+        
+        const { extractClaims, detectSensationalism, checkSourceReliability } = require('./services/claimAnalyzer');
+        const { detectVNFakePatterns, getTrustedSourceScore } = require('./services/vietnameseFactCheck');
+        const { aggregateNews } = require('./services/newsAggregator');
+        
+        const startTime = Date.now();
+        
+        // Fast parallel analysis
+        const [claims, sensationalism, vnPatterns, articles] = await Promise.all([
+            Promise.resolve(extractClaims(text)),
+            Promise.resolve(detectSensationalism(text)),
+            Promise.resolve(detectVNFakePatterns(text)),
+            aggregateNews(text, { maxResults: 10 }).catch(() => [])
+        ]);
+        
+        // Cross-reference with trusted sources
+        const crossRefs = articles.map(a => {
+            const domain = a.link ? new URL(a.link).hostname : '';
+            const trusted = getTrustedSourceScore(domain);
+            return { ...a, trust_score: trusted.score, is_trusted: trusted.trusted };
+        });
+        
+        // Quick scoring
+        let score = 50;
+        if (sensationalism.level === 'high') score -= 20;
+        else if (sensationalism.level === 'medium') score -= 10;
+        
+        const highSeverityPatterns = vnPatterns.filter(p => p.severity === 'high');
+        if (highSeverityPatterns.length > 0) score -= 25;
+        else if (vnPatterns.length > 0) score -= 10;
+        
+        const trustedCount = crossRefs.filter(r => r.is_trusted).length;
+        if (trustedCount >= 3) score += 20;
+        else if (trustedCount >= 1) score += 10;
+        else score -= 10;
+        
+        score = Math.max(0, Math.min(100, score));
+        
+        res.json({
+            success: true,
+            score,
+            verdict: score >= 70 ? 'CÓ KHẢ NÀNG LÀ TIN THẬT' : score >= 45 ? 'CHƯA XÁC ĐỊNH' : 'CÓ THỂ LÀ TIN GIẢ',
+            claims,
+            sensationalism,
+            vn_fake_patterns: vnPatterns,
+            cross_references: crossRefs.slice(0, 5),
+            articles_count: articles.length,
+            tools_used: ['claimAnalyzer', 'vietnameseFactCheck', 'newsAggregator'],
+            execution_time_ms: Date.now() - startTime
+        });
+    } catch (error) {
+        console.error('[API] Lỗi Fast Verify:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -497,6 +600,8 @@ app.listen(PORT, () => {
   console.log(`✅ Mô hình phân tích ngôn ngữ đã sẵn sàng`);
   console.log(`🔗 Endpoint xác thực: POST http://localhost:${PORT}/api/verify-news`);
   console.log(`🔗 Endpoint full-scan: POST http://localhost:${PORT}/api/full-scan`);
+  console.log(`🔗 Endpoint comprehensive: POST http://localhost:${PORT}/api/verify-comprehensive`);
+  console.log(`🔗 Endpoint fast-verify: POST http://localhost:${PORT}/api/verify-fast`);
   console.log(`🔗 Endpoint NLI: POST http://localhost:${PORT}/api/verify-nli`);
   console.log(`🔗 Endpoint Fact Check: POST http://localhost:${PORT}/api/fact-check`);
   console.log(`🔗 Cache Stats: GET http://localhost:${PORT}/api/cache/stats`);

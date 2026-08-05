@@ -570,6 +570,21 @@ export default function App() {
           console.error("Full scan failed", err);
         }
 
+        // ============ COMPREHENSIVE VERIFICATION ============
+        let comprehensiveResult: any = null;
+        try {
+          const compRes = await fetch("/api/verify-comprehensive", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text })
+          });
+          if (compRes.ok) {
+            comprehensiveResult = await compRes.json();
+          }
+        } catch (err) {
+          console.error("Comprehensive verification failed", err);
+        }
+
         const lcsResult = await runLCSEngine(text);
 
         let typeLabel = "Tin tức / Sự kiện";
@@ -933,7 +948,19 @@ export default function App() {
           textContent: articleExtraction?.markdownContent ?? searchQuery,
           pressArticles: liveNewsCheck.pressArticles,
           pressSourceLabel: liveNewsCheck.pressSourceLabel,
-          factCheckedFake: fullScanResult?.isFactCheckedFake || false
+          factCheckedFake: fullScanResult?.isFactCheckedFake || false,
+          comprehensive: comprehensiveResult?.comprehensive || null,
+          comprehensive_tools: comprehensiveResult?.comprehensive?.tools_used || [],
+          comprehensive_signals: comprehensiveResult?.comprehensive?.signals || [],
+          comprehensive_cross_refs: comprehensiveResult?.comprehensive?.cross_references || [],
+          comprehensive_fact_checks: comprehensiveResult?.comprehensive?.fact_check_results || [],
+          comprehensive_domain_analysis: comprehensiveResult?.comprehensive?.domain_analysis || null,
+          comprehensive_claim_analysis: comprehensiveResult?.comprehensive?.claim_analysis || null,
+          comprehensive_sensationalism: comprehensiveResult?.comprehensive?.sensationalism || null,
+          comprehensive_vn_specific: comprehensiveResult?.comprehensive?.vietnamese_specific || null,
+          comprehensive_verdict: comprehensiveResult?.comprehensive?.overall_verdict || null,
+          comprehensive_confidence: comprehensiveResult?.comprehensive?.confidence || 0,
+          comprehensive_score: comprehensiveResult?.comprehensive?.score || 0
         });
         setShowResults(true);
         setIsChecking(false);

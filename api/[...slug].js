@@ -155,6 +155,8 @@ app.get("/api/cached-news", (req, res) => {
 const HEAVY_PREFIXES = [
   "/api/verify-news",
   "/api/full-scan",
+  "/api/verify-comprehensive",
+  "/api/verify-fast",
   "/api/verify-nli",
   "/api/proxy"
 ];
@@ -201,12 +203,12 @@ async function forwardToBackend(req, res) {
 
     const targetUrl = `${BACKEND_URL}${path}${query}`;
 
-    // Tăng tốc Timeout ngắt ở 8.5s để Vercel không bị quá tải
+    // Tăng tốc Timeout ngắt ở 25s cho comprehensive verification
     const upstreamResponse = await fetch(targetUrl, {
       method: req.method,
       headers: forwardHeaders,
       body: rawBody,
-      signal: AbortSignal.timeout(8500)
+      signal: AbortSignal.timeout(25000)
     });
 
     const contentType = upstreamResponse.headers.get("content-type");
