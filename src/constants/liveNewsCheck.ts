@@ -3,7 +3,7 @@ import { NEWS_API_CONFIG } from "../config/newsApis";
 import { VERIFICATION_CONFIG } from "../config/verificationConfig";
 import type { NewsAnalysisReason } from "./newsVerification";
 import { compareIdentityClaimsWithWikipedia, compareProfileClaimWithWikipedia, compareStatusClaimsWithWikipedia, extractStatusClaims, extractWikipediaClaims, type WikipediaIdentityClaim } from "./wikipediaClaimExtractor";
-import { verifyHeadline, isHeadlineText, getArticleClaimStance, type HeadlineVerificationResult } from "./headlineVerification";
+import { verifyHeadline, isHeadlineText, getArticleClaimStance, getClaimContradictionFromArticles, type HeadlineVerificationResult } from "./headlineVerification";
 import { searchNews, searchNewsByTopic, isTrustedNewsSource, getNewsApiMetrics } from "../utils/newsApiOptimized";
 import { apiOrchestrator } from "../utils/apiOrchestrator";
 import { withTimeout } from "../utils/performanceOptimizer";
@@ -905,7 +905,21 @@ export async function runLiveNewsCheck(text: string): Promise<LiveNewsCheckResul
 
   const pressSourceLabel = "Bộ máy tìm kiếm cục bộ (Backend)";
   const strongGoogleNewsMatch = pressArticles.length > 0 && pressArticles.some((article) => isStrongGoogleNewsMatch(text, article.title));
+  
   const contradictingPressArticles = pressArticles.filter((article) => article.stance === "contradicting");
+  
+  const claimContradiction = getClaimContradictionFromArticles(text, pressArticles);
+  if (claimContradiction.isContradicting) {
+    const fakeArticle = {
+      title: `[Bác bỏ] ${claimContradiction.reason}`,
+      source: "LCS Contradiction Detection",
+      stance: "contradicting" as const,
+      similarityScore: 0.9,
+      textualRating: "contradicting"
+    };
+    contradictingPressArticles.push(fakeArticle);
+  }
+  
   const hasContradictingPressCoverage = contradictingPressArticles.length > 0;
   if (!BACKEND_PROXY_ENABLED && pressArticles.length === 0 && !wikipediaSummary && !headlineVerification) {
     return {

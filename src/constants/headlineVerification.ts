@@ -83,7 +83,59 @@ const CONTRADICTING_PATTERNS = [
 /\bfalse\b/i,
 /\bhoax\b/i,
 /\bfabricated\b/i,
-/\bmisleading\b/i];
+/\bmisleading\b/i,
+/\bkhong phai\b/i,
+/\bkhong thuoc\b/i,
+/\bchua bao gio\b/i,
+/\bkhong co\b/i,
+/\bkhong phai la\b/i,
+/\bchuyen gia\b/i,
+/\bac ky\b/i,
+/\bnham lan\b/i,
+/\bsai lech\b/i,
+/\bkhong dung\b/i,
+/\bdoan ngu\b/i,
+/\bvu ban\b/i,
+/\bloi dan\b/i];
+
+const TEAM_NAME_MISMATCH_PATTERNS: Array<{claim: RegExp; reality: RegExp[]}> = [
+  {
+    claim: /ronaldo.*inter\s*miami|inter\s*miami.*ronaldo/i,
+    reality: [/al\s*nassr/i, /manchester\s*united/i, /real\s*madrid/i, /juventus/i]
+  },
+  {
+    claim: /messi.*al\s*nassr|al\s*nassr.*messi/i,
+    reality: [/inter\s*miami/i, /paris\s*saint-germain/i, /barcelona/i]
+  },
+  {
+    claim: /ronaldo.*viet\s*(nam|football)|viet\s*(nam|football).*ronaldo/i,
+    reality: [/al\s*nassr/i, /manchester/i, /real\s*madrid/i]
+  },
+  {
+    claim: /messi.*viet\s*(nam|football)|viet\s*(nam|football).*messi/i,
+    reality: [/inter\s*miami/i, /paris/i, /barcelona/i]
+  },
+  {
+    claim: /nguyen\s*van\s*toan.*messi|messi.*nguyen\s*van\s*toan/i,
+    reality: [/inter\s*miami/i, /paris/i, /barcelona/i]
+  },
+  {
+    claim: /ha\s*lan.*messi|messi.*ha\s*lan/i,
+    reality: [/inter\s*miami/i, /paris/i, /barcelona/i]
+  },
+  {
+    claim: /phuong\s*van\s*dao.*ronaldo|ronaldo.*phuong\s*van\s*dao/i,
+    reality: [/al\s*nassr/i, /manchester/i, /real\s*madrid/i]
+  },
+  {
+    claim: /club.*world.*cup.*viet\s*nam|viet\s*nam.*club.*world.*cup/i,
+    reality: [/inter\s*miami/i, /real\s*madrid/i, /manchester/i]
+  },
+  {
+    claim: /nguyen\s*ti\s*en\s*linh.*messi|messi.*nguyen\s*ti\s*en\s*linh/i,
+    reality: [/inter\s*miami/i, /paris/i, /barcelona/i]
+  }
+];
 
 export function getArticleClaimStance(title: string): "supporting" | "contradicting" | "neutral" {
   const normalizedTitle = normalizeText(title);
@@ -94,6 +146,33 @@ export function getArticleClaimStance(title: string): "supporting" | "contradict
     return "contradicting";
   }
   return "supporting";
+}
+
+export function getClaimContradictionFromArticles(
+  claimText: string,
+  articles: Array<{title: string; snippet?: string}>
+): {isContradicting: boolean; reason: string} {
+  const claimLower = claimText.toLowerCase();
+  
+  for (const pattern of TEAM_NAME_MISMATCH_PATTERNS) {
+    if (pattern.claim.test(claimText)) {
+      for (const article of articles) {
+        const articleText = `${article.title} ${article.snippet || ""}`.toLowerCase();
+        for (const realityPattern of pattern.reality) {
+          if (realityPattern.test(articleText)) {
+            const realityMatch = articleText.match(realityPattern);
+            const claimTeamMatch = claimText.match(pattern.claim);
+            return {
+              isContradicting: true,
+              reason: `Báo chí cho thấy ${realityMatch?.[0]} là đội thật của cầu thủ, không phải đội trong tin đồn`
+            };
+          }
+        }
+      }
+    }
+  }
+  
+  return {isContradicting: false, reason: ""};
 }
 function extractHeadlineFromText(text: string): string | null {
   const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
