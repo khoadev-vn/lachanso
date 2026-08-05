@@ -3,6 +3,7 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 const { deepseekChat } = require('./deepseekClient');
 const { geminiChat, isGeminiConfigured, getKeyCount, getKeyStats, GEMINI_MODEL } = require('./geminiClient');
+const { groqChat, isGroqConfigured, getGroqStats, GROQ_MODEL } = require('./groqClient');
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3:latest';
@@ -134,22 +135,13 @@ async function llmChat(messages, options = {}) {
   let result = null;
   let mode = null;
 
-  // 1. Try Ollama first (local, free)
-  const ollama = await checkOllama();
-  if (ollama.available) {
-    const requestedModel = options.model || OLLAMA_MODEL;
-    const baseName = requestedModel ? requestedModel.split(':')[0] : '';
-    const hasModel = ollama.models.some((m) => {
-      const name = typeof m === 'string' ? m : m?.name;
-      return name === requestedModel || (baseName && name?.startsWith(baseName));
-    });
-    if (hasModel) {
-      result = await ollamaChat(messages, options);
-      if (result) mode = 'ollama';
-    }
+  // 1. Try Groq first (fast, 280 tok/s)
+  if (!result && isGroqConfigured()) {
+    result = await groqChat(messages, options);
+    if (result) mode = 'groq';
   }
 
-  // 2. Try Gemini (round-robin keys)
+  // 2. Try Gemini (round-robin keys, good Vietnamese)
   if (!result && isGeminiConfigured()) {
     result = await geminiChat(messages, options);
     if (result) mode = 'gemini';
@@ -159,6 +151,23 @@ async function llmChat(messages, options = {}) {
   if (!result) {
     result = await deepseekChat(messages, options);
     if (result) mode = 'deepseek';
+  }
+
+  // 4. Fallback to Ollama (local, free)
+  if (!result) {
+    const ollama = await checkOllama();
+    if (ollama.available) {
+      const requestedModel = options.model || OLLAMA_MODEL;
+      const baseName = requestedModel ? requestedModel.split(':')[0] : '';
+      const hasModel = ollama.models.some((m) => {
+        const name = typeof m === 'string' ? m : m?.name;
+        return name === requestedModel || (baseName && name?.startsWith(baseName));
+      });
+      if (hasModel) {
+        result = await ollamaChat(messages, options);
+        if (result) mode = 'ollama';
+      }
+    }
   }
 
   if (result && mode) {
@@ -172,6 +181,7 @@ async function llmChat(messages, options = {}) {
 async function getLLMStatus() {
   const ollama = await checkOllama(true);
   return {
+    groq: getGroqStats(),
     ollama: {
       baseUrl: OLLAMA_BASE_URL,
       model: OLLAMA_MODEL,
@@ -186,13 +196,13 @@ async function getLLMStatus() {
       stats: getKeyStats()
     },
     deepseekConfigured: Boolean(process.env.DEEPSEEK_API_KEY),
-    enabled: ollama.available || isGeminiConfigured() || Boolean(process.env.DEEPSEEK_API_KEY)
+    enabled: isGroqConfigured() || ollama.available || isGeminiConfigured() || Boolean(process.env.DEEPSEEK_API_KEY)
   };
 }
 
 async function isLLMConfigured() {
   const ollama = await checkOllama();
-  return ollama.available || isGeminiConfigured() || Boolean(process.env.DEEPSEEK_API_KEY);
+  return isGroqConfigured() || ollama.available || isGeminiConfigured() || Boolean(process.env.DEEPSEEK_API_KEY);
 }
 
 module.exports = {
