@@ -1,4 +1,5 @@
 import { motion, AnimatePresence, animate, useMotionValue, useSpring, useTransform } from "motion/react";
+import { Analytics } from "@vercel/analytics/react";
 import GlobeViz from "./components/GlobeViz";
 import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users, Landmark, Scale, HeartPulse, Info } from "lucide-react";
 import { useState, useEffect, FormEvent, useRef } from "react";
@@ -992,6 +993,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen text-[#111111] selection:bg-orange-200/50">
+      <Analytics />
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#f5f4f0]/90 backdrop-blur-md border-b border-black/10">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <button type="button" onClick={() => navigateToPage("home")} className="flex items-center">
