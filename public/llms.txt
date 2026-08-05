@@ -1,0 +1,49 @@
+# Lá Chắn Số - Vietnamese Fake News Detection Platform
+
+> Lá Chắn Số là nền tảng kiểm tra tin giả và lừa đảo trực tuyến hàng đầu tại Việt Nam, sử dụng công nghệ phân tích đa tầng AI để xác thực thông tin.
+
+## About
+
+Lá Chắn Số (LaChanSo) là một ứng dụng web miễn phí giúp người dùng Việt Nam kiểm tra tin tức, URL và nội dung nghi ngờ có phải là tin giả hay lừa đảo hay không. Hệ thống sử dụng nhiều lớp phân tích bao gồm:
+
+- **Linguistic Fingerprint**: Phân tích ngôn ngữ, phát hiện từ ngữ cảm xúc, nguồn gốc thông tin
+- **Trust Graph**: Đồ thị tin cậy với hơn 1000+ nguồn tin uy tín
+- **Behavioral Pattern**: Nhận diện mẫu hành vi lừa đảo đặc thù Việt Nam
+- **AI Neural Network**: Mạng neural nhân tạo nhận diện kịch bản thao túng
+- **Bing News Integration**: Đối chiếu với tin tức thời sự thực tế
+
+## Features
+
+- Kiểm tra URL và nội dung văn bản
+- Phân tích đa tầng: ngôn ngữ, tin cậy, hành vi
+- Đánh giá điểm tin cậy (Trust Score)
+- Cảnh báo lừa đảo, phishing
+- Đối chiếu tin tức thời sự
+- Danh sách 1000+ nguồn tin uy tín
+
+## Use Cases
+
+- Kiểm tra tin tức trước khi chia sẻ
+- Phát hiện tin giả, tin sai sự thật
+- Nhận diện lừa đảo trực tuyến
+- Bảo vệ tài khoản khỏi phishing
+- Xác thực thông tin quan trọng
+
+## Technology
+
+- Frontend: React + TypeScript + Vite
+- Backend: Node.js + Express
+- AI: Ollama (qwen2.5, deepseek-r1)
+- Hosting: Vercel (frontend) + Custom VPS (backend)
+- Security: Cloudflare Tunnel, rate limiting, SSRF protection
+
+## Contact
+
+- Website: https://lachansovn.vercel.app
+- Facebook: https://www.facebook.com/profile.php?id=61592680388542
+- YouTube: https://youtube.com/@lachansovn
+- Email: kanh05113@gmail.com
+
+## License
+
+© 2026 Lá Chắn Số. Bảo lưu mọi quyền.

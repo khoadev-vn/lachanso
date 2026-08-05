@@ -1,14 +1,138 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lá Chắn Số</title>
+    <title>Lá Chắn Số - Kiểm Tra Tin Giả & Lừa Đảo | Miễn Phí</title>
+    <meta name="description" content="Lá Chắn Số là nền tảng kiểm tra tin giả và lừa đảo trực tuyến miễn phí hàng đầu tại Việt Nam. Sử dụng AI phân tích đa tầng để xác thực thông tin, phát hiện phishing, scam." />
+    <meta name="keywords" content="kiểm tra tin giả, phát hiện lừa đảo, fake news, scam, phishing, xác thực tin tức, tin sai sự thật, bảo mật trực tuyến, AI, trí tuệ nhân tạo" />
+    <meta name="author" content="Lá Chắn Số" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://lachansovn.vercel.app/" />
+    <meta property="og:title" content="Lá Chắn Số - Kiểm Tra Tin Giả & Lừa Đảo" />
+    <meta property="og:description" content="Nền tảng kiểm tra tin giả và lừa đảo trực tuyến miễn phí hàng đầu tại Việt Nam. AI phân tích đa tầng để bảo vệ bạn." />
+    <meta property="og:image" content="/logo.png" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:site_name" content="Lá Chắn Số" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://lachansovn.vercel.app/" />
+    <meta property="twitter:title" content="Lá Chắn Số - Kiểm Tra Tin Giả & Lừa Đảo" />
+    <meta property="twitter:description" content="Nền tảng kiểm tra tin giả và lừa đảo trực tuyến miễn phí hàng đầu tại Việt Nam." />
+    <meta property="twitter:image" content="/logo.png" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://lachansovn.vercel.app/" />
+    
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    
+    <!-- LLM Discovery -->
+    <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM-friendly description" />
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Lá Chắn Số",
+      "alternateName": "LaChanSo",
+      "url": "https://lachansovn.vercel.app",
+      "description": "Nền tảng kiểm tra tin giả và lừa đảo trực tuyến miễn phí hàng đầu tại Việt Nam, sử dụng AI phân tích đa tầng.",
+      "applicationCategory": "SecurityApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "VND"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Lá Chắn Số Team",
+        "email": "kanh05113@gmail.com"
+      },
+      "inLanguage": "vi",
+      "keywords": "kiểm tra tin giả, phát hiện lừa đảo, fake news, scam, phishing, xác thực tin tức",
+      "featureList": [
+        "Kiểm tra URL và nội dung văn bản",
+        "Phân tích đa tầng: ngôn ngữ, tin cậy, hành vi",
+        "Đánh giá điểm tin cậy",
+        "Cảnh báo lừa đảo, phishing",
+        "Đối chiếu tin tức thời sự",
+        "Danh sách 1000+ nguồn tin uy tín"
+      ]
+    }
+    </script>
+    
+    <!-- Organization Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Lá Chắn Số",
+      "url": "https://lachansovn.vercel.app",
+      "logo": "/logo.png",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "kanh05113@gmail.com",
+        "contactType": "customer service"
+      },
+      "sameAs": [
+        "https://www.facebook.com/profile.php?id=61592680388542",
+        "https://youtube.com/@lachansovn"
+      ]
+    }
+    </script>
+    
+    <!-- FAQ Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Lá Chắn Số là gì?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Lá Chắn Số là nền tảng kiểm tra tin giả và lừa đảo trực tuyến miễn phí hàng đầu tại Việt Nam. Hệ thống sử dụng AI phân tích đa tầng bao gồm: phân tích ngôn ngữ, đồ thị tin cậy với 1000+ nguồn, nhận diện mẫu hành vi lừa đảo, và mạng neural nhân tạo."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Lá Chắn Số có miễn phí không?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Có, Lá Chắn Số hoàn toàn miễn phí. Bạn có thể kiểm tra URL, tin tức và nội dung văn bản mà không cần đăng ký tài khoản."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Lá Chắn Số hoạt động như thế nào?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Lá Chắn Số sử dụng nhiều lớp phân tích: (1) Phân tích ngôn ngữ để phát hiện từ ngữ cảm xúc, (2) Đồ thị tin cậy để đối chiếu với 1000+ nguồn uy tín, (3) Nhận diện mẫu hành vi lừa đảo đặc thù Việt Nam, (4) Mạng neural AI nhận diện kịch bản thao túng."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Lá Chắn Số có phát hiện được phishing không?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Có, Lá Chắn Số phát hiện được các loại lừa đảo phổ biến: phishing, giả mạo thương hiệu, lừa đảo tài chính, cờ bạc, tin giả giật gân. Hệ thống đặc biệt hiệu quả với các mẫu lừa đảo Việt Nam."
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
