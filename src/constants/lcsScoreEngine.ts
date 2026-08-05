@@ -999,6 +999,7 @@ function computeVerdict(score: number, allSignals: LCSSignal[]): {
   return { verdict: "SUSPICIOUS", verdictLabel: "Đáng ngờ", confidence: 0.75 };
   return { verdict: "DANGER", verdictLabel: "Nguy hiểm — Lừa đảo", confidence: 0.91 };
 }
+// LCS Score Engine v1.1 — Educational content detection
 export async function runLCSEngine(text: string): Promise<LCSEngineResult> {
   const linguistic = await runLinguisticLayer(text);
   const trust = runTrustLayer(text);
