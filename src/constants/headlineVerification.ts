@@ -100,39 +100,19 @@ const CONTRADICTING_PATTERNS = [
 
 const TEAM_NAME_MISMATCH_PATTERNS: Array<{claim: RegExp; reality: RegExp[]}> = [
   {
-    claim: /ronaldo.*inter\s*miami|inter\s*miami.*ronaldo/i,
+    claim: /ronaldo.*choi\s*(cho|o|tai).*inter\s*miami|ronaldo.*là.*cau\s*thu.*inter\s*miami|ronaldo.*thuoc.*inter\s*miami/i,
     reality: [/al\s*nassr/i, /manchester\s*united/i, /real\s*madrid/i, /juventus/i]
   },
   {
-    claim: /messi.*al\s*nassr|al\s*nassr.*messi/i,
+    claim: /messi.*choi\s*(cho|o|tai).*al\s*nassr|messi.*là.*cau\s*thu.*al\s*nassr|messi.*thuoc.*al\s*nassr/i,
     reality: [/inter\s*miami/i, /paris\s*saint-germain/i, /barcelona/i]
   },
   {
-    claim: /ronaldo.*viet\s*(nam|football)|viet\s*(nam|football).*ronaldo/i,
+    claim: /ronaldo.*choi\s*(cho|o|tai).*viet\s*nam|ronaldo.*là.*cau\s*thu.*viet\s*nam/i,
     reality: [/al\s*nassr/i, /manchester/i, /real\s*madrid/i]
   },
   {
-    claim: /messi.*viet\s*(nam|football)|viet\s*(nam|football).*messi/i,
-    reality: [/inter\s*miami/i, /paris/i, /barcelona/i]
-  },
-  {
-    claim: /nguyen\s*van\s*toan.*messi|messi.*nguyen\s*van\s*toan/i,
-    reality: [/inter\s*miami/i, /paris/i, /barcelona/i]
-  },
-  {
-    claim: /ha\s*lan.*messi|messi.*ha\s*lan/i,
-    reality: [/inter\s*miami/i, /paris/i, /barcelona/i]
-  },
-  {
-    claim: /phuong\s*van\s*dao.*ronaldo|ronaldo.*phuong\s*van\s*dao/i,
-    reality: [/al\s*nassr/i, /manchester/i, /real\s*madrid/i]
-  },
-  {
-    claim: /club.*world.*cup.*viet\s*nam|viet\s*nam.*club.*world.*cup/i,
-    reality: [/inter\s*miami/i, /real\s*madrid/i, /manchester/i]
-  },
-  {
-    claim: /nguyen\s*ti\s*en\s*linh.*messi|messi.*nguyen\s*ti\s*en\s*linh/i,
+    claim: /messi.*choi\s*(cho|o|tai).*viet\s*nam|messi.*là.*cau\s*thu.*viet\s*nam/i,
     reality: [/inter\s*miami/i, /paris/i, /barcelona/i]
   }
 ];
