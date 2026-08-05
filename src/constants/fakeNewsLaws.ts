@@ -266,10 +266,35 @@ export const FAKE_NEWS_LAWS: FakeNewsLaw[] = [
     const links = text.match(/(https?:\/\/[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\.[a-zA-Z]{2,})/gi) || [];
     return links.some((link) => {
       const domain = link.toLowerCase().replace(/^https?:\/\//, '').split('/')[0];
-      const hasBrand = /apple|google|facebook|microsoft|vtv|vneid|shopee|lazada|vcb|mbbank|vib/i.test(domain);
+      
+      // Official domains mapping
+      const officialDomains: Record<string, string[]> = {
+        "vietcombank": ["vietcombank.com.vn"],
+        "vcb": ["vietcombank.com.vn"],
+        "mbbank": ["mbbank.com.vn"],
+        "techcombank": ["techcombank.com.vn"],
+        "bidv": ["bidv.com.vn"],
+        "vietinbank": ["vietinbank.com.vn"],
+        "momo": ["momo.vn"],
+        "zalopay": ["zalopay.vn"],
+        "vnpay": ["vnpay.vn"],
+        "facebook": ["facebook.com"],
+        "google": ["google.com", "google.com.vn"],
+        "microsoft": ["microsoft.com"],
+        "apple": ["apple.com"]
+      };
+      
+      // Check if brand is in domain but not official
+      const brandMatch = domain.match(/apple|google|facebook|microsoft|vtv|vneid|shopee|lazada|vcb|mbbank|vib/i);
+      const hasBrand = !!brandMatch;
+      const brand = brandMatch ? brandMatch[0].toLowerCase() : "";
+      const official = officialDomains[brand] || [];
+      const isOfficial = official.some(d => domain.endsWith(d) || domain === d);
+      
       const isSuspiciousTLD = /\.(top|info|cc|icu|click|link|today|space|online|io|xyz)$/i.test(domain);
       const isSecurityImpersonation = /security|check|verify|fix|update|login|account/i.test(domain) && !/\.(com|vn|net)$/i.test(domain);
-      return hasBrand && isSuspiciousTLD || isSecurityImpersonation;
+      
+      return (hasBrand && !isOfficial && isSuspiciousTLD) || isSecurityImpersonation;
     });
   }
 },

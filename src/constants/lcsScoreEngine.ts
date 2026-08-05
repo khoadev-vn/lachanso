@@ -282,12 +282,42 @@ function runTrustLayer(text: string): LCSLayerResult {
   let maxTrustScore = 0;
   let matchedEntity = "";
   let matchedNote = "";
-  for (const [key, val] of Object.entries(TRUSTED_ENTITIES)) {
-    if (lower.includes(key)) {
-      if (val.score > maxTrustScore) {
-        maxTrustScore = val.score;
-        matchedEntity = key;
-        matchedNote = val.note;
+  
+  // Extract all URLs from text for domain matching
+  const urlPattern = /https?:\/\/[^\s]+/gi;
+  const urls = text.match(urlPattern) || [];
+  const domainPattern = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+(?:\.[a-zA-Z]{2,})+)/gi;
+  const domains = text.match(domainPattern) || [];
+  const allUrls = [...urls, ...domains].map(u => u.toLowerCase());
+  
+  // Check for domain impersonation first
+  const fakeDomainDetected = /(facebook|google|microsoft|apple|instagram|zalo|viettel|vinaphone|mobifone)\.(com\.)?(xy|xyz|club|top|icu|buzz|info|site|online|click|link|live|cam)/i.test(text);
+  
+  if (fakeDomainDetected) {
+    signals.push({
+      id: "TG_DOMAIN_IMPERSONATION",
+      layer: "trust",
+      name: "Phát hiện tên miền giả mạo",
+      detail: "Tên miền giả mạo thương hiệu nổi tiếng (thêm hậu tố .xyz, .club, .top...). Kỹ thuật phishing phổ biến để đánh cắp tài khoản.",
+      impact: -50,
+      severity: "danger"
+    });
+  }
+  
+  // Only check trusted entities if no fake domain is detected
+  if (!fakeDomainDetected) {
+    for (const [key, val] of Object.entries(TRUSTED_ENTITIES)) {
+      // Check if the exact domain is mentioned in URLs
+      const exactDomainMatch = allUrls.some(url => url.includes(key));
+      // Also check if the brand name is mentioned in text (but not in suspicious contexts)
+      const brandMention = lower.includes(key);
+      
+      if (exactDomainMatch || brandMention) {
+        if (val.score > maxTrustScore) {
+          maxTrustScore = val.score;
+          matchedEntity = key;
+          matchedNote = val.note;
+        }
       }
     }
   }

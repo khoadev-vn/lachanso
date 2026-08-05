@@ -74,14 +74,46 @@ function analyzePhishingUrl(rawLink: string): { score: number; signals: string[]
     score += 30;
     signals.push("đuôi tên miền rủi ro (.top/.xyz/.icu...)");
   }
+  
+  // Official domains mapping
+  const officialDomains: Record<string, string[]> = {
+    "vietcombank": ["vietcombank.com.vn"],
+    "vcb": ["vietcombank.com.vn"],
+    "mbbank": ["mbbank.com.vn"],
+    "techcombank": ["techcombank.com.vn"],
+    "bidv": ["bidv.com.vn"],
+    "vietinbank": ["vietinbank.com.vn"],
+    "momo": ["momo.vn"],
+    "zalopay": ["zalopay.vn"],
+    "vnpay": ["vnpay.vn"],
+    "facebook": ["facebook.com"],
+    "google": ["google.com", "google.com.vn"],
+    "microsoft": ["microsoft.com"],
+    "apple": ["apple.com"]
+  };
+  
+  // Check if brand is in hostname but not an official domain
   const hasBrand = PHISHING_BRAND_PATTERN.test(host);
   const hasHook = PHISHING_HOOK_PATTERN.test(host);
-  if (hasBrand && (hasSuspiciousTld || hasHook)) {
-    score += 40;
-    signals.push("giả mạo thương hiệu/tổ chức quen thuộc");
+  
+  if (hasBrand) {
+    // Check if it's an official domain
+    const brandMatch = host.match(/vietcombank|vcb|mbbank|techcombank|bidv|vietinbank|momo|zalopay|vnpay|facebook|google|microsoft|apple/i);
+    const brand = brandMatch ? brandMatch[0].toLowerCase() : "";
+    const official = officialDomains[brand] || [];
+    const isOfficial = official.some(d => host.endsWith(d) || host === d);
+    
+    if (!isOfficial && (hasSuspiciousTld || hasHook)) {
+      score += 40;
+      signals.push("giả mạo thương hiệu/tổ chức quen thuộc");
+    } else if (!isOfficial) {
+      score += 20;
+      signals.push("tên miền chứa thương hiệu nhưng không phải domain chính thức");
+    }
   } else if (hasHook && hasSuspiciousTld) {
     score += 20;
     signals.push("tên miền chứa từ khóa lừa đảo điển hình");
+  }
   }
   if (host.includes("xn--")) {
     score += 25;

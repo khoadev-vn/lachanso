@@ -117,7 +117,35 @@ function hasIpHostname(hostname: string): boolean {
 }
 function hasLookalikeBrand(hostname: string): boolean {
   const compactHost = hostname.replace(/[^a-z0-9]/g, "");
-  return BRAND_KEYWORDS.some((brand) => compactHost.includes(brand) && !hostname.endsWith(`${brand}.com`) && !hostname.endsWith(`${brand}.vn`) && !hostname.includes(`${brand}.com.vn`));
+  
+  // Official domains mapping
+  const officialDomains: Record<string, string[]> = {
+    "vietcombank": ["vietcombank.com.vn"],
+    "vcb": ["vietcombank.com.vn"],
+    "mbbank": ["mbbank.com.vn"],
+    "techcombank": ["techcombank.com.vn"],
+    "bidv": ["bidv.com.vn"],
+    "vietinbank": ["vietinbank.com.vn"],
+    "momo": ["momo.vn"],
+    "zalopay": ["zalopay.vn"],
+    "vnpay": ["vnpay.vn"],
+    "facebook": ["facebook.com"],
+    "google": ["google.com", "google.com.vn"],
+    "microsoft": ["microsoft.com"],
+    "apple": ["apple.com"]
+  };
+  
+  return BRAND_KEYWORDS.some((brand) => {
+    // Check if brand is in the hostname
+    if (!compactHost.includes(brand)) return false;
+    
+    // Check if it's an official domain
+    const official = officialDomains[brand] || [];
+    const isOfficial = official.some(d => hostname.endsWith(d) || hostname === d);
+    
+    // If it's not official, it's a lookalike
+    return !isOfficial;
+  });
 }
 function hasCredentialPath(url: URL): boolean {
   const value = `${url.pathname} ${url.search}`.toLowerCase();
