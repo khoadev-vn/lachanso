@@ -98,8 +98,9 @@ function calculateBaseContentScore(text) {
   const allFindings = [...analysis, ...contactFindings];
   let totalWeight = 0;
 
-  // For educational content, reduce penalty weight for keywords used as examples
-  const penaltyMultiplier = educational.isEducational ? 0.3 : 1.0;
+  // For educational content, dramatically reduce penalty for keywords
+  // Educational articles use scam words as EXAMPLES, not as actual scam content
+  const penaltyMultiplier = educational.isEducational ? 0.1 : 1.0;
 
   allFindings.forEach(match => {
     totalWeight += match.penalty * penaltyMultiplier;
@@ -110,7 +111,7 @@ function calculateBaseContentScore(text) {
   if (hasDomainImpersonation && !educational.isEducational) {
     totalWeight += 80; // Heavy penalty for domain impersonation
   } else if (hasDomainImpersonation && educational.isEducational) {
-    totalWeight += 10; // Reduced penalty — likely an example
+    totalWeight += 5; // Minimal penalty — likely an example
   }
 
   // Check for phishing patterns (reduced for educational content)
@@ -118,7 +119,7 @@ function calculateBaseContentScore(text) {
   if (hasPhishingLink && !educational.isEducational) {
     totalWeight += 60; // Heavy penalty for phishing patterns
   } else if (hasPhishingLink && educational.isEducational) {
-    totalWeight += 8; // Reduced penalty — likely an example
+    totalWeight += 3; // Minimal penalty — likely an example
   }
 
   const k = WEIGHTS.keywordBase.k;
@@ -129,9 +130,9 @@ function calculateBaseContentScore(text) {
 
   baseScore = Math.min(100, Math.max(0, baseScore));
 
-  // Educational content gets a bonus
+  // Educational content gets a large bonus
   if (educational.isEducational) {
-    baseScore = Math.max(0, baseScore - 25); // Reduce score by up to 25 points
+    baseScore = Math.max(0, baseScore - 40); // Reduce score by up to 40 points
   }
 
   return { score: baseScore, weight: totalWeight, keywordMatches: allFindings, hasDomainImpersonation, hasPhishingLink, isEducational: educational.isEducational };
@@ -330,6 +331,15 @@ async function analyzeAndScore(text) {
 
   // --- Phase 6: Verdict ---
   const t = WEIGHTS.verdicts;
+  
+  // Educational content override — cap maximum score
+  if (baseContent.isEducational) {
+    finalScore = Math.min(finalScore, 30); // Cap at 30 for educational content
+    if (finalScore >= t.SUSPICIOUS) {
+      verdict = "SUSPICIOUS"; // Never escalate beyond SUSPICIOUS for educational content
+    }
+  }
+  
   if (finalScore >= t.FRAUD_CONFIRMED) verdict = "FRAUD_CONFIRMED";
   else if (finalScore >= t.HIGH_RISK) verdict = "HIGH_RISK";
   else if (finalScore >= t.SUSPICIOUS) verdict = "SUSPICIOUS";

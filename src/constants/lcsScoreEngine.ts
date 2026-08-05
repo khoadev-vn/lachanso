@@ -969,6 +969,9 @@ function computeVerdict(score: number, allSignals: LCSSignal[]): {
   verdictLabel: string;
   confidence: number;
 } {
+  // Check if this is educational content
+  const isEducational = allSignals.some(s => s.id === "EDU_CONTENT" || s.id === "TG_EDUCATIONAL" || s.id === "BP_EDUCATIONAL");
+  
   const hasCriticalPhishing = allSignals.some(s => 
     s.id === "TG_DOMAIN_IMPERSONATION" || 
     s.id === "BP_PHISHING_LINK" || 
@@ -976,8 +979,16 @@ function computeVerdict(score: number, allSignals: LCSSignal[]): {
     s.id === "BP_DOMAIN_IMPERSONATION"
   );
   
-  if (hasCriticalPhishing) {
+  // Critical phishing always overrides educational content
+  if (hasCriticalPhishing && !isEducational) {
     return { verdict: "DANGER", verdictLabel: "Nguy hiểm — Lừa đảo", confidence: 0.95 };
+  }
+  
+  // Educational content never goes beyond UNCERTAIN
+  if (isEducational) {
+    if (score >= 60) return { verdict: "VERIFIED", verdictLabel: "Nội dung giáo dục — An toàn", confidence: 0.85 };
+    if (score >= 40) return { verdict: "UNCERTAIN", verdictLabel: "Nội dung giáo dục — Cần đối chiếu", confidence: 0.70 };
+    return { verdict: "UNCERTAIN", verdictLabel: "Nội dung giáo dục", confidence: 0.65 };
   }
   
   if (score >= 78)
@@ -995,11 +1006,18 @@ export async function runLCSEngine(text: string): Promise<LCSEngineResult> {
   const weightedRaw = linguistic.score * linguistic.weight +
   trust.score * trust.weight +
   behavioral.score * behavioral.weight;
-  const lcsScore = Math.round(Math.max(0, Math.min(100, (weightedRaw + 100) / 2)));
+  let lcsScore = Math.round(Math.max(0, Math.min(100, (weightedRaw + 100) / 2)));
+  
   const allSignals = [
   ...linguistic.signals,
   ...trust.signals,
   ...behavioral.signals];
+  
+  // Educational content — cap maximum score
+  const isEducational = allSignals.some(s => s.id === "EDU_CONTENT" || s.id === "TG_EDUCATIONAL" || s.id === "BP_EDUCATIONAL");
+  if (isEducational) {
+    lcsScore = Math.min(lcsScore, 30); // Cap at 30 for educational content
+  }
 
   const narrativeProfile = inferNarrativeProfile(text, allSignals);
   const { verdict, verdictLabel, confidence } = computeVerdict(lcsScore, allSignals);
