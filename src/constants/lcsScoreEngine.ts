@@ -975,10 +975,26 @@ export async function runLCSEngine(text: string): Promise<LCSEngineResult> {
   ...trust.signals,
   ...behavioral.signals];
   
-  // Educational content — cap maximum score
+  // Educational content — cap maximum score and filter out false-positive keyword signals
   const isEducational = allSignals.some(s => s.id === "EDU_CONTENT" || s.id === "TG_EDUCATIONAL" || s.id === "BP_EDUCATIONAL");
   if (isEducational) {
     lcsScore = Math.min(lcsScore, 30); // Cap at 30 for educational content
+    
+    // Filter out keyword signals that are false positives in educational context
+    // These keywords appear in educational guides about phishing/scams but are NOT actual threats
+    const educationalFalsePositiveIds = new Set([
+      "KG_PANIC", "KG_PERSONAL_INFO", "KG_CLICKBAIT", "KG_SMS_PHONE",
+      "L042", "L045", "L083", "L164", "L082",
+      "URL_PHISHING", "MIXED_SOURCES"
+    ]);
+    for (const signal of allSignals) {
+      if (educationalFalsePositiveIds.has(signal.id)) {
+        signal.severity = "safe";
+        signal.name = `${signal.name} (bối cảnh giáo dục)`;
+        signal.detail = `Nội dung giáo dục/hướng dẫn — từ khóa "${signal.id}" được dùng trong ngữ cảnh phòng chống, KHÔNG phải dấu hiệu lừa đảo.`;
+        signal.impact = 0;
+      }
+    }
   }
 
   const narrativeProfile = inferNarrativeProfile(text, allSignals);

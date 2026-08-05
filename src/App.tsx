@@ -1574,6 +1574,30 @@ export default function App() {
                   </div>
                 )}
 
+                {!resultData.numericVerification?.hasMismatch && resultData.numericVerification?.penalty > 0 && resultData.numericVerification?.type === 'unverified' && (
+                  <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-l-4 border-yellow-500 rounded-xl p-5 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                        <span className="text-lg">❓</span>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-yellow-800 text-lg">Số liệu chưa được xác nhận</h4>
+                        <p className="text-yellow-700 text-sm mt-1">
+                          Nội dung chứa <strong>{resultData.numericVerification.textNumbers?.length || 0} số liệu cụ thể</strong> nhưng không có bài báo nào xác nhận thông tin này.
+                        </p>
+                        <div className="mt-3 space-y-2">
+                          {resultData.numericVerification.textNumbers?.slice(0, 3).map((n: any, i: number) => (
+                            <div key={i} className="bg-white rounded-lg p-3 border border-yellow-200 text-sm">
+                              <span className="text-yellow-600 font-semibold">Số liệu:</span> {n.value} — <span className="text-gray-600">{n.context}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-yellow-600 text-xs mt-2">⚠️ Số liệu cụ thể cần được kiểm chứng từ nguồn tin chính thống.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-6">
                   <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
                     <div className="h-1.5 bg-gradient-to-r from-orange-400 to-amber-500" />
