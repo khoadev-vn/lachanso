@@ -464,6 +464,7 @@ function runTrustLayer(text: string): LCSLayerResult {
   let maxTrustScore = 0;
   let matchedEntity = "";
   let matchedNote = "";
+  let matchedVia = "";
   
   // Detect educational content
   const educational = detectEducationalContent(text);
@@ -512,16 +513,46 @@ function runTrustLayer(text: string): LCSLayerResult {
   // Only check trusted entities if no fake domain is detected
   if (!fakeDomainDetected) {
     for (const [key, val] of Object.entries(TRUSTED_ENTITIES)) {
-      // Check if the exact domain is mentioned in URLs
+      // Check if the exact domain is mentioned in URLs (STRONG trust signal)
       const exactDomainMatch = allUrls.some(url => url.includes(key));
-      // Also check if the brand name is mentioned in text (but not in suspicious contexts)
+      
+      // Check if brand is mentioned in text BUT with source citation patterns (WEAK trust)
       const brandMention = lower.includes(key);
       
-      if (exactDomainMatch || brandMention) {
+      // Detect fake source citation patterns: "tin từ vnexpress:", "theo vnexpress:", etc.
+      const fakeCitationPatterns = [
+        new RegExp(`(?:tin|bài viết|bài báo|thông tin|nội dung).{0,10}(?:từ|của|đăng trên|đăng tải).{0,5}${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i'),
+        new RegExp(`(?:theo|như).{0,10}${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i'),
+        new RegExp(`${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.{0,10}(?:đưa tin|cho biết|xác nhận|báo cáo)`, 'i'),
+      ];
+      
+      const isFakeCitation = brandMention && !exactDomainMatch && fakeCitationPatterns.some(p => p.test(text));
+      
+      if (exactDomainMatch) {
+        // Real URL found — full trust
         if (val.score > maxTrustScore) {
           maxTrustScore = val.score;
           matchedEntity = key;
           matchedNote = val.note;
+          matchedVia = 'url';
+        }
+      } else if (brandMention && isFakeCitation) {
+        // Fake citation pattern detected — penalty instead of trust
+        signals.push({
+          id: "TG_FAKE_CITATION",
+          layer: "trust",
+          name: `Nguồn "${key}" được trích dẫn giả`,
+          detail: `Phát hiệnpattern trích dẫn "${key}" trong văn bản nhưng KHÔNG có URL thực. Đây có thể là nội dung giả mạo nguồn tin. Chỉ tin khi có link trực tiếp đến bài viết gốc.`,
+          impact: -25,
+          severity: "danger"
+        });
+      } else if (brandMention) {
+        // Brand mentioned but no URL and no fake citation pattern — reduced trust
+        if (val.score * 0.4 > maxTrustScore) {
+          maxTrustScore = Math.round(val.score * 0.4); // Only 40% of original trust
+          matchedEntity = key;
+          matchedNote = val.note + " (chỉ nhắc tên, không có URL)";
+          matchedVia = 'text_mention';
         }
       }
     }
@@ -530,9 +561,11 @@ function runTrustLayer(text: string): LCSLayerResult {
     signals.push({
       id: "TG_TRUSTED_HIGH",
       layer: "trust",
-      name: "Nguồn tin cậy cao được tham chiếu",
-      detail: `Phát hiện tham chiếu tới "${matchedEntity}" (${matchedNote}) — điểm tin cậy LCS: ${maxTrustScore}/100.`,
-      impact: +25,
+      name: matchedVia === 'url' ? "Nguồn tin cậy cao được tham chiếu (có URL)" : "Nguồn tin cậy được nhắc tên",
+      detail: matchedVia === 'url'
+        ? `Phát hiện URL thực từ "${matchedEntity}" (${matchedNote}) — điểm tin cậy LCS: ${maxTrustScore}/100.`
+        : `Nhắc tên "${matchedEntity}" (${matchedNote}) nhưng KHÔNG có URL thực. Điểm tin cậy giảm còn ${maxTrustScore}/100. Cần đối chiếu thêm.`,
+      impact: matchedVia === 'url' ? +25 : +8,
       severity: "safe"
     });
   } else if (maxTrustScore >= 70) {

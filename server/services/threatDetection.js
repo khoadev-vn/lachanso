@@ -42,6 +42,27 @@ const CONTACT_SIGNAL_KEYWORDS = [
   'xác minh', 'đăng nhập', 'mật khẩu', 'căn cước', 'cccd', 'cmnd', 'sinh trắc'
 ];
 
+// Trusted sources for fake citation detection
+const TRUSTED_SOURCES = [
+  'vnexpress', 'tuoitre', 'thanhnien', 'nhandan', 'baochinhphu',
+  'vietnamnet', 'dantri', 'thanhnien', 'nld', 'tiennphong',
+  'vov', 'vbcf', 'infonet', 'soha', 'kenh14', 'yan', 'fpt',
+  'zing', 'zingnews', 'cafef', 'cafebiz', 'vietstock', 'ndh',
+  'tinnhanhchungkhoan', 'vneconomy', 'batdongsan', 'autopro',
+  'dân trí', 'tiền phong', 'lao động', 'pháp luật', 'giáo dục',
+  'health', 'suckhoe', 'evn', 'vinfast', 'fpt', 'viettel', 'mobifone', 'vinaphone'
+];
+
+// Fake source citation patterns: "tin từ vnexpress:", "theo vnexpress:", etc.
+const FAKE_CITATION_PATTERNS = TRUSTED_SOURCES.map(source => {
+  const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return [
+    new RegExp(`(?:tin|bài viết|bài báo|thông tin|nội dung).{0,10}(?:từ|của|đăng trên|đăng tải).{0,5}${escaped}`, 'i'),
+    new RegExp(`(?:theo|như).{0,10}${escaped}`, 'i'),
+    new RegExp(`${escaped}.{0,10}(?:đưa tin|cho biết|xác nhận|báo cáo)`, 'i'),
+  ];
+}).flat();
+
 function detectContactScam(text) {
   const input = String(text || '');
   const findings = [];
@@ -84,6 +105,22 @@ function detectContactScam(text) {
       name: 'Chứa số tài khoản kèm yêu cầu chuyển tiền',
       detail: `Văn bản cung cấp số tài khoản ngân hàng (${accounts[0]}) cùng lời kêu gọi chuyển tiền/nạp tiền. Kiểm chứng chủ tài khoản trước khi chuyển bất kỳ khoản nào.`,
       penalty: 30,
+      isPositive: false
+    });
+  }
+
+  // Detect fake source citation: "tin từ vnexpress:", "theo tuoitre:", etc.
+  // But only if there's NO actual URL from that source
+  const hasUrl = /https?:\/\/[^\s]+/i.test(input);
+  const fakeCitationMatch = FAKE_CITATION_PATTERNS.some(pattern => pattern.test(input));
+  
+  if (fakeCitationMatch && !hasUrl) {
+    findings.push({
+      id: 'CTX_FAKE_CITATION',
+      groupId: 'KG_MISINFO',
+      name: 'Trích dẫn nguồn tin giả mạo',
+      detail: 'Phát hiện pattern trích dẫn nguồn tin uy tín (vnexpress, tuoitre, thanhnien...) NHƯNG không có URL thực. Đây là kỹ thuật phổ biến của tin giả — mạo danh nguồn tin để tăng độ tin cậy. Chỉ tin khi có link trực tiếp đến bài viết gốc.',
+      penalty: 40,
       isPositive: false
     });
   }
