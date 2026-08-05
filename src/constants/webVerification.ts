@@ -273,6 +273,93 @@ async function mergeBackendAnalysis(reasons: WebVerificationReason[], scoreRef: 
   }
 }
 
+// Phát hiện Google Safe Browsing warning page
+async function detectGoogleWarningPage(url: string): Promise<{ isWarning: boolean; warningType: string }> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      signal: controller.signal,
+      redirect: 'follow',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    clearTimeout(timeout);
+    
+    const html = await response.text();
+    const lowerHtml = html.toLowerCase();
+    
+    // Google Safe Browsing warning patterns
+    const googleWarningPatterns = [
+      'deceptive site ahead',
+      'this site is deceptive',
+      'the site ahead contains malware',
+      'back to safety',
+      'google safe browsing',
+      'warning: visiting this web site may harm your computer',
+      'this website has been reported as a deceptive site',
+      'report this deceptive site',
+      'why this page was blocked',
+      'what is the danger of a deceptive site',
+      'deceptive traffic warning',
+      'the web page at',
+      'has been reported as a deceptive site',
+      'has been reported as a malicious site',
+      'warning: potential security risk ahead',
+      'ssl connection error',
+      'your connection is not private',
+      'this connection is not private',
+      'the certificate for this site is not valid',
+      'net::err_cert',
+      'err_ssl_',
+      "this site can't provide a secure connection",
+      'chrome detected a phishing site',
+      'safe browsing has detected malware',
+      'this site is hosted on a suspicious domain',
+      "the site you're trying to access is a known phishing site",
+      'this website is a known phishing site',
+      'phishing detected',
+      'malware detected',
+      'social engineering detected',
+      'unwanted software detected'
+    ];
+    
+    // Check for Google warning page indicators
+    const hasWarningTitle = /<title[^>]*>(.*?(?:deceptive|malware|phishing|warning|danger|harmful|suspicious).*?)<\/title>/i.test(html);
+    const hasWarningBody = googleWarningPatterns.some(pattern => lowerHtml.includes(pattern));
+    const hasBackToSafety = lowerHtml.includes('back to safety') || lowerHtml.includes('quay lại an toàn');
+    const hasReportButton = lowerHtml.includes('report this deceptive site') || lowerHtml.includes('báo cáo trang web này');
+    
+    // Check for interstitial warning page structure
+    const hasInterstitialStructure = 
+      lowerHtml.includes('safe-browsing') ||
+      lowerHtml.includes('google-warning') ||
+      lowerHtml.includes('warning-content') ||
+      lowerHtml.includes('error-code') && lowerHtml.includes('phishing');
+    
+    const isWarning = hasWarningTitle || hasWarningBody || hasBackToSafety || hasInterstitialStructure;
+    let warningType = 'unknown';
+    
+    if (lowerHtml.includes('phishing') || lowerHtml.includes('deceptive')) {
+      warningType = 'phishing';
+    } else if (lowerHtml.includes('malware') || lowerHtml.includes('malicious')) {
+      warningType = 'malware';
+    } else if (lowerHtml.includes('social engineering')) {
+      warningType = 'social_engineering';
+    } else if (hasInterstitialStructure) {
+      warningType = 'interstitial';
+    }
+    
+    return { isWarning, warningType };
+  } catch (error) {
+    // Nếu fetch fail (CORS, timeout, etc.) → không detect được
+    return { isWarning: false, warningType: 'fetch_error' };
+  }
+}
+
 export async function analyzeWebsite(input: string): Promise<WebVerificationResult> {
   const reasons: WebVerificationReason[] = [];
   let score = 70;
@@ -304,6 +391,22 @@ export async function analyzeWebsite(input: string): Promise<WebVerificationResu
   const destroylist = await checkDestroylist(hostname);
   const destroylistRiskScore = destroylist?.risk_score ?? destroylist?.riskScore ?? 0;
   const isDestroylistThreat = Boolean(destroylist?.threat || destroylist?.listed || destroylistRiskScore >= 40);
+  
+  // Phát hiện Google Safe Browsing warning page
+  const googleWarning = await detectGoogleWarningPage(normalizedUrl);
+  if (googleWarning.isWarning) {
+    score = 0;
+    reasons.unshift({
+      id: "WEB_GOOGLE_WARNING",
+      name: "CẢNH BÁO: Google phát hiện lừa đảo",
+      detail: `Google Safe Browsing đã chặn trang web này (${googleWarning.warningType}). Trang web hiển thị cảnh báo lừa đảo/mã độc.`,
+      status: "danger",
+      icon: AlertTriangle,
+      category: "security",
+      scoreDelta: -100
+    });
+  }
+  
   if (isHttps) {
     score += 10;
     reasons.push({

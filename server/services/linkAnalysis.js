@@ -82,6 +82,84 @@ async function resolveAndCheckSSRF(hostname) {
   return false;
 }
 
+// ============ GOOGLE SAFE BROWSING WARNING DETECTION ============
+async function detectGoogleWarningPage(url) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await axios.get(url, {
+      signal: controller.signal,
+      maxRedirects: 5,
+      timeout: 5000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      validateStatus: (status) => status < 500
+    });
+    clearTimeout(timeout);
+    
+    const html = (response.data || '').toString().toLowerCase();
+    
+    const googleWarningPatterns = [
+      'deceptive site ahead',
+      'this site is deceptive',
+      'the site ahead contains malware',
+      'back to safety',
+      'google safe browsing',
+      'warning: visiting this web site may harm your computer',
+      'this website has been reported as a deceptive site',
+      'report this deceptive site',
+      'why this page was blocked',
+      'deceptive traffic warning',
+      'has been reported as a deceptive site',
+      'has been reported as a malicious site',
+      'warning: potential security risk ahead',
+      'your connection is not private',
+      'this connection is not private',
+      'the certificate for this site is not valid',
+      'net::err_cert',
+      'err_ssl_',
+      "this site can't provide a secure connection",
+      'chrome detected a phishing site',
+      'safe browsing has detected malware',
+      'this site is hosted on a suspicious domain',
+      "the site you're trying to access is a known phishing site",
+      'this website is a known phishing site',
+      'phishing detected',
+      'malware detected',
+      'social engineering detected',
+      'unwanted software detected'
+    ];
+    
+    const hasWarningTitle = /<title[^>]*>(.*?(?:deceptive|malware|phishing|warning|danger|harmful|suspicious).*?)<\/title>/i.test(html);
+    const hasWarningBody = googleWarningPatterns.some(pattern => html.includes(pattern));
+    const hasBackToSafety = html.includes('back to safety') || html.includes('quay lại an toàn');
+    const hasInterstitialStructure = 
+      html.includes('safe-browsing') ||
+      html.includes('google-warning') ||
+      html.includes('warning-content') ||
+      (html.includes('error-code') && html.includes('phishing'));
+    
+    const isWarning = hasWarningTitle || hasWarningBody || hasBackToSafety || hasInterstitialStructure;
+    let warningType = 'unknown';
+    
+    if (html.includes('phishing') || html.includes('deceptive')) {
+      warningType = 'phishing';
+    } else if (html.includes('malware') || html.includes('malicious')) {
+      warningType = 'malware';
+    } else if (html.includes('social engineering')) {
+      warningType = 'social_engineering';
+    } else if (hasInterstitialStructure) {
+      warningType = 'interstitial';
+    }
+    
+    return { isWarning, warningType };
+  } catch (error) {
+    return { isWarning: false, warningType: 'fetch_error' };
+  }
+}
+
 const DESTROYLIST_CHECK_ENDPOINT = 'https://api.destroy.tools/v1/check';
 const DESTROYLIST_RAW_URL = 'https://raw.githubusercontent.com/phishdestroy/destroylist/main/rootlist/formats/primary_active/hosts.txt';
 const RDAP_LOOKUP_URL = 'https://rdap.org/domain/';
@@ -852,6 +930,18 @@ async function analyzeLink(input) {
     scoreDelta: isHttps ? 8 : -20
   });
 
+  // --- 1.5. Google Safe Browsing Warning Detection ---
+  const googleWarning = await detectGoogleWarningPage(fullInput);
+  if (googleWarning.isWarning) {
+    addReason({
+      id: 'LINK_GOOGLE_WARNING',
+      name: 'CẢNH BÁO: Google phát hiện lừa đảo',
+      detail: `Google Safe Browsing đã chặn trang web này (${googleWarning.warningType}). Trang web hiển thị cảnh báo lừa đảo/mã độc.`,
+      status: 'danger',
+      scoreDelta: -70
+    });
+  }
+
   // --- 2. Scam Dataset ---
   const scamMatch = matchScamDataset(hostname);
   if (scamMatch) {
@@ -1291,6 +1381,7 @@ module.exports = {
   analyzePageContent,
   followRedirects,
   isTrustedDomain,
+  detectGoogleWarningPage,
   TRUSTED_ROOT_DOMAINS,
   SCAM_DOMAINS
 };
