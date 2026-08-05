@@ -433,6 +433,43 @@ function buildFactCheckQueries(text: string, biographyClaim: BiographyClaim | nu
 function normalizeForPressMatch(text: string): string {
   return normalizeText(compactWhitespace(text)).replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 }
+
+function extractClaimKeywords(text: string): string[] {
+  const lower = text.toLowerCase();
+  const keywords: string[] = [];
+  
+  const numberMatches = text.match(/\d+/g) || [];
+  keywords.push(...numberMatches);
+  
+  const teamPatterns = [
+    /ronaldo/i, /messi/i, /inter\s*miami/i, /al\s*nassr/i, /barcelona/i, /real\s*madrid/i,
+    /manchester\s*united/i, /liverpool/i, /bayern/i, /psg/i, /viet\s*nam/i,
+    /tottenham/i, /chelsea/i, /arsenal/i, /manchester\s*city/i
+  ];
+  
+  for (const pattern of teamPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      keywords.push(match[0].toLowerCase());
+    }
+  }
+  
+  const scorePatterns = [
+    /(\d+)\s*[-–]\s*(\d+)/i,
+    /thang\s*(\d+)/i,
+    /ghi\s*(\d+)\s*ban/i
+  ];
+  
+  for (const pattern of scorePatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      keywords.push(match[0].toLowerCase());
+    }
+  }
+  
+  return [...new Set(keywords)].filter(kw => kw.length > 1);
+}
+
 function isStrongGoogleNewsMatch(text: string, title: string): boolean {
   const normalizedText = normalizeForPressMatch(text);
   const normalizedTitle = normalizeForPressMatch(title);
@@ -970,14 +1007,30 @@ export async function runLiveNewsCheck(text: string): Promise<LiveNewsCheckResul
       icon: AlertTriangle
     });
   }
-  if (pressArticles.length >= 2 && !hasContradictingPressCoverage) {
-    scoreDelta += 12;
+  
+  const claimKeywords = extractClaimKeywords(text);
+  const articlesConfirmClaim = pressArticles.filter(article => {
+    const articleText = `${article.title} ${article.snippet || ""}`.toLowerCase();
+    return claimKeywords.every(kw => articleText.includes(kw.toLowerCase()));
+  });
+  
+  if (pressArticles.length >= 2 && !hasContradictingPressCoverage && articlesConfirmClaim.length >= 2) {
+    scoreDelta += 15;
     reasons.push({
       id: "LIVE_PRESS_MATCH",
-      name: "Có đối chiếu từ báo chí bên ngoài",
-      detail: `Tìm thấy ${pressArticles.length} bài liên quan từ ${pressSourceLabel} để so sánh chéo tiêu đề và ngữ cảnh.`,
+      name: "Báo chí xác nhận nội dung",
+      detail: `Tìm thấy ${articlesConfirmClaim.length}/${pressArticles.length} bài báo có nội dung xác nhận trực tiếp claim.`,
       status: "success",
       icon: Database
+    });
+  } else if (pressArticles.length >= 2 && !hasContradictingPressCoverage && articlesConfirmClaim.length < 2) {
+    scoreDelta -= 10;
+    reasons.push({
+      id: "LIVE_PRESS_UNCONFIRMED",
+      name: "Báo chí liên quan nhưng chưa xác nhận",
+      detail: `Tìm thấy ${pressArticles.length} bài liên quan nhưng chỉ ${articlesConfirmClaim.length} bài có nội dung trùng khớp cụ thể với claim. Báo chí nói về chủ đề tương tự nhưng chưa xác nhận chi tiết.`,
+      status: "warning",
+      icon: AlertTriangle
     });
   }
   if (strongGoogleNewsMatch && hasContradictingPressCoverage) {
