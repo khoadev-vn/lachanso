@@ -1,18 +1,12 @@
-# Lá Chắn Số - Vietnamese Fake News Detection Platform
+# Lá Chắn Số
 
-> Lá Chắn Số là nền tảng kiểm tra tin giả và lừa đảo trực tuyến hàng đầu tại Việt Nam, sử dụng công nghệ phân tích đa tầng AI để xác thực thông tin.
+> Nền tảng kiểm tra tin giả và lừa đảo trực tuyến hàng đầu tại Việt Nam
 
-## About
+## Overview
 
-Lá Chắn Số (LaChanSo) là một ứng dụng web miễn phí giúp người dùng Việt Nam kiểm tra tin tức, URL và nội dung nghi ngờ có phải là tin giả hay lừa đảo hay không. Hệ thống sử dụng nhiều lớp phân tích bao gồm:
+Lá Chàn Số (LaChanSo) là ứng dụng web miễn phí giúp người dùng Việt Nam kiểm tra tin tức, URL và nội dung nghi ngờ có phải là tin giả hay lừa đảo hay không. Hệ thống sử dụng nhiều lớp phân tích AI bao gồm phân tích ngôn ngữ, đồ thị tin cậy, nhận diện mẫu hành vi lừa đảo, và mạng neural nhân tạo.
 
-- **Linguistic Fingerprint**: Phân tích ngôn ngữ, phát hiện từ ngữ cảm xúc, nguồn gốc thông tin
-- **Trust Graph**: Đồ thị tin cậy với hơn 1000+ nguồn tin uy tín
-- **Behavioral Pattern**: Nhận diện mẫu hành vi lừa đảo đặc thù Việt Nam
-- **AI Neural Network**: Mạng neural nhân tạo nhận diện kịch bản thao túng
-- **Bing News Integration**: Đối chiếu với tin tức thời sự thực tế
-
-## Features
+## Key Features
 
 - Kiểm tra URL và nội dung văn bản
 - Phân tích đa tầng: ngôn ngữ, tin cậy, hành vi
@@ -27,23 +21,22 @@ Lá Chắn Số (LaChanSo) là một ứng dụng web miễn phí giúp người
 - Phát hiện tin giả, tin sai sự thật
 - Nhận diện lừa đảo trực tuyến
 - Bảo vệ tài khoản khỏi phishing
-- Xác thực thông tin quan trọng
 
-## Technology
+## Technical Details
 
 - Frontend: React + TypeScript + Vite
 - Backend: Node.js + Express
-- AI: Ollama (qwen2.5, deepseek-r1)
-- Hosting: Vercel (frontend) + Custom VPS (backend)
+- AI: Ollama (qwen2.5)
 - Security: Cloudflare Tunnel, rate limiting, SSRF protection
+
+## URLs
+
+- Main: https://lachansovn.vercel.app
+- Blog: https://lachansovn.vercel.app/blog
+- About: https://lachansovn.vercel.app/#about
 
 ## Contact
 
-- Website: https://lachansovn.vercel.app
+- Email: kanh05113@gmail.com
 - Facebook: https://www.facebook.com/profile.php?id=61592680388542
 - YouTube: https://youtube.com/@lachansovn
-- Email: kanh05113@gmail.com
-
-## License
-
-© 2026 Lá Chắn Số. Bảo lưu mọi quyền.

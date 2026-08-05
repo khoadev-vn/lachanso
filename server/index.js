@@ -8,6 +8,8 @@ const keywordExtractor = require('./services/keywordExtractor');
 const nliChecker = require('./services/nliChecker');
 const ArticleComparator = require('./services/articleComparator');
 const { isLLMConfigured, getLLMStatus } = require('./services/llmClient');
+const cacheService = require('./services/cacheService');
+const autoCrawlService = require('./services/autoCrawlService');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -335,6 +337,22 @@ app.post('/api/analyze-link', async (req, res) => {
     if (!url) return res.status(400).json({ error: 'Missing url input' });
 
     const startTime = Date.now();
+    
+    // Check cache first
+    const cached = cacheService.get('link', url);
+    if (cached) {
+      console.log(`[Cache] HIT for ${url}`);
+      return res.json({
+        success: true,
+        ...cached,
+        cached: true,
+        cacheTTL: cacheService.getTTL('link', url),
+        executionTimeMs: Date.now() - startTime
+      });
+    }
+    
+    console.log(`[Cache] MISS for ${url}`);
+    
     const isGambling = threatDetection.isGamblingDomainInput(url);
     const result = await linkAnalysis.analyzeLink(url);
 
@@ -349,12 +367,17 @@ app.post('/api/analyze-link', async (req, res) => {
       result.score = Math.max(0, result.score - 80);
     }
 
-    res.json({
+    const responseData = {
       success: true,
       ...result,
       isGambling,
       executionTimeMs: Date.now() - startTime
-    });
+    };
+    
+    // Cache result for 60 minutes
+    cacheService.set('link', url, responseData, 60);
+    
+    res.json(responseData);
   } catch (error) {
     console.error('[API] Lỗi analyze-link:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -364,9 +387,28 @@ app.post('/api/analyze-link', async (req, res) => {
 app.post('/api/analyze-text', (req, res) => {
   const { text } = req.body;
   if (!text) return res.status(400).json({ error: 'Missing text input' });
+  
+  // Check cache first
+  const cached = cacheService.get('text', text);
+  if (cached) {
+    console.log(`[Cache] HIT for text (${text.substring(0, 50)}...)`);
+    return res.json({
+      ...cached,
+      cached: true,
+      cacheTTL: cacheService.getTTL('text', text)
+    });
+  }
+  
+  console.log(`[Cache] MISS for text (${text.substring(0, 50)}...)`);
+  
   const matches = threatDetection.analyzeTextByKeywords(text);
   const contactFindings = threatDetection.detectContactScam(text);
-  res.json({ matches: [...matches, ...contactFindings] });
+  const responseData = { matches: [...matches, ...contactFindings] };
+  
+  // Cache result for 30 minutes
+  cacheService.set('text', text, responseData, 30);
+  
+  res.json(responseData);
 });
 
 const factCheckService = require('./services/factCheckService');
@@ -401,6 +443,55 @@ app.post('/api/full-scan', async (req, res) => {
     }
 });
 
+// Cache stats endpoint
+app.get('/api/cache/stats', (req, res) => {
+  res.json(cacheService.getStats());
+});
+
+// Clear cache endpoint (admin only)
+app.post('/api/cache/clear', (req, res) => {
+  cacheService.clear();
+  res.json({ success: true, message: 'Cache cleared' });
+});
+
+// Auto-crawl endpoints
+app.get('/api/crawl/stats', (req, res) => {
+  res.json(autoCrawlService.getStats());
+});
+
+app.post('/api/crawl/trigger', async (req, res) => {
+  try {
+    await autoCrawlService.crawlAll();
+    res.json({ success: true, message: 'Crawl triggered' });
+  } catch (error) {
+    res.status(500).json({ error: 'Crawl failed' });
+  }
+});
+
+// Get scam domains list
+app.get('/api/scam-domains', (req, res) => {
+  try {
+    const fs = require('fs');
+    const dataPath = require('path').join(__dirname, 'data/scamDomains.json');
+    const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+    res.json(data.scamDomains || []);
+  } catch (error) {
+    res.json([]);
+  }
+});
+
+// Get fake news list
+app.get('/api/fake-news', (req, res) => {
+  try {
+    const fs = require('fs');
+    const dataPath = require('path').join(__dirname, 'data/fakeNews.json');
+    const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+    res.json(data.fakeNews || []);
+  } catch (error) {
+    res.json([]);
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Server đang chạy tại port ${PORT}`);
   console.log(`✅ Mô hình phân tích ngôn ngữ đã sẵn sàng`);
@@ -408,6 +499,11 @@ app.listen(PORT, () => {
   console.log(`🔗 Endpoint full-scan: POST http://localhost:${PORT}/api/full-scan`);
   console.log(`🔗 Endpoint NLI: POST http://localhost:${PORT}/api/verify-nli`);
   console.log(`🔗 Endpoint Fact Check: POST http://localhost:${PORT}/api/fact-check`);
+  console.log(`🔗 Cache Stats: GET http://localhost:${PORT}/api/cache/stats`);
+  console.log(`🔗 Crawl Stats: GET http://localhost:${PORT}/api/crawl/stats`);
+  
+  // Start auto-crawl service (every 6 hours)
+  autoCrawlService.start(6);
 
   const { llmChat } = require('./services/llmClient');
   llmChat([

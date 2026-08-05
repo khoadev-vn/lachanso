@@ -67,7 +67,7 @@ function WebReasonGroupCard({ group, reasons }: { group: { key: string; label: s
         <p className="text-xs font-black uppercase tracking-wide text-gray-800">{group.label}</p>
         <p className="truncate text-[10px] font-medium text-gray-500">{group.description}</p>
       </div>
-      <span className="rounded-full bg-white px-2.5 py-0.5 text-[10px] font-black text-gray-400">{reasons.length}</span>
+      <span className="rounded-full bg-white px-2.5 py-0.5 text-[10px] font-black text-gray-500">{reasons.length}</span>
     </div>
     <div className="space-y-2 p-3">
       {reasons.map((res: any, idx: number) => <div key={idx} className={`rounded-xl border p-3 ${WEB_REASON_STATUS_CARD(res.status)}`}>
@@ -1176,10 +1176,10 @@ export default function App() {
                     </div>
 
                     <div className="flex gap-2 mb-5">
-                      <button onClick={() => setCheckType("web")} className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${checkType === "web" ? "bg-orange-500 text-white" : "bg-white/10 text-gray-400 hover:bg-white/20"}`}>
+                      <button onClick={() => setCheckType("web")} className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${checkType === "web" ? "bg-orange-500 text-white" : "bg-white/10 text-gray-500 hover:bg-white/20"}`}>
                         Website
                       </button>
-                      <button onClick={() => setCheckType("news")} className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${checkType === "news" ? "bg-orange-500 text-white" : "bg-white/10 text-gray-400 hover:bg-white/20"}`}>
+                      <button onClick={() => setCheckType("news")} className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${checkType === "news" ? "bg-orange-500 text-white" : "bg-white/10 text-gray-500 hover:bg-white/20"}`}>
                         Tin giả
                       </button>
                     </div>
@@ -1228,7 +1228,7 @@ export default function App() {
                       <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-orange-50 mb-5">
                         <card.icon className="w-6 h-6 text-orange-500" />
                       </div>
-                      <h3 className="text-xl font-black mb-3 text-[#111]">{card.title}</h3>
+                      <h2 className="text-xl font-black mb-3 text-[#111]">{card.title}</h2>
                       <p className="text-[#666] text-sm leading-relaxed">{card.desc}</p>
                     </motion.div>
                   )}
@@ -1261,7 +1261,7 @@ export default function App() {
                   </button>
                 </div>
                 <div className="max-w-md">
-                  <p className="text-lg text-gray-400 leading-relaxed">
+                  <p className="text-lg text-gray-500 leading-relaxed">
                     Lá Chắn Số: Định nghĩa lại sự an toàn trực tuyến. Chúng tôi xây dựng một lớp lọc thông tin minh bạch, giúp người dùng phân định giữa thực tại - tin giả và chống khỏi lừa đảo . Một giải pháp bảo mật tinh gọn, hiệu quả và luôn sẵn sàng bảo vệ bạn.
                   </p>
                 </div>
@@ -1375,7 +1375,7 @@ export default function App() {
                 <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-white">
                   Tin giả và lừa đảo có ở khắp mọi nơi
                 </motion.h2>
-                <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="text-gray-400 max-w-2xl text-lg">
+                <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="text-gray-500 max-w-2xl text-lg">
                   Lá Chắn Số kết nối với các trung tâm dữ liệu bảo mật trên toàn thế giới để cập nhật và ngăn chặn các mối đe dọa xuyên biên giới trong thời gian thực.
                 </motion.p>
               </div>
@@ -1488,7 +1488,7 @@ export default function App() {
                     { icon: ShieldCheck, label: "Xác thực kết quả" }].
                     map((step, idx) => <div key={idx} className={`flex items-center gap-4 transition-all duration-500 ${idx === loadingStep ? "opacity-100 scale-105" : idx < loadingStep ? "opacity-40" : "opacity-20"}`}>
                       <div className={`p-2 rounded-lg ${idx === loadingStep ? "bg-orange-100" : "bg-gray-100"}`}>
-                        {idx === loadingStep ? <Loader2 className="w-5 h-5 text-orange-600 animate-spin" /> : idx < loadingStep ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <step.icon className="w-5 h-5 text-gray-400" />}
+                        {idx === loadingStep ? <Loader2 className="w-5 h-5 text-orange-600 animate-spin" /> : idx < loadingStep ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <step.icon className="w-5 h-5 text-gray-500" />}
                       </div>
                       <span className={`font-medium ${idx === loadingStep ? "text-orange-900" : "text-gray-600"}`}>
                         {step.label}
@@ -1511,7 +1511,7 @@ export default function App() {
                     <div className="h-1.5 bg-gradient-to-r from-orange-400 to-amber-500" />
                     <div className="grid gap-6 p-6 lg:grid-cols-[220px_1fr_auto] lg:items-center">
                       <div className="flex flex-col items-center justify-center">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">
                           {resultData.type === "news" ? "Độ tin cậy" : "Mức an toàn"}
                         </p>
 
@@ -1543,12 +1543,12 @@ export default function App() {
                           {resultData.isSafe ? <ShieldCheck className="h-4 w-4" /> : resultData.isWarning ? <AlertTriangle className="h-4 w-4" /> : <X className="h-4 w-4" />}
                           {resultData.isSafe ? "An toàn" : resultData.isWarning ? "Cần xác thực" : "Nguy hiểm"}
                         </div>
-                        <h4 className="truncate text-2xl font-black tracking-tight text-gray-950">{resultData.title}</h4>
+                        <h3 className="truncate text-2xl font-black tracking-tight text-gray-950">{resultData.title}</h3>
                         <p className="mt-2 line-clamp-2 text-sm leading-6 text-gray-600">{resultData.description}</p>
                       </div>
 
                       <div className="rounded-2xl bg-gray-50 p-4 lg:min-w-[260px]">
-                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400">
+                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500">
                           <Globe className="h-4 w-4" />
                           Đối tượng
                         </div>
@@ -1562,7 +1562,7 @@ export default function App() {
                     return <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className={`overflow-hidden rounded-3xl border p-6 ${resultData.isSafe ? "border-emerald-200 bg-emerald-50/60" : resultData.isWarning ? "border-amber-200 bg-amber-50/60" : "border-red-200 bg-red-50/70"}`}>
                       <div className="flex items-center gap-2 mb-3">
                         {resultData.isSafe ? <ShieldCheck className="h-5 w-5 text-emerald-600" /> : resultData.isWarning ? <AlertTriangle className="h-5 w-5 text-amber-600" /> : <X className="h-5 w-5 text-red-600" />}
-                        <h4 className="text-base font-black tracking-tight text-gray-950">Kết luận bằng lời đơn giản</h4>
+                          <h3 className="text-base font-black tracking-tight text-gray-950">Kết luận bằng lời đơn giản</h3>
                       </div>
                       <p className={`text-[15px] leading-relaxed font-medium ${resultData.isSafe ? "text-emerald-900" : resultData.isWarning ? "text-amber-900" : "text-red-900"}`}>
                         {plain.verdict}
@@ -1580,9 +1580,9 @@ export default function App() {
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
                       <div className="flex flex-col gap-4 border-b border-gray-100 p-5 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                          <h4 className="text-lg font-black tracking-tight text-gray-950">
+                          <h3 className="text-lg font-black tracking-tight text-gray-950">
                             {resultData.type === "news" ? "Nội dung đã phân tích" : "Preview an toàn"}
-                          </h4>
+                          </h3>
                           <p className="mt-1 text-sm text-gray-500">
                             {resultData.type === "news" ? "Văn bản hoặc bài viết được đưa vào pipeline kiểm chứng." : "Ảnh chụp được render qua dịch vụ trung gian, không nhúng website trực tiếp."}
                           </p>
@@ -1614,10 +1614,10 @@ export default function App() {
 
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }} className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
                       <div className="mb-5 flex items-center justify-between gap-3">
-                        <h4 className="flex items-center gap-2 text-lg font-black tracking-tight text-gray-950">
+                          <h3 className="flex items-center gap-2 text-lg font-black tracking-tight text-gray-950">
                           <Database className="h-5 w-5 text-gray-700" />
                           Tín Hiệu LCS
-                        </h4>
+                        </h3>
                         <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-black uppercase text-gray-500">
                           {resultData.analysisReasons.length} tín hiệu
                         </span>
@@ -1636,7 +1636,7 @@ export default function App() {
                                 <p className="text-xs font-black uppercase tracking-wide text-gray-800">{group.label}</p>
                                 <p className="truncate text-[10px] font-medium text-gray-500">{group.description}</p>
                               </div>
-                              <span className="rounded-full bg-white px-2.5 py-0.5 text-[10px] font-black text-gray-400">{groupReasons.length}</span>
+                              <span className="rounded-full bg-white px-2.5 py-0.5 text-[10px] font-black text-gray-500">{groupReasons.length}</span>
                             </div>
                             <div className="grid grid-cols-1 gap-2 p-3 md:grid-cols-2">
                               {groupReasons.map((res: any, idx: number) => <div key={idx} className={`rounded-xl border p-3 ${WEB_REASON_STATUS_CARD(res.status)}`}>
@@ -1695,7 +1695,7 @@ export default function App() {
                           <Sparkles className="w-6 h-6 text-orange-600" />
                         </div>
                         <div className="font-analysis-heading">
-                          <h4 className="text-2xl font-bold tracking-tight text-gray-900">Thẩm Định Chuyên Gia Phân Tích</h4>
+                          <h3 className="text-2xl font-bold tracking-tight text-gray-900">Thẩm Định Chuyên Gia Phân Tích</h3>
                           <div className="flex items-center gap-2 mt-2">
                             <span className="px-3 py-1 rounded-full bg-orange-50 border border-orange-100 text-orange-700 text-xs font-bold whitespace-nowrap">
                               {resultData.checkTypeLabel || "Tin tức chung"}
@@ -1842,7 +1842,7 @@ export default function App() {
                 {resultData.type === "news" && resultData.pressArticles && <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
                   <div className="flex flex-col gap-4 border-b border-gray-100 p-5 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h4 className="text-lg font-black tracking-tight text-gray-950">LCS Press Matrix — Đối Chiếu Báo Chí</h4>
+                        <h3 className="text-lg font-black tracking-tight text-gray-950">LCS Press Matrix — Đối Chiếu Báo Chí</h3>
                       <p className="mt-1 text-sm text-gray-500">
                         Kết quả đối chiếu đa nguồn từ LCS Press Matrix — phân tích bài viết liên quan theo sự kiện.
                       </p>
@@ -1877,7 +1877,7 @@ export default function App() {
                 <div className="hidden">
 
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-[40px] border border-gray-100 p-10 shadow-sm flex flex-col items-center text-center">
-                    <h4 className="text-lg font-bold mb-8 text-gray-800 tracking-tight">Cổng Giám Sát Cấp Cao</h4>
+                        <h3 className="text-lg font-bold mb-8 text-gray-800 tracking-tight">Cổng Giám Sát Cấp Cao</h3>
 
                     <div className="relative w-48 h-48 mb-10">
                       <svg className="w-full h-full transform -rotate-90">
@@ -1886,7 +1886,7 @@ export default function App() {
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <span className="text-4xl font-black text-gray-900 leading-none">{resultData.score}%</span>
-                        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-2">Độ Tin Cậy</span>
+                        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-[0.2em] mt-2">Độ Tin Cậy</span>
                       </div>
                     </div>
 
@@ -1898,7 +1898,7 @@ export default function App() {
                     </div>
 
                     <div className="w-full space-y-4 mb-10">
-                      <div className="flex justify-between text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                      <div className="flex justify-between text-[11px] font-bold text-gray-500 uppercase tracking-widest">
                         <span>Phân cấp rủi ro</span>
                         <span className={resultData.isSafe ? "text-green-500" : resultData.isWarning ? "text-orange-500" : "text-red-500"}>
                           {resultData.isSafe ? "Cấp độ 1 (An toàn)" : resultData.isWarning ? "Cấp độ 2 (Cảnh báo)" : "Cấp độ 3 (Khẩn cấp)"}
@@ -1923,11 +1923,11 @@ export default function App() {
 
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white rounded-[40px] border border-gray-100 p-10 shadow-sm flex flex-col h-full">
                     <div className="flex items-center justify-between mb-10 pb-6 border-b border-gray-50">
-                      <h4 className="text-xl font-bold flex items-center gap-3">
+                        <h3 className="text-xl font-bold flex items-center gap-3">
                         <Database className="w-7 h-7 text-[#ff8904]" />
                         Bằng Chứng Phân Tích
-                      </h4>
-                      <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-4 py-1.5 rounded-full border border-gray-100">
+                      </h3>
+                      <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest bg-gray-50 px-4 py-1.5 rounded-full border border-gray-100">
                         {resultData.analysisReasons.length} Tín hiệu
                       </span>
                     </div>
@@ -1957,9 +1957,9 @@ export default function App() {
 
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white rounded-[40px] border border-gray-100 p-10 shadow-sm flex flex-col h-full">
                     <div className="flex items-center justify-between mb-10 pb-6 border-b border-gray-50">
-                      <h4 className="text-xl font-bold text-gray-900 tracking-tight">
+                        <h3 className="text-xl font-bold text-gray-900 tracking-tight">
                         {resultData.type === "news" ? "Dữ Liệu Văn Bản" : "Kiểm Soát Sandbox"}
-                      </h4>
+                      </h3>
                       <div className="px-4 py-1.5 bg-green-50 text-green-700 text-[11px] font-bold rounded-full border border-green-100 flex items-center gap-2">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
                         {resultData.type === "news" ? "TEXT QUANTUM" : "SAFE PREVIEW"}
@@ -1992,7 +1992,7 @@ export default function App() {
                       </>}
                     </div>
 
-                    <div className="mt-8 flex items-center justify-between text-[11px] text-gray-400 font-bold uppercase tracking-[0.2em] px-4">
+                    <div className="mt-8 flex items-center justify-between text-[11px] text-gray-500 font-bold uppercase tracking-[0.2em] px-4">
                       <div className="flex items-center gap-2">
                         <Globe className="w-4 h-4 text-orange-400" />
                         <span className="truncate max-w-[150px]">{resultData.url}</span>
@@ -2015,8 +2015,8 @@ export default function App() {
                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Search className="w-10 h-10 text-gray-300" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-400">Chưa có dữ liệu kiểm tra</h3>
-                <p className="text-gray-400">Vui lòng nhập URL để bắt đầu phân tích an toàn.</p>
+                <h3 className="text-xl font-bold text-gray-500">Chưa có dữ liệu kiểm tra</h3>
+                <p className="text-gray-500">Vui lòng nhập URL để bắt đầu phân tích an toàn.</p>
               </div>}
             </div>
           </div>

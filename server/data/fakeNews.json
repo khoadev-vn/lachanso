@@ -1,27 +1,27 @@
 {
-  "scamDomains": [
+  "fakeNews": [
     {
-      "domain": "shopee-khuyenmai-2026.com",
+      "title": "Phong tỏa tài khoản ngân hàng hàng loạt",
       "source": "manual",
       "discoveredAt": "2026-04-02T00:00:00.000Z"
     },
     {
-      "domain": "nganhang-abc-login.net",
+      "title": "Thông tin sai về chính sách hỗ trợ mới",
       "source": "manual",
       "discoveredAt": "2026-04-01T00:00:00.000Z"
     },
     {
-      "domain": "nhan-qua-mien-phi.org",
+      "title": "Tin đồn thất thiệt về dịch bệnh",
       "source": "manual",
       "discoveredAt": "2026-03-31T00:00:00.000Z"
     },
     {
-      "domain": "facebook-verify-account.com",
+      "title": "Giả mạo văn bản xử phạt giao thông",
       "source": "manual",
       "discoveredAt": "2026-03-30T00:00:00.000Z"
     },
     {
-      "domain": "crypto-invest-bonus.io",
+      "title": "Tin giả về chương trình tặng quà tri ân",
       "source": "manual",
       "discoveredAt": "2026-03-29T00:00:00.000Z"
     }

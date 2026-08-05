@@ -40,9 +40,8 @@ export default defineConfig({
         obfuscatorPlugin({
           compact: true,
           controlFlowFlattening: true,
-          controlFlowFlatteningThreshold: 0.5,
-          deadCodeInjection: true,
-          deadCodeInjectionThreshold: 0.2,
+          controlFlowFlatteningThreshold: 0.3,
+          deadCodeInjection: false,
           debugProtection: false,
           disableConsoleOutput: true,
           identifierNamesGenerator: "hexadecimal",
@@ -63,7 +62,7 @@ export default defineConfig({
           stringArrayWrappersChainedCalls: true,
           stringArrayWrappersParametersMaxCount: 2,
           stringArrayWrappersType: "function",
-          stringArrayThreshold: 0.75,
+          stringArrayThreshold: 0.5,
           transformObjectKeys: true,
           unicodeEscapeSequence: false
         })
