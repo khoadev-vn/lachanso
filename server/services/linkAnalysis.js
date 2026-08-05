@@ -6,7 +6,9 @@ const tls = require('tls');
 const { URL } = require('url');
 
 const scamDataPath = path.join(__dirname, '../data/scamDomains.json');
-const { SCAM_DOMAINS, SCAM_BRAND_PATTERNS } = JSON.parse(fs.readFileSync(scamDataPath, 'utf8'));
+const scamData = JSON.parse(fs.readFileSync(scamDataPath, 'utf8'));
+const SCAM_DOMAINS = scamData.SCAM_DOMAINS || scamData.scamDomains || [];
+const SCAM_BRAND_PATTERNS = scamData.SCAM_BRAND_PATTERNS || [];
 
 // ============ TRUSTED DOMAINS WHITELIST ============
 const trustedDomainsPath = path.join(__dirname, '../data/trustedDomains.json');

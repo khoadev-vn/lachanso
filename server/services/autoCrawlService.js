@@ -178,8 +178,14 @@ class AutoCrawlService {
       }
     }
 
-    // Save updated data
-    fs.writeFileSync(this.scamDomainsPath, JSON.stringify(existingData, null, 2));
+    // Save updated data (preserve SCAM_BRAND_PATTERNS)
+    let existingRaw = {};
+    try {
+      existingRaw = JSON.parse(fs.readFileSync(this.scamDomainsPath, 'utf8'));
+    } catch {}
+    existingRaw.scamDomains = existingData.scamDomains;
+    existingRaw.SCAM_DOMAINS = existingData.scamDomains;
+    fs.writeFileSync(this.scamDomainsPath, JSON.stringify(existingRaw, null, 2));
     console.log(`[AutoCrawl] Added ${addedCount} new scam domains (total: ${existingData.scamDomains.length})`);
     
     return addedCount;

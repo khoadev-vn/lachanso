@@ -1,5 +1,193 @@
 {
+  "SCAM_BRAND_PATTERNS": [
+    {
+      "brand": "Vietcombank",
+      "keywords": ["vietcombank", "vcb", "vcbonline", "vietcombankvn"],
+      "officialDomains": ["vietcombank.com.vn"]
+    },
+    {
+      "brand": "MB Bank",
+      "keywords": ["mbbank", "mb bank", "mbbanking", "mb-online"],
+      "officialDomains": ["mbbank.com.vn"]
+    },
+    {
+      "brand": "Techcombank",
+      "keywords": ["techcombank", "techcom", "tcbonline"],
+      "officialDomains": ["techcombank.com.vn"]
+    },
+    {
+      "brand": "TPBank",
+      "keywords": ["tpbank", "tp bank", "tpbankonline", "tp-online"],
+      "officialDomains": ["tpbank.com.vn"]
+    },
+    {
+      "brand": "VietinBank",
+      "keywords": ["vietinbank", "vietin", "vietinbankonline"],
+      "officialDomains": ["vietinbank.com.vn"]
+    },
+    {
+      "brand": "Agribank",
+      "keywords": ["agribank", "agri bank", "agribankonline"],
+      "officialDomains": ["agribank.com.vn"]
+    },
+    {
+      "brand": "Sacombank",
+      "keywords": ["sacombank", "sacom", "sacombankonline"],
+      "officialDomains": ["sacombank.com.vn"]
+    },
+    {
+      "brand": "BIDV",
+      "keywords": ["bidv", "bidvonline", "bidvbank"],
+      "officialDomains": ["bidv.com.vn"]
+    },
+    {
+      "brand": "ACB",
+      "keywords": ["acb", "acb bank", "acb-online"],
+      "officialDomains": ["acb.com.vn"]
+    },
+    {
+      "brand": "HDBank",
+      "keywords": ["hdbank", "hd bank", "hdbankonline"],
+      "officialDomains": ["hdbank.com.vn"]
+    },
+    {
+      "brand": "MoMo",
+      "keywords": ["momo", "momo wallet", "momo-app"],
+      "officialDomains": ["momo.vn"]
+    },
+    {
+      "brand": "ZaloPay",
+      "keywords": ["zalopay", "zalo pay", "zalopay-app"],
+      "officialDomains": ["zalopay.vn"]
+    },
+    {
+      "brand": "Shopee",
+      "keywords": ["shopee", "shopee-app", "shopee-vn"],
+      "officialDomains": ["shopee.vn"]
+    },
+    {
+      "brand": "Lazada",
+      "keywords": ["lazada", "lazada-app", "lazada-vn"],
+      "officialDomains": ["lazada.vn"]
+    },
+    {
+      "brand": "VNPAY",
+      "keywords": ["vnpay", "vn pay", "vnpay-app"],
+      "officialDomains": ["vnpay.vn"]
+    },
+    {
+      "brand": "Facebook",
+      "keywords": ["facebook", "fb", "facebook-login", "facebook-verify"],
+      "officialDomains": ["facebook.com"]
+    },
+    {
+      "brand": "Google",
+      "keywords": ["google", "gmail", "google-login", "google-verify"],
+      "officialDomains": ["google.com"]
+    },
+    {
+      "brand": "Apple",
+      "keywords": ["apple", "apple-id", "apple-verify", "icloud"],
+      "officialDomains": ["apple.com"]
+    }
+  ],
   "scamDomains": [
+    {
+      "domain": "vcb-online.com",
+      "brand": "Vietcombank",
+      "type": "bank_phishing",
+      "description": "Trang giả mạo Vietcombank thu thập thông tin đăng nhập và OTP.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "vietcombankvn.com",
+      "brand": "Vietcombank",
+      "type": "bank_phishing",
+      "description": "Tên miền giả mạo thương hiệu Vietcombank.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "vcbonline.vn",
+      "brand": "Vietcombank",
+      "type": "bank_phishing",
+      "description": "Trang đăng nhập giả Vietcombank.",
+      "source": "community",
+      "severity": "high"
+    },
+    {
+      "domain": "mbbank-online.com",
+      "brand": "MB Bank",
+      "type": "bank_phishing",
+      "description": "Trang giả mạo MB Bank yêu cầu cập nhật sinh trắc học.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "mbbanking.com",
+      "brand": "MB Bank",
+      "type": "bank_phishing",
+      "description": "Domain giả mạo dịch vụ ngân hàng MB.",
+      "source": "community",
+      "severity": "high"
+    },
+    {
+      "domain": "techcombank-online.com",
+      "brand": "Techcombank",
+      "type": "bank_phishing",
+      "description": "Trang giả mạo Techcombank.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "tpbankonline.com",
+      "brand": "TPBank",
+      "type": "bank_phishing",
+      "description": "Trang giả mạo TPBank.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "vietinbank.com.vn.lua-dao.com",
+      "brand": "VietinBank",
+      "type": "bank_phishing",
+      "description": "Subdomain giả mạo VietinBank.",
+      "source": "community",
+      "severity": "high"
+    },
+    {
+      "domain": "agribank.com",
+      "brand": "Agribank",
+      "type": "bank_phishing",
+      "description": "Domain .com nhái Agribank chính thức (.com.vn).",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "sacombank.org",
+      "brand": "Sacombank",
+      "type": "bank_phishing",
+      "description": "Đuôi tên miền .org không phải của Sacombank.",
+      "source": "community",
+      "severity": "high"
+    },
+    {
+      "domain": "bidvonline.net",
+      "brand": "BIDV",
+      "type": "bank_phishing",
+      "description": "Trang giả mạo BIDV.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
+    {
+      "domain": "momo-app.com",
+      "brand": "MoMo",
+      "type": "fintech_phishing",
+      "description": "Trang giả mạo ví MoMo.",
+      "source": "tinnhiemmang",
+      "severity": "high"
+    },
     {
       "domain": "shopee-khuyenmai-2026.com",
       "source": "manual",
