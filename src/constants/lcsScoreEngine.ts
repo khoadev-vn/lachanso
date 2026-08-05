@@ -324,13 +324,26 @@ async function runLinguisticLayer(text: string): Promise<LCSLayerResult> {
       });
     } else if (vagueMatches.length === 1) {
       signals.push({
-      id: "LF_SRC_VAGUE_LOW",
-      layer: "linguistic",
-      name: "Trích dẫn chưa rõ nguồn",
-      detail: "Có ít nhất một cụm trích dẫn chưa gắn danh tính cụ thể.",
-      impact: -6,
-      severity: "warning"
-    });
+        id: "LF_SRC_VAGUE_LOW",
+        layer: "linguistic",
+        name: "Trích dẫn chưa rõ nguồn",
+        detail: "Có ít nhất một cụm trích dẫn chưa gắn danh tính cụ thể.",
+        impact: -6,
+        severity: "warning"
+      });
+    }
+  } else {
+    // Educational content — vague sources are examples being discussed
+    if (vagueMatches.length > 0) {
+      signals.push({
+        id: "LF_SRC_VAGUE_EDU",
+        layer: "linguistic",
+        name: "Nguồn mơ hồ trong bối cảnh hướng dẫn",
+        detail: `${vagueMatches.length} cụm trích dẫn mờ nhạt trong bối cảnh giáo dục — đây là ví dụ minh họa.`,
+        impact: +3,
+        severity: "safe"
+      });
+    }
   }
   // Context-aware absolutism detection
   let absoluteAsExample = 0;
