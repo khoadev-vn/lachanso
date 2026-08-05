@@ -14,22 +14,30 @@ import { analyzeWebsite } from "./constants/webVerification";
 import shieldImg from "./imgs/shield-3d-nobg.png";
 import XAIHeatmap from "./components/XAIHeatmap";
 import FactCheckBanner from "./components/FactCheckBanner";
-type PageId = "home" | "check" | "resources" | "partners" | "mission";
+import BlogList from "./components/blog/BlogList";
+import BlogArticleView from "./components/blog/BlogArticleView";
+import { getBlogArticleBySlug } from "./data/blog/articles";
+type PageId = "home" | "check" | "resources" | "partners" | "mission" | "blog";
 const PAGE_PATHS: Record<PageId, string> = {
   home: "/",
   check: "/kiem-tra",
   resources: "/tai-nguyen",
   partners: "/dong-hanh",
-  mission: "/su-menh"
+  mission: "/su-menh",
+  blog: "/blog"
 };
 const PATH_TO_PAGE: Record<string, PageId> = {
   "/": "home",
   "/kiem-tra": "check",
   "/tai-nguyen": "resources",
   "/dong-hanh": "partners",
-  "/su-menh": "mission"
+  "/su-menh": "mission",
+  "/blog": "blog"
 };
-const getPageFromPath = (pathname: string): PageId => PATH_TO_PAGE[pathname] ?? "home";
+const getPageFromPath = (pathname: string): PageId => {
+  if (pathname.startsWith("/blog/")) return "blog";
+  return PATH_TO_PAGE[pathname] ?? "home";
+};
 
 const WEB_CATEGORY_GROUPS: { key: string; label: string; icon: any; description: string; accent: string }[] = [
   { key: "security", label: "Tín hiệu Lừa đảo & Bảo mật", icon: AlertTriangle, description: "Dấu hiệu phishing, lừa đảo và mối đe dọa đã được ghi nhận.", accent: "text-red-600 bg-red-50 border-red-100" },
@@ -220,6 +228,13 @@ export default function App() {
   const [previewCandidateIndex, setPreviewCandidateIndex] = useState(0);
   const [analysisExpanded, setAnalysisExpanded] = useState(false);
   const [selectedInfoItem, setSelectedInfoItem] = useState<{ title: string; description: string; link: string; category: string; } | null>(null);
+  const [selectedBlogSlug, setSelectedBlogSlug] = useState<string | null>(() => {
+    const path = window.location.pathname;
+    if (path.startsWith("/blog/")) {
+      return path.replace("/blog/", "");
+    }
+    return null;
+  });
   const [shieldOrigin, setShieldOrigin] = useState("50% 50%");
   const shieldPointerX = useMotionValue(0);
   const shieldPointerY = useMotionValue(0);
@@ -970,6 +985,7 @@ export default function App() {
   const navLinks = [
     { name: "Trang Chủ", id: "home" as PageId },
     { name: "Kiểm Tra", id: "check" as PageId },
+    { name: "Blog", id: "blog" as PageId },
     { name: "Tài Nguyên", id: "resources" as PageId },
     { name: "Đồng hành", id: "partners" as PageId },
     { name: "Sứ mệnh", id: "mission" as PageId }];
@@ -2225,6 +2241,32 @@ export default function App() {
             </div>
           </div>
         </motion.div>}
+        {currentPage === "blog" && (
+          <motion.div 
+            key="blog" 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            className="pt-20"
+          >
+            {selectedBlogSlug ? (
+              <BlogArticleView 
+                article={getBlogArticleBySlug(selectedBlogSlug)!} 
+                onBack={() => {
+                  setSelectedBlogSlug(null);
+                  window.history.pushState({}, "", "/blog");
+                }}
+              />
+            ) : (
+              <BlogList 
+                onArticleClick={(slug) => {
+                  setSelectedBlogSlug(slug);
+                  window.history.pushState({}, "", `/blog/${slug}`);
+                }}
+              />
+            )}
+          </motion.div>
+        )}
       </AnimatePresence>
       <AnimatePresence>
         {selectedInfoItem &&
