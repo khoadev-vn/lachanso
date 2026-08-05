@@ -260,6 +260,73 @@ async function analyzeAndScore(text) {
     }
   }
 
+  // --- Phase 2.5: Numeric claim verification ---
+// Detect when text has numbers that could be modified from real articles
+function verifyNumericClaims(text, articles) {
+  if (!articles || articles.length === 0) return { mismatches: [], score: 0 };
+  
+  const mismatches = [];
+  
+  // Extract numbers from user text
+  const textNumbers = [];
+  const percentPattern = /(\d+(?:\.\d+)?)\s*%/g;
+  const numberPattern = /(\d+(?:\.\d+)?)\s*(?:phiếu|người|tỷ|triệu|nghìn|ngàn|đồng|USD|VND|năm|ngày|tháng|giờ|phút)/gi;
+  
+  let match;
+  while ((match = percentPattern.exec(text)) !== null) {
+    textNumbers.push({ value: parseFloat(match[1]), context: text.substring(Math.max(0, match.index - 30), match.index + match[0].length + 30), type: 'percent' });
+  }
+  while ((match = numberPattern.exec(text)) !== null) {
+    textNumbers.push({ value: parseFloat(match[1]), context: text.substring(Math.max(0, match.index - 30), match.index + match[0].length + 30), type: 'count' });
+  }
+  
+  if (textNumbers.length === 0) return { mismatches: [], score: 0 };
+  
+  // Check each article for matching numbers
+  for (const article of articles.slice(0, 3)) {
+    const articleText = (article.title + ' ' + (article.snippet || '')).toLowerCase();
+    
+    for (const num of textNumbers) {
+      // Check if article mentions the same entity/topic but different number
+      const hasSameTopic = textNumbers.some(t => {
+        const topicWords = text.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+        return topicWords.some(w => articleText.includes(w));
+      });
+      
+      if (hasSameTopic) {
+        // Check if article has a different number for the same context
+        const articlePercents = [...articleText.matchAll(/(\d+(?:\.\d+)?)\s*%/g)].map(m => parseFloat(m[1]));
+        const articleCounts = [...articleText.matchAll(/(\d+(?:\.\d+)?)\s*(?:phiếu|người|tỷ|triệu|nghìn|ngàn|đồng|USD|VND|năm|ngày|tháng|giờ|phút)/gi)].map(m => parseFloat(m[1]));
+        
+        const articleNums = [...articlePercents, ...articleCounts];
+        
+        // If user text has a number that's very different from article numbers
+        for (const articleNum of articleNums) {
+          const ratio = num.value > 0 ? articleNum / num.value : 0;
+          // If ratio is very different (e.g., 10% vs 100% = 10x difference)
+          if ((ratio > 3 || ratio < 0.33) && num.value > 0 && articleNum > 0) {
+            mismatches.push({
+              textNumber: num.value,
+              articleNumber: articleNum,
+              articleTitle: article.title,
+              context: num.context.trim(),
+              confidence: Math.min(0.9, 1 - Math.abs(ratio - 1) * 0.3)
+            });
+          }
+        }
+      }
+    }
+  }
+  
+  // Calculate penalty based on mismatches
+  let penalty = 0;
+  if (mismatches.length > 0) {
+    penalty = Math.min(60, mismatches.length * 20 + mismatches.reduce((sum, m) => sum + m.confidence * 20, 0));
+  }
+  
+  return { mismatches, score: penalty };
+}
+
   // --- Phase 3: News search + NLI ---
   logs.push("Phase 3: News search + NLI...");
   const extracted = await keywordExtractor.extractKeywords(text);
@@ -268,6 +335,15 @@ async function analyzeAndScore(text) {
 
   logs.push("Searching news...");
   const articles = await searchEngine.searchVietnameseNews(searchQuery);
+
+  // Phase 3.5: Verify numeric claims against found articles
+  const numericVerification = verifyNumericClaims(text, articles);
+  if (numericVerification.mismatches.length > 0) {
+    logs.push(`Numeric claim mismatch detected: ${numericVerification.mismatches.length} mismatches found.`);
+    for (const m of numericVerification.mismatches) {
+      logs.push(`  - Text says ${m.textNumber}, article says ${m.articleNumber} (${m.articleTitle})`);
+    }
+  }
 
   let nliResults = [];
   let maxEntailment = 0;
@@ -301,6 +377,11 @@ async function analyzeAndScore(text) {
     logs.push("Educational content detected — skipping NLI scoring.");
     finalScore = baseContent.score;
     nliModifier = 'EDU_SKIP';
+  } else if (numericVerification.mismatches.length > 0) {
+    // Numeric claim mismatch detected — this is a strong signal of manipulation
+    logs.push(`Numeric manipulation detected — penalty: ${numericVerification.score}`);
+    finalScore = Math.min(100, finalScore + numericVerification.score);
+    nliModifier = 'NUMERIC_MISMATCH';
   } else if (maxContradiction > WEIGHTS.nli.contradictionHigh) {
     logs.push(`NLI Contradiction = ${maxContradiction.toFixed(2)} (threshold: ${WEIGHTS.nli.contradictionHigh}). → MAX_RISK`);
     finalScore = 100;
@@ -387,6 +468,11 @@ async function analyzeAndScore(text) {
     isEducational: baseContent.isEducational,
     factCheckResult,
     nliDetails: nliSignals,
+    numericVerification: {
+      mismatches: numericVerification.mismatches,
+      penalty: numericVerification.score,
+      hasMismatch: numericVerification.mismatches.length > 0
+    },
     keywordMatches: educationalKeywordMatches,
     keywordSignals: educationalKeywordSignals,
     filteredArticles: filtered,

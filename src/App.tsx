@@ -959,6 +959,7 @@ export default function App() {
           pressArticles: liveNewsCheck.pressArticles,
           pressSourceLabel: liveNewsCheck.pressSourceLabel,
           factCheckedFake: fullScanResult?.isFactCheckedFake || false,
+          numericVerification: fullScanResult?.numericVerification || null,
           comprehensive: comprehensiveResult?.comprehensive || null,
           comprehensive_tools: comprehensiveResult?.comprehensive?.tools_used || [],
           comprehensive_signals: comprehensiveResult?.comprehensive?.signals || [],
@@ -1545,6 +1546,33 @@ export default function App() {
               </motion.div> : showResults && resultData ? <div className="space-y-8">
 
                 {resultData.factCheckedFake && <FactCheckBanner />}
+
+                {resultData.numericVerification?.hasMismatch && (
+                  <div className="bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-500 rounded-xl p-5 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                        <span className="text-lg">🔢</span>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-red-800 text-lg">Phát hiện số liệu bị chỉnh sửa</h4>
+                        <p className="text-red-700 text-sm mt-1">
+                          Tin bài gốc từ báo uy tín có số liệu khác với nội dung bạn cung cấp. 
+                          Hệ thống đã phát hiện <strong>{resultData.numericVerification.mismatches.length} chỗ</strong> số liệu không khớp.
+                        </p>
+                        <div className="mt-3 space-y-2">
+                          {resultData.numericVerification.mismatches.slice(0, 3).map((m: any, i: number) => (
+                            <div key={i} className="bg-white rounded-lg p-3 border border-red-200 text-sm">
+                              <span className="text-red-600 font-semibold">Nội dung:</span> {m.context}
+                              <br />
+                              <span className="text-green-600 font-semibold">Báo gốc:</span> {m.articleTitle} → số liệu thực: <strong>{m.articleNumber}</strong>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-red-600 text-xs mt-2">⚠️ Đây là dấu hiệu của tin giả — lấy tin từ báo nhưng thay đổi số liệu để gây hiểu lầm.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-6">
                   <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
