@@ -114,7 +114,6 @@ function analyzePhishingUrl(rawLink: string): { score: number; signals: string[]
     score += 20;
     signals.push("tên miền chứa từ khóa lừa đảo điển hình");
   }
-  }
   if (host.includes("xn--")) {
     score += 25;
     signals.push("dùng punycode che giấu tên miền");
