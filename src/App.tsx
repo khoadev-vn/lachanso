@@ -2254,6 +2254,17 @@ export default function App() {
             <img src="/logo.png" alt="Lá Chắn Số" className="w-12 h-12 -mr-1 -mt-2" />
             <span className="text-xl font-bold tracking-tighter text-[#ff8904]">Lá Chắn Số</span>
           </div>
+          <div className="flex items-center gap-6">
+            <a href="https://www.facebook.com/profile.php?id=61592680388542" target="_blank" rel="noreferrer" className="text-gray-500 hover:text-[#1877f2] transition-colors">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+            <a href="https://youtube.com/@lachansovn?si=gWlNIAaSq1xcmv5f" target="_blank" rel="noreferrer" className="text-gray-500 hover:text-[#ff0000] transition-colors">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            </a>
+            <a href="mailto:kanh05113@gmail.com" className="text-gray-500 hover:text-[#ea4335] transition-colors">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>
+            </a>
+          </div>
           <p className="text-sm text-[#4a5565]">
             Copyright © 2026 Lá Chắn Số. Bảo lưu mọi quyền.
           </p>
