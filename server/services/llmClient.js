@@ -2,6 +2,7 @@ const axios = require('axios');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 const { deepseekChat } = require('./deepseekClient');
+const { geminiChat, isGeminiConfigured, getKeyCount, getKeyStats, GEMINI_MODEL } = require('./geminiClient');
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3:latest';
@@ -133,6 +134,7 @@ async function llmChat(messages, options = {}) {
   let result = null;
   let mode = null;
 
+  // 1. Try Ollama first (local, free)
   const ollama = await checkOllama();
   if (ollama.available) {
     const requestedModel = options.model || OLLAMA_MODEL;
@@ -147,6 +149,13 @@ async function llmChat(messages, options = {}) {
     }
   }
 
+  // 2. Try Gemini (round-robin keys)
+  if (!result && isGeminiConfigured()) {
+    result = await geminiChat(messages, options);
+    if (result) mode = 'gemini';
+  }
+
+  // 3. Fallback to DeepSeek
   if (!result) {
     result = await deepseekChat(messages, options);
     if (result) mode = 'deepseek';
@@ -170,14 +179,20 @@ async function getLLMStatus() {
       modelReady: ollama.modelReady,
       models: ollama.models
     },
+    gemini: {
+      configured: isGeminiConfigured(),
+      keyCount: getKeyCount(),
+      model: GEMINI_MODEL,
+      stats: getKeyStats()
+    },
     deepseekConfigured: Boolean(process.env.DEEPSEEK_API_KEY),
-    enabled: ollama.available || Boolean(process.env.DEEPSEEK_API_KEY)
+    enabled: ollama.available || isGeminiConfigured() || Boolean(process.env.DEEPSEEK_API_KEY)
   };
 }
 
 async function isLLMConfigured() {
   const ollama = await checkOllama();
-  return ollama.available || Boolean(process.env.DEEPSEEK_API_KEY);
+  return ollama.available || isGeminiConfigured() || Boolean(process.env.DEEPSEEK_API_KEY);
 }
 
 module.exports = {
