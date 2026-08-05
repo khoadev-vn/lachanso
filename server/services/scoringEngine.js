@@ -93,33 +93,38 @@ const WEIGHTS = {
 
 function calculateBaseContentScore(text) {
   const educational = detectEducationalContent(text);
+  
+  // Educational content — skip keyword analysis entirely, return safe base score
+  if (educational.isEducational) {
+    return { 
+      score: 5, // Very low base score for educational content
+      weight: 0, 
+      keywordMatches: [], 
+      hasDomainImpersonation: false, 
+      hasPhishingLink: false, 
+      isEducational: true 
+    };
+  }
+
   const analysis = threatDetection.analyzeTextByKeywords(text);
   const contactFindings = threatDetection.detectContactScam(text);
   const allFindings = [...analysis, ...contactFindings];
   let totalWeight = 0;
 
-  // For educational content, dramatically reduce penalty for keywords
-  // Educational articles use scam words as EXAMPLES, not as actual scam content
-  const penaltyMultiplier = educational.isEducational ? 0.1 : 1.0;
-
   allFindings.forEach(match => {
-    totalWeight += match.penalty * penaltyMultiplier;
+    totalWeight += match.penalty;
   });
 
-  // Check for domain impersonation (reduced for educational content)
+  // Check for domain impersonation
   const hasDomainImpersonation = DOMAIN_IMPERSONATION_PATTERNS.some(p => p.test(text));
-  if (hasDomainImpersonation && !educational.isEducational) {
+  if (hasDomainImpersonation) {
     totalWeight += 80; // Heavy penalty for domain impersonation
-  } else if (hasDomainImpersonation && educational.isEducational) {
-    totalWeight += 5; // Minimal penalty — likely an example
   }
 
-  // Check for phishing patterns (reduced for educational content)
+  // Check for phishing patterns
   const hasPhishingLink = PHISHING_LINK_PATTERNS.some(p => p.test(text));
-  if (hasPhishingLink && !educational.isEducational) {
+  if (hasPhishingLink) {
     totalWeight += 60; // Heavy penalty for phishing patterns
-  } else if (hasPhishingLink && educational.isEducational) {
-    totalWeight += 3; // Minimal penalty — likely an example
   }
 
   const k = WEIGHTS.keywordBase.k;
@@ -130,12 +135,7 @@ function calculateBaseContentScore(text) {
 
   baseScore = Math.min(100, Math.max(0, baseScore));
 
-  // Educational content gets a large bonus
-  if (educational.isEducational) {
-    baseScore = Math.max(0, baseScore - 40); // Reduce score by up to 40 points
-  }
-
-  return { score: baseScore, weight: totalWeight, keywordMatches: allFindings, hasDomainImpersonation, hasPhishingLink, isEducational: educational.isEducational };
+  return { score: baseScore, weight: totalWeight, keywordMatches: allFindings, hasDomainImpersonation, hasPhishingLink, isEducational: false };
 }
 
 // Analyze keyword findings to extract structured signals
@@ -296,7 +296,12 @@ async function analyzeAndScore(text) {
   logs.push("Phase 4: NLI scoring...");
   const nliSignals = { maxEntailment, maxContradiction, nliResults, filteredCount: filtered.length };
 
-  if (maxContradiction > WEIGHTS.nli.contradictionHigh) {
+  // Educational content — skip NLI scoring, keep base score
+  if (baseContent.isEducational) {
+    logs.push("Educational content detected — skipping NLI scoring.");
+    finalScore = baseContent.score;
+    nliModifier = 'EDU_SKIP';
+  } else if (maxContradiction > WEIGHTS.nli.contradictionHigh) {
     logs.push(`NLI Contradiction = ${maxContradiction.toFixed(2)} (threshold: ${WEIGHTS.nli.contradictionHigh}). → MAX_RISK`);
     finalScore = 100;
     nliModifier = 'MAX_RISK';
@@ -321,7 +326,8 @@ async function analyzeAndScore(text) {
   finalScore = Math.min(100, finalScore);
 
   // --- Phase 5: Multi-signal cascade ---
-  if (WEIGHTS.cascade.enabled) {
+  // Skip cascade for educational content
+  if (WEIGHTS.cascade.enabled && !baseContent.isEducational) {
     const beforeCascade = finalScore;
     finalScore = applyCascadeMultiplier(finalScore, keywordSignals, nliSignals, filtered.length, baseContent.isEducational);
     if (finalScore !== beforeCascade) {
@@ -332,20 +338,45 @@ async function analyzeAndScore(text) {
   // --- Phase 6: Verdict ---
   const t = WEIGHTS.verdicts;
   
-  // Educational content override — cap maximum score
+  // Educational content override — cap maximum score and set safe verdict
   if (baseContent.isEducational) {
     finalScore = Math.min(finalScore, 30); // Cap at 30 for educational content
-    if (finalScore >= t.SUSPICIOUS) {
-      verdict = "SUSPICIOUS"; // Never escalate beyond SUSPICIOUS for educational content
-    }
+    verdict = "SAFE";
+    logs.push(`Educational content detected — score capped at ${finalScore}, verdict: SAFE`);
   }
   
-  if (finalScore >= t.FRAUD_CONFIRMED) verdict = "FRAUD_CONFIRMED";
-  else if (finalScore >= t.HIGH_RISK) verdict = "HIGH_RISK";
-  else if (finalScore >= t.SUSPICIOUS) verdict = "SUSPICIOUS";
-  else verdict = "SAFE";
+  if (verdict !== "SAFE") {
+    if (finalScore >= t.FRAUD_CONFIRMED) verdict = "FRAUD_CONFIRMED";
+    else if (finalScore >= t.HIGH_RISK) verdict = "HIGH_RISK";
+    else if (finalScore >= t.SUSPICIOUS) verdict = "SUSPICIOUS";
+    else verdict = "SAFE";
+  }
 
   logs.push(`Final score: ${finalScore}, Verdict: ${verdict}`);
+
+  // For educational content, clear danger keyword signals to prevent UI from showing them
+  const educationalKeywordMatches = baseContent.isEducational ? [] : baseContent.keywordMatches;
+  const educationalKeywordSignals = baseContent.isEducational ? {
+    categories: [],
+    hasFinancialScam: false,
+    hasPhishing: false,
+    hasGambling: false,
+    hasCryptoScam: false,
+    hasFakeNews: false,
+    hasDomainImpersonation: false,
+    hasPhishingLink: false,
+    severityCount: 0
+  } : {
+    categories: Array.from(keywordSignals.categories),
+    hasFinancialScam: keywordSignals.hasFinancialScam,
+    hasPhishing: keywordSignals.hasPhishing,
+    hasGambling: keywordSignals.hasGambling,
+    hasCryptoScam: keywordSignals.hasCryptoScam,
+    hasFakeNews: keywordSignals.hasFakeNews,
+    hasDomainImpersonation: keywordSignals.hasDomainImpersonation,
+    hasPhishingLink: keywordSignals.hasPhishingLink,
+    severityCount: keywordSignals.severityCount
+  };
 
   const resultObj = {
     finalScore: Math.round(finalScore),
@@ -356,18 +387,8 @@ async function analyzeAndScore(text) {
     isEducational: baseContent.isEducational,
     factCheckResult,
     nliDetails: nliSignals,
-    keywordMatches: baseContent.keywordMatches,
-    keywordSignals: {
-      categories: Array.from(keywordSignals.categories),
-      hasFinancialScam: keywordSignals.hasFinancialScam,
-      hasPhishing: keywordSignals.hasPhishing,
-      hasGambling: keywordSignals.hasGambling,
-      hasCryptoScam: keywordSignals.hasCryptoScam,
-      hasFakeNews: keywordSignals.hasFakeNews,
-      hasDomainImpersonation: keywordSignals.hasDomainImpersonation,
-      hasPhishingLink: keywordSignals.hasPhishingLink,
-      severityCount: keywordSignals.severityCount
-    },
+    keywordMatches: educationalKeywordMatches,
+    keywordSignals: educationalKeywordSignals,
     filteredArticles: filtered,
     logs,
     executionTimeMs: Date.now() - startTime

@@ -249,22 +249,22 @@ async function runLinguisticLayer(text: string): Promise<LCSLayerResult> {
   const words = text.split(/\s+/).filter(Boolean);
   const totalWords = Math.max(words.length, 1);
 
-  // Context-aware emotional density analysis
-  let emotionalAsExample = 0;
-  let emotionalAsClaim = 0;
-  for (const word of EMOTIONAL_WORDS_VI) {
-    const contexts = analyzeKeywordContext(text, word);
-    if (contexts.contextType === 'example' || contexts.contextType === 'warning') {
-      emotionalAsExample++;
-    } else if (contexts.contextType === 'claim') {
-      emotionalAsClaim++;
-    }
-  }
-
-  const emotionalDensity = (emotionalAsExample + emotionalAsClaim) / totalWords;
-
+  // For educational content — skip emotional/urgency analysis entirely
   if (!educational.isEducational) {
-    // Original behavior for non-educational content
+    // Context-aware emotional density analysis
+    let emotionalAsExample = 0;
+    let emotionalAsClaim = 0;
+    for (const word of EMOTIONAL_WORDS_VI) {
+      const contexts = analyzeKeywordContext(text, word);
+      if (contexts.contextType === 'example' || contexts.contextType === 'warning') {
+        emotionalAsExample++;
+      } else if (contexts.contextType === 'claim') {
+        emotionalAsClaim++;
+      }
+    }
+
+    const emotionalDensity = (emotionalAsExample + emotionalAsClaim) / totalWords;
+
     if (emotionalDensity > 0.04) {
       signals.push({
         id: "LF_EMO_HIGH",
@@ -282,18 +282,6 @@ async function runLinguisticLayer(text: string): Promise<LCSLayerResult> {
         detail: `Phát hiện từ ngữ kích động ở mức vừa (${(emotionalDensity * 100).toFixed(1)}%). Cần đối chiếu thêm.`,
         impact: -8,
         severity: "warning"
-      });
-    }
-  } else {
-    // Educational content — emotional words are explained, not used
-    if (emotionalAsExample > 0) {
-      signals.push({
-        id: "LF_EMO_EDU_EXAMPLE",
-        layer: "linguistic",
-        name: "Từ ngữ cảm xúc trong bối cảnh hướng dẫn",
-        detail: `${emotionalAsExample} từ ngữ cảm xúc được phát hiện trong bối cảnh ví dụ/hướng dẫn — không tính là tín hiệu lừa đảo.`,
-        impact: +5,
-        severity: "safe"
       });
     }
   }
@@ -346,17 +334,6 @@ async function runLinguisticLayer(text: string): Promise<LCSLayerResult> {
     }
   }
   // Context-aware absolutism detection
-  let absoluteAsExample = 0;
-  let absoluteAsClaim = 0;
-  for (const word of ABSOLUTISM_WORDS) {
-    const ctx = analyzeKeywordContext(text, word);
-    if (ctx.contextType === 'example' || ctx.contextType === 'warning') {
-      absoluteAsExample++;
-    } else if (ctx.contextType === 'claim') {
-      absoluteAsClaim++;
-    }
-  }
-
   if (!educational.isEducational) {
     const absoluteCount = ABSOLUTISM_WORDS.filter((w) => text.toLowerCase().includes(w.toLowerCase())).length;
     if (absoluteCount >= 3) {
@@ -378,31 +355,11 @@ async function runLinguisticLayer(text: string): Promise<LCSLayerResult> {
         severity: "warning"
       });
     }
-  } else if (absoluteAsExample > 0) {
-    signals.push({
-      id: "LF_ABS_EDU",
-      layer: "linguistic",
-      name: "Từ ngữ tuyệt đối hoá trong bối cảnh hướng dẫn",
-      detail: `${absoluteAsExample} từ ngữ tuyệt đối hóa trong bối cảnh ví dụ/hướng dẫn — không tính là tín hiệu lừa đảo.`,
-      impact: +3,
-      severity: "safe"
-    });
   }
 
-  // Context-aware urgency detection
-  const urgencyMatches = URGENCY_TRIGGERS.filter((p) => p.test(text));
-  let urgencyAsExample = 0;
-  if (educational.isEducational) {
-    const urgencyKeywords = ['trong vòng', 'còn lại', 'hết hạn', 'deadline'];
-    for (const uk of urgencyKeywords) {
-      const ctx = analyzeKeywordContext(text, uk);
-      if (ctx.contextType === 'example' || ctx.contextType === 'warning') {
-        urgencyAsExample++;
-      }
-    }
-  }
-
-  if (!educational.isEducational || urgencyAsExample === 0) {
+  // Urgency detection — skip for educational content
+  if (!educational.isEducational) {
+    const urgencyMatches = URGENCY_TRIGGERS.filter((p) => p.test(text));
     if (urgencyMatches.length >= 2) {
       signals.push({
         id: "LF_URG_HIGH",
@@ -422,15 +379,6 @@ async function runLinguisticLayer(text: string): Promise<LCSLayerResult> {
         severity: "warning"
       });
     }
-  } else {
-    signals.push({
-      id: "LF_URG_EDU",
-      layer: "linguistic",
-      name: "Yếu tố áp lực trong bối cảnh hướng dẫn",
-      detail: `Yếu tố cấp bách được phát hiện trong bối cảnh ví dụ/hướng dẫn — không tính là tín hiệu lừa đảo.`,
-      impact: +3,
-      severity: "safe"
-    });
   }
   const hasByline = /phóng viên|biên tập|tác giả:|ghi nhận của/i.test(text);
   const hasDateRef = /ngày \d{1,2}\/\d{1,2}|tháng \d{1,2} năm \d{4}/i.test(text);
@@ -826,30 +774,10 @@ function runBehavioralLayer(text: string): LCSLayerResult {
   // Detect educational content for context-aware scoring
   const educational = detectEducationalContent(text);
 
-  for (const pattern of VN_SCAM_PATTERNS) {
-    if (pattern.pattern.test(text)) {
-      // Check if this pattern match is in an example/warning context
-      const isContextual = educational.isEducational && (() => {
-        const match = text.match(pattern.pattern);
-        if (!match) return false;
-        const matchIdx = text.indexOf(match[0]);
-        const contextStart = Math.max(0, matchIdx - 150);
-        const contextEnd = Math.min(text.length, matchIdx + match[0].length + 150);
-        const context = text.substring(contextStart, contextEnd).toLowerCase();
-        return /(?:ví dụ|chẳng hạn|điển hình|cảnh báo|tránh|đừng|nhận biết|phát hiện|thường thấy|phổ biến|thủ đoạn|biểu hiện|dấu hiệu|đặc điểm)/i.test(context);
-      })();
-
-      if (isContextual) {
-        // Pattern found in educational context — this is a red flag being explained, not used
-        signals.push({
-          id: pattern.id + "_EDU",
-          layer: "behavioral",
-          name: `${pattern.name} (trong bối cảnh hướng dẫn)`,
-          detail: `Mẫu hành vi "${pattern.name}" được phát hiện trong bối cảnh giáo dục/hướng dẫn — đây là ví dụ minh họa, KHÔNG phải lừa đảo thực tế.`,
-          impact: Math.abs(pattern.impact) * 0.3, // Partial positive impact
-          severity: "safe"
-        });
-      } else {
+  // For educational content — skip ALL scam patterns, they're examples not actual scams
+  if (!educational.isEducational) {
+    for (const pattern of VN_SCAM_PATTERNS) {
+      if (pattern.pattern.test(text)) {
         signals.push({
           id: pattern.id,
           layer: "behavioral",
