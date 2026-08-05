@@ -4,7 +4,7 @@ const { extractClaims, detectSensationalism, extractNumbers, checkSourceReliabil
 const { fullDomainAnalysis, analyzeDomainName } = require('./domainReputation');
 const { googleFactCheck, claimBusterCheck, fullFactCheck } = require('./factCheckApis');
 const { detectVNFakePatterns, getTrustedSourceScore, crossReferenceWithTrustedSources, checkGovWarnings, TRUSTED_VN_SOURCES } = require('./vietnameseFactCheck');
-const { verifyBlogContent, analyzeBlogCredibility, analyzeBlogContent, BLOG_PLATFORMS } = require('./blogVerifier');
+const { verifyBlogContent, classifyContentType, calculateBlogScore, CONTENT_TYPES } = require('./blogVerifier');
 
 // ============ COMPREHENSIVE NEWS VERIFICATION ENGINE ============
 
@@ -264,39 +264,52 @@ function calculateComprehensiveScore(results, blogVerification = null) {
     signals.push({ type: 'negative', reason: 'Government warning found on topic', impact: -15 });
   }
 
-  // Blog verification impact (NEW)
+  // Blog verification impact (NUANCED)
   if (blogVerification) {
-    // Blog credibility
-    if (blogVerification.blog_credibility?.credibility_score) {
-      const credDiff = blogVerification.blog_credibility.credibility_score - 50;
-      score += credDiff * 0.3;
-      if (blogVerification.blog_credibility.level === 'low') {
-        score -= 15;
-        signals.push({ type: 'negative', reason: `Blog credibility LOW: ${blogVerification.blog_credibility.warnings?.join(', ') || 'Low platform credibility'}`, impact: -15 });
-      } else if (blogVerification.blog_credibility.level === 'high') {
-        score += 10;
-        signals.push({ type: 'positive', reason: 'Blog has high credibility indicators', impact: 10 });
+    // Content type classification
+    if (blogVerification.content_type_id) {
+      const contentType = CONTENT_TYPES[blogVerification.content_type_id];
+      if (contentType) {
+        signals.push({ 
+          type: 'info', 
+          reason: `Nội dung phân loại: ${blogVerification.content_type} (trust weight: ${blogVerification.trust_weight})`, 
+          impact: 0 
+        });
       }
     }
     
-    // Content quality
-    if (blogVerification.content_quality?.score) {
-      const qualDiff = blogVerification.content_quality.score - 50;
-      score += qualDiff * 0.4;
-      if (blogVerification.content_quality.negative_signals?.length > 0) {
-        signals.push({ type: 'negative', reason: `Blog content issues: ${blogVerification.content_quality.negative_signals.map(s => s.type).join(', ')}`, impact: -10 });
+    // Blog score (nuanced by content type)
+    if (blogVerification.score !== undefined) {
+      const blogDiff = blogVerification.score - 50;
+      const trustWeight = blogVerification.trust_weight || 1.0;
+      const weightedImpact = Math.round(blogDiff * trustWeight * 0.4);
+      score += weightedImpact;
+      
+      if (blogVerification.score < 40) {
+        signals.push({ 
+          type: 'negative', 
+          reason: `Blog score thấp (${blogVerification.score}/100): ${blogVerification.adjustments?.filter(a => a.impact < 0).map(a => a.detail).join(', ') || 'Multiple issues'}`, 
+          impact: weightedImpact 
+        });
+      } else if (blogVerification.score >= 70) {
+        signals.push({ 
+          type: 'positive', 
+          reason: `Blog score cao (${blogVerification.score}/100): ${blogVerification.content_type}`, 
+          impact: weightedImpact 
+        });
       }
     }
     
-    // Cross-verification
-    if (blogVerification.cross_verification) {
-      const corroboration = blogVerification.cross_verification.overall_corroboration;
-      if (corroboration === 'strong') {
-        score += 15;
-        signals.push({ type: 'positive', reason: 'Blog claims strongly corroborated by news sources', impact: 15 });
-      } else if (corroboration === 'moderate') {
-        score += 8;
-        signals.push({ type: 'positive', reason: 'Blog claims moderately corroborated', impact: 8 });
+    // Fact-check required warning
+    if (blogVerification.fact_check_required) {
+      score -= 5;
+      signals.push({ 
+        type: 'warning', 
+        reason: 'Nội dung y tế/tài chính - cần fact-check kỹ', 
+        impact: -5 
+      });
+    }
+  }
       } else if (corroboration === 'weak') {
         score -= 5;
         signals.push({ type: 'negative', reason: 'Blog claims only weakly corroborated', impact: -5 });

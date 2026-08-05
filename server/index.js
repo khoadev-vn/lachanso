@@ -494,26 +494,23 @@ app.post('/api/verify-fast', async (req, res) => {
         const { extractClaims, detectSensationalism, checkSourceReliability } = require('./services/claimAnalyzer');
         const { detectVNFakePatterns, getTrustedSourceScore } = require('./services/vietnameseFactCheck');
         const { aggregateNews } = require('./services/newsAggregator');
-        const { analyzeBlogContent, analyzeBlogCredibility, BLOG_PLATFORMS } = require('./services/blogVerifier');
+        const { classifyContentType, calculateBlogScore, CONTENT_TYPES } = require('./services/blogVerifier');
         
         const startTime = Date.now();
         
         // Fast parallel analysis
-        const [claims, sensationalism, vnPatterns, articles, blogContentQuality] = await Promise.all([
+        const [claims, sensationalism, vnPatterns, articles] = await Promise.all([
             Promise.resolve(extractClaims(text)),
             Promise.resolve(detectSensationalism(text)),
             Promise.resolve(detectVNFakePatterns(text)),
-            aggregateNews(text, { maxResults: 10 }).catch(() => []),
-            Promise.resolve(analyzeBlogContent(text))
+            aggregateNews(text, { maxResults: 10 }).catch(() => [])
         ]);
         
-        // Blog credibility analysis (if URL provided)
-        let blogCredibility = null;
-        if (url) {
-            try {
-                blogCredibility = await analyzeBlogCredibility(url);
-            } catch {}
-        }
+        // Classify content type
+        const contentType = classifyContentType(text);
+        
+        // Calculate nuanced blog score
+        const blogScore = calculateBlogScore(text, contentType, url);
         
         // Cross-reference with trusted sources
         const crossRefs = articles.map(a => {
@@ -538,14 +535,11 @@ app.post('/api/verify-fast', async (req, res) => {
         
         score = Math.max(0, Math.min(100, score));
         
-        // Add blog verification scoring
-        if (blogCredibility?.credibility_score) {
-            const credDiff = blogCredibility.credibility_score - 50;
-            score += Math.round(credDiff * 0.3);
-        }
-        if (blogContentQuality?.score) {
-            const qualDiff = blogContentQuality.score - 50;
-            score += Math.round(qualDiff * 0.4);
+        // Add blog verification scoring (nuanced)
+        if (blogScore.finalScore !== 50) {
+            const blogDiff = blogScore.finalScore - 50;
+            const trustWeight = blogScore.trustWeight || 1.0;
+            score += Math.round(blogDiff * trustWeight * 0.4);
         }
         
         score = Math.max(0, Math.min(100, score));
@@ -559,8 +553,11 @@ app.post('/api/verify-fast', async (req, res) => {
             vn_fake_patterns: vnPatterns,
             cross_references: crossRefs.slice(0, 5),
             articles_count: articles.length,
-            blog_credibility: blogCredibility,
-            blog_content_quality: blogContentQuality,
+            blog_content_type: contentType.type.label,
+            blog_content_type_id: contentType.type.id,
+            blog_score: blogScore.finalScore,
+            blog_trust_weight: blogScore.trustWeight,
+            blog_adjustments: blogScore.adjustments,
             tools_used: ['claimAnalyzer', 'vietnameseFactCheck', 'newsAggregator', 'blogVerifier'],
             execution_time_ms: Date.now() - startTime
         });

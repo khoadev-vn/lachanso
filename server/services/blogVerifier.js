@@ -1,423 +1,433 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-// ============ BLOG & INDEPENDENT CONTENT VERIFICATION ============
+// ============ NUANCED BLOG & INDEPENDENT CONTENT VERIFICATION ============
 
-// Known blog platforms with varying credibility
-const BLOG_PLATFORMS = {
-  'wordpress.com': { type: 'hosted', baseCredibility: 40, note: 'Blog WordPress.com miễn phí' },
-  'wordpress.org': { type: 'self-hosted', baseCredibility: 50, note: 'Blog WordPress tự host' },
-  'blogspot.com': { type: 'hosted', baseCredibility: 35, note: 'Blogspot/Blogger' },
-  'blogger.com': { type: 'hosted', baseCredibility: 35, note: 'Google Blogger' },
-  'medium.com': { type: 'platform', baseCredibility: 55, note: 'Medium' },
-  'substack.com': { type: 'platform', baseCredibility: 50, note: 'Substack newsletter' },
-  'ghost.io': { type: 'platform', baseCredibility: 50, note: 'Ghost blog' },
-  'wixsite.com': { type: 'hosted', baseCredibility: 30, note: 'Wix website' },
-  'webs.com': { type: 'hosted', baseCredibility: 25, note: 'Webs.com' },
-  'tumblr.com': { type: 'hosted', baseCredibility: 30, note: 'Tumblr' },
-  'facebook.com': { type: 'social', baseCredibility: 25, note: 'Facebook' },
-  'youtube.com': { type: 'video', baseCredibility: 40, note: 'YouTube' },
-  'tiktok.com': { type: 'video', baseCredibility: 20, note: 'TikTok' },
+// ============ CONTENT TYPE CLASSIFICATION ============
+const CONTENT_TYPES = {
+  PERSONAL_EXPERIENCE: {
+    id: 'personal_experience',
+    label: 'Kinh nghiệm cá nhân',
+    description: 'Blog chia sẻ kinh nghiệm, mẹo vặt cá nhân',
+    trustWeight: 0.7, // Giảm trọng số tin cậy vì là chủ quan
+    factCheckRequired: false, // Không cần fact-check vì là kinh nghiệm
+    typicalPatterns: [
+      /(?:kinh nghiệm|chia sẻ|của tôi|tôi đã|bản thân|cá nhân)/gi,
+      /(?:mẹo|tip|thủ thuật|cách|phương pháp)/gi,
+      /(?:review|đánh giá|trải nghiệm|sử dụng)/gi,
+    ],
+    redFlags: [
+      { pattern: /(?:cam kết|guarantee|100%|tuyệt đối)\s+(?:thành công|hiệu quả)/gi, weight: 25, type: 'overclaim' },
+      { pattern: /(?:bán|buy|order|mua|đặt hàng)\s+(?:link|liên kết)/gi, weight: 20, type: 'selling' },
+    ],
+    greenFlags: [
+      { pattern: /(?:lưu ý|tùy người|có thể|không phải ai cũng)/gi, weight: 10, type: 'honest_disclaimer' },
+      { pattern: /(?:thất bại|không hiệu quả|không phù hợp)/gi, weight: 15, type: 'honest_failure' },
+    ]
+  },
+
+  PRODUCT_REVIEW: {
+    id: 'product_review',
+    label: 'Đánh giá sản phẩm',
+    description: 'Blog review, so sánh sản phẩm',
+    trustWeight: 0.8,
+    factCheckRequired: false,
+    typicalPatterns: [
+      /(?:review|đánh giá|so sánh|compare|versus|vs)/gi,
+      /(?:sản phẩm|product|thiết bị|device|tool)/gi,
+      /(?:điểm|score|rating|sao|star)/gi,
+    ],
+    redFlags: [
+      { pattern: /(?:tốt nhất|best|tốt nhất thị trường|#1)/gi, weight: 15, type: 'superlative' },
+      { pattern: /(?:affiliate|referral|commission|hoa hồng)/gi, weight: 10, type: 'affiliate' },
+      { pattern: /(?:chỉ có|exclusive|độc quyền)\s+(?:tại|only)/gi, weight: 15, type: 'exclusive_deal' },
+    ],
+    greenFlags: [
+      { pattern: /(?:nhược điểm|điểm yếu|drawback|cons|không tốt)/gi, weight: 15, type: 'balanced_review' },
+      { pattern: /(?:giá|price|cost|chi phí)\s+(?:cao|đắt|reasonable)/gi, weight: 10, type: 'price_awareness' },
+      { pattern: /(?:alternative|thay thế|phương án khác)/gi, weight: 10, type: 'offers_alternatives' },
+    ]
+  },
+
+  HEALTH_MEDICAL: {
+    id: 'health_medical',
+    label: 'Y tế / Sức khỏe',
+    description: 'Blog về sức khỏe, y tế, thuốc',
+    trustWeight: 1.3, // Tăng trọng số vì ảnh hưởng đến sức khỏe
+    factCheckRequired: true,
+    typicalPatterns: [
+      /(?:sức khỏe|health|bệnh|disease|thuốc|medicine)/gi,
+      /(?:điều trị|treatment|chữa|cure|khỏi)/gi,
+      /(?:bác sĩ|doctor|y sĩ|physician)/gi,
+    ],
+    redFlags: [
+      { pattern: /(?:bài thuốc|công thức|thảo dược|herbal)\s+(?:gia truyền|cổ truyền)/gi, weight: 30, type: 'folk_medicine' },
+      { pattern: /(?:chữa khỏi|khỏi hoàn toàn|100% hiệu quả)/gi, weight: 35, type: 'miracle_cure' },
+      { pattern: /(?:bác sĩ không nói|thuốc giấu|bí mật y tế)/gi, weight: 40, type: 'conspiracy' },
+      { pattern: /(?:không cần|bỏ thuốc|từ bỏ)\s+(?:điều trị|thuốc)/gi, weight: 45, type: 'anti_medical' },
+      { pattern: /(?:vắc-xin|vaccine|tiêm)\s+(?:gây|có hại|độc)/gi, weight: 40, type: 'anti_vax' },
+    ],
+    greenFlags: [
+      { pattern: /(?:tham khảo|consult|consulting)\s+(?:bác sĩ|chuyên gia)/gi, weight: 15, type: 'recommends_professional' },
+      { pattern: /(?:nghiên cứu|study|research)\s+(?:khoa học|scientific)/gi, weight: 10, type: 'references_research' },
+      { pattern: /(?:phụ thuộc|tùy|cơ địa|tùy người)/gi, weight: 10, type: 'acknowledges_variation' },
+    ]
+  },
+
+  FINANCIAL_INVESTMENT: {
+    id: 'financial_investment',
+    label: 'Tài chính / Đầu tư',
+    description: 'Blog về đầu tư, tài chính, tiền ảo',
+    trustWeight: 1.2,
+    factCheckRequired: true,
+    typicalPatterns: [
+      /(?:đầu tư|invest|investment|tài chính|finance)/gi,
+      /(?:tiền ảo|crypto|bitcoin|token|coin)/gi,
+      /(?:lợi nhuận|return|profit|ROI|lãi)/gi,
+    ],
+    redFlags: [
+      { pattern: /(?:lợi nhuận|return)\s+(?:cao|lớn|siêu)\s+\d+%/gi, weight: 40, type: 'guaranteed_return' },
+      { pattern: /(?:cam kết|guarantee|bảo đảm)\s+(?:lợi nhuận|không lỗ)/gi, weight: 45, type: 'guarantee' },
+      { pattern: /(?:risk-free|không rủi ro|an toàn 100%)/gi, weight: 40, type: 'no_risk' },
+      { pattern: /(?:trước khi|before|limited time|hết hạn)/gi, weight: 30, type: 'urgency' },
+      { pattern: /(?:tuyển đại lý|nhà phân phối|MLM|network marketing)/gi, weight: 35, type: 'mlm' },
+    ],
+    greenFlags: [
+      { pattern: /(?:rủi ro|risk|có thể mất|potential loss)/gi, weight: 15, type: 'acknowledges_risk' },
+      { pattern: /(?:nghiên cứu|research|phân tích|analysis)\s+(?:thị trường|market)/gi, weight: 10, type: 'due_diligence' },
+      { pattern: /(?:đa dạng|hedge|phòng ngừa)\s+(?:đầu tư|rủi ro)/gi, weight: 10, type: 'diversification' },
+    ]
+  },
+
+  TECHNICAL_TUTORIAL: {
+    id: 'technical_tutorial',
+    label: 'Kỹ thuật / Hướng dẫn',
+    description: 'Blog hướng dẫn kỹ thuật, lập trình, IT',
+    trustWeight: 0.9,
+    factCheckRequired: false,
+    typicalPatterns: [
+      /(?:hướng dẫn|tutorial|guide|how to|cách)/gi,
+      /(?:lập trình|programming|coding|develop)/gi,
+      /(?:cài đặt|install|setup|config|cấu hình)/gi,
+    ],
+    redFlags: [
+      { pattern: /(?:tải|download|crack|keygen|patch)\s+(?:miễn phí|free)/gi, weight: 30, type: 'piracy' },
+      { pattern: /(?:bypass|hack|exploit|attack)/gi, weight: 20, type: 'security_risk' },
+    ],
+    greenFlags: [
+      { pattern: /(?:source code|github|gitlab|repository)/gi, weight: 15, type: 'open_source' },
+      { pattern: /(?:cập nhật|update|version|mới nhất)/gi, weight: 10, type: 'up_to_date' },
+      { pattern: /(?:test|thử|demo|example)/gi, weight: 10, type: 'provides_examples' },
+    ]
+  },
+
+  OPINION_EDITORIAL: {
+    id: 'opinion_editorial',
+    label: 'Ý kiến / Bình luận',
+    description: 'Blog ý kiến, editorial, commentary',
+    trustWeight: 0.6, // Ý kiến cá nhân không cần fact-check
+    factCheckRequired: false,
+    typicalPatterns: [
+      /(?:ý kiến|opinion|quan điểm|viewpoint|góc nhìn)/gi,
+      /(?:bình luận|commentary|phân tích|analysis)/gi,
+      /(?:nên|should|cần|need|phải|must)/gi,
+    ],
+    redFlags: [
+      { pattern: /(?:sự thật|truth|fact|chính xác)\s+(?:là|is)/gi, weight: 15, type: 'presents_opinion_as_fact' },
+    ],
+    greenFlags: [
+      { pattern: /(?:theo tôi|cá nhân|personal|my opinion)/gi, weight: 10, type: 'clearly_opinion' },
+      { pattern: /(?:có thể sai|quan điểm khác|disagree)/gi, weight: 10, type: 'acknowledges_other_views' },
+    ]
+  },
+
+  NEWS_ANALYSIS: {
+    id: 'news_analysis',
+    label: 'Phân tích tin tức',
+    description: 'Blog phân tích, bình luận tin tức',
+    trustWeight: 0.85,
+    factCheckRequired: true,
+    typicalPatterns: [
+      /(?:phân tích|analysis|bình luận|commentary)/gi,
+      /(?:tin tức|news|sự kiện|event|happening)/gi,
+      /(?:nguồn tin|source|theo|citing)/gi,
+    ],
+    redFlags: [
+      { pattern: /(?:fake|giả|đạo nhái|fabricated)/gi, weight: 25, type: 'fake_news' },
+    ],
+    greenFlags: [
+      { pattern: /(?:nguồn|source|trích dẫn|citation)/gi, weight: 10, type: 'cites_sources' },
+      { pattern: /(?:đối chiếu|cross-reference|verify)/gi, weight: 10, type: 'verification' },
+    ]
+  }
 };
 
-// High-risk blog indicators
-const HIGH_RISK_BLOG_PATTERNS = [
-  { pattern: /(?:affiliate|referral|commission|kiếm tiền|thu nhập|passive income)/gi, weight: 15, type: 'affiliate' },
-  { pattern: /(?:sponsored|được tài trợ|hợp tác|quảng cáo)/gi, weight: 10, type: 'sponsored' },
-  { pattern: /(?:click here|click ngay|mua ngay|đăng ký ngay|nhanh tay)/gi, weight: 20, type: 'cta_spam' },
-  { pattern: /(?:guaranteed|cam kết|100%|tuyệt đối|chắc chắn|không rủi ro)/gi, weight: 15, type: 'guarantee' },
-  { pattern: /(?:secret|bí mật|hidden|hidden gem|only few know|chỉ ít người biết)/gi, weight: 20, type: 'secret_selling' },
-  { pattern: /(?:before it's too late|trước khi quá muộn|hôm nay only|limited time)/gi, weight: 25, type: 'urgency_scam' },
-];
-
-// Vietnamese blog misinformation patterns
-const VN_BLOG_MISINFO = [
-  { pattern: /(?:chia sẻ|kinh nghiệm|của tôi|tôi đã thử|tôi đã dùng)\s+(?:thành công|hiệu quả|tuyệt vời)/gi, type: 'personal_anecdote', weight: 10 },
-  { pattern: /(?:bài thuốc|công thức|cách làm|bí quyết)\s+(?:của bà|của ông|gia truyền|đông y)/gi, type: 'folk_medicine', weight: 20 },
-  { pattern: /(?:phát hiện|nghiên cứu mới|khoa học chứng minh|nghiên cứu cho thấy)/gi, type: 'fake_science', weight: 15 },
-  { pattern: /(?:ai cũng không nói|báo chí không đưa|kh ai biết|bí mật bị giấu)/gi, type: 'conspiracy', weight: 25 },
-  { pattern: /(?:đầu tư|invest|crypto|bitcoin|token)\s+(?:lợi nhuận|return|ROI)\s+\d+%/gi, type: 'investment_scam', weight: 30 },
-];
-
-// Content quality indicators
-const QUALITY_INDICATORS = {
-  positive: [
-    { pattern: /(?:nguồn|source|tham khảo|reference|citation|trích dẫn)/gi, weight: 10, type: 'has_references' },
-    { pattern: /(?:tác giả|author|viết bởi|written by|bio|giới thiệu)/gi, weight: 8, type: 'has_author' },
-    { pattern: /(?:cập nhật|updated|lần cuối|last modified|ngày đăng)/gi, weight: 5, type: 'has_date' },
-    { pattern: /(?:lưu ý|chú ý|disclaimer|từ chối|miễn trừ)/gi, weight: 5, type: 'has_disclaimer' },
-    { pattern: /(?:thảo luận|bình luận|comment|discussion)/gi, weight: 3, type: 'has_engagement' },
-  ],
-  negative: [
-    { pattern: /(?:copy|sao chép|đăng lại|repost|share lại)/gi, weight: 15, type: 'copied_content' },
-    { pattern: /(?:ai cũng|tất cả|100%|tuyệt đối|chắc chắn|không bao giờ)/gi, weight: 10, type: 'absolute_claims' },
-    { pattern: /(?:cảnh báo|warning|cẩn thận|danger|nguy hiểm)\s*!/gi, weight: 8, type: 'fear_mongering' },
-    { pattern: /(?:link\s+(?:affiliate|referral|ad))/gi, weight: 20, type: 'affiliate_links' },
-  ]
-};
-
-// Extract blog metadata from HTML
-function extractBlogMetadata(html, url) {
-  try {
-    const $ = cheerio.load(html);
-    const metadata = {
-      title: $('title').text().trim() || $('h1').first().text().trim(),
-      description: $('meta[name="description"]').attr('content') || '',
-      author: $('meta[name="author"]').attr('content') || 
-              $('[rel="author"]').text().trim() ||
-              $('.author').first().text().trim() ||
-              $('[class*="author"]').first().text().trim(),
-      publishDate: $('meta[property="article:published_time"]').attr('content') ||
-                   $('time[datetime]').first().attr('datetime') ||
-                   $('[class*="date"]').first().text().trim(),
-      modifiedDate: $('meta[property="article:modified_time"]').attr('content') ||
-                    $('meta[name="last-modified"]').attr('content'),
-      keywords: $('meta[name="keywords"]').attr('content') || '',
-      ogImage: $('meta[property="og:image"]').attr('content'),
-      canonical: $('link[rel="canonical"]').attr('href'),
-      wordCount: $('article, .post-content, .entry-content, .content').text().split(/\s+/).length,
-      links: $('article a, .post-content a, .entry-content a').length,
-      images: $('article img, .post-content img, .entry-content img').length,
-      headings: {
-        h1: $('h1').length,
-        h2: $('h2').length,
-        h3: $('h3').length
-      },
-      hasComments: $('.comments, #comments, [class*="comment"]').length > 0,
-      hasShareButtons: $('[class*="share"], [class*="social"]').length > 0,
-      hasRelatedPosts: $('[class*="related"], [class*="suggested"]').length > 0,
-    };
-    
-    return metadata;
-  } catch (e) {
-    return { error: e.message };
-  }
-}
-
-// Analyze blog credibility
-async function analyzeBlogCredibility(url) {
-  try {
-    const parsed = new URL(url.includes('://') ? url : `https://${url}`);
-    const hostname = parsed.hostname.toLowerCase();
-    const rootDomain = hostname.split('.').slice(-2).join('.');
-    
-    const result = {
-      url,
-      hostname,
-      rootDomain,
-      platform: null,
-      credibility_score: 50,
-      factors: [],
-      warnings: []
-    };
-    
-    // Check platform
-    for (const [platform, info] of Object.entries(BLOG_PLATFORMS)) {
-      if (hostname.includes(platform)) {
-        result.platform = { name: platform, ...info };
-        result.credibility_score = info.baseCredibility;
-        result.factors.push({ type: 'platform', impact: info.baseCredibility - 50, detail: info.note });
-        break;
-      }
-    }
-    
-    // Check if custom domain (higher credibility)
-    if (!result.platform) {
-      result.credibility_score = 60;
-      result.factors.push({ type: 'custom_domain', impact: 10, detail: 'Sử dụng tên miền riêng' });
-    }
-    
-    // Try to fetch and analyze the page
-    try {
-      const { data } = await axios.get(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-        timeout: 10000
-      });
-      
-      const metadata = extractBlogMetadata(data, url);
-      result.metadata = metadata;
-      
-      // Author check
-      if (metadata.author) {
-        result.credibility_score += 5;
-        result.factors.push({ type: 'has_author', impact: 5, detail: `Tác giả: ${metadata.author}` });
-      } else {
-        result.credibility_score -= 10;
-        result.warnings.push('Không tìm thấy thông tin tác giả');
-      }
-      
-      // Date check
-      if (metadata.publishDate) {
-        const pubDate = new Date(metadata.publishDate);
-        const daysOld = Math.floor((Date.now() - pubDate.getTime()) / (1000 * 60 * 60 * 24));
-        if (daysOld > 365) {
-          result.credibility_score -= 5;
-          result.warnings.push(`Bài viết cũ (${daysOld} ngày)`);
-        } else if (daysOld < 1) {
-          result.credibility_score -= 3;
-          result.warnings.push('Bài viết rất mới (có thể là tin tức chưa xác thực)');
-        }
-      } else {
-        result.credibility_score -= 5;
-        result.warnings.push('Không tìm thấy ngày đăng');
-      }
-      
-      // Word count check
-      if (metadata.wordCount) {
-        if (metadata.wordCount < 100) {
-          result.credibility_score -= 15;
-          result.warnings.push('Nội dung quá ngắn (dưới 100 từ)');
-        } else if (metadata.wordCount > 500) {
-          result.credibility_score += 5;
-          result.factors.push({ type: 'substantial_content', impact: 5, detail: `${metadata.wordCount} từ` });
-        }
-      }
-      
-      // Reference check
-      if (metadata.links > 5) {
-        result.credibility_score += 5;
-        result.factors.push({ type: 'has_references', impact: 5, detail: `${metadata.links} liên kết` });
-      }
-      
-      // Image check
-      if (metadata.images > 2) {
-        result.credibility_score += 3;
-        result.factors.push({ type: 'has_images', impact: 3, detail: `${metadata.images} hình ảnh` });
-      }
-      
-      // Comment section
-      if (metadata.hasComments) {
-        result.credibility_score += 3;
-        result.factors.push({ type: 'has_comments', impact: 3, detail: 'Có phần bình luận' });
-      }
-      
-    } catch (e) {
-      result.warnings.push(`Không thể đọc nội dung: ${e.message}`);
-    }
-    
-    result.credibility_score = Math.max(0, Math.min(100, result.credibility_score));
-    result.level = result.credibility_score >= 70 ? 'high' : 
-                   result.credibility_score >= 45 ? 'medium' : 'low';
-    
-    return result;
-  } catch (e) {
-    return { error: e.message, credibility_score: 0, level: 'unknown' };
-  }
-}
-
-// Analyze blog content quality
-function analyzeBlogContent(text) {
-  if (!text || text.length < 50) return { score: 0, issues: [] };
+// ============ CONTENT TYPE CLASSIFICATION ============
+function classifyContentType(text) {
+  const scores = {};
   
-  const results = {
-    score: 50,
-    issues: [],
-    positive_signals: [],
-    negative_signals: []
+  for (const [key, contentType] of Object.entries(CONTENT_TYPES)) {
+    let score = 0;
+    for (const pattern of contentType.typicalPatterns) {
+      const matches = text.match(pattern);
+      if (matches) score += matches.length;
+    }
+    scores[key] = score;
+  }
+  
+  // Find the highest scoring content type
+  let maxScore = 0;
+  let classifiedType = 'PERSONAL_EXPERIENCE'; // Default
+  
+  for (const [key, score] of Object.entries(scores)) {
+    if (score > maxScore) {
+      maxScore = score;
+      classifiedType = key;
+    }
+  }
+  
+  return {
+    type: CONTENT_TYPES[classifiedType],
+    scores,
+    confidence: maxScore > 3 ? 'high' : maxScore > 1 ? 'medium' : 'low'
+  };
+}
+
+// ============ NUANCED SCORING ============
+function calculateBlogScore(text, contentType, url = null) {
+  const result = {
+    baseScore: 50,
+    adjustments: [],
+    finalScore: 50,
+    category: contentType.type.id,
+    categoryLabel: contentType.type.label,
+    trustWeight: contentType.type.trustWeight,
+    factCheckRequired: contentType.type.factCheckRequired
   };
   
-  // Check quality indicators
-  for (const indicator of QUALITY_INDICATORS.positive) {
-    const matches = text.match(indicator.pattern);
-    if (matches) {
-      results.score += indicator.weight;
-      results.positive_signals.push({ type: indicator.type, matches: matches.slice(0, 2) });
+  // Apply red flags (with category-specific weights)
+  if (contentType.type.redFlags) {
+    for (const flag of contentType.type.redFlags) {
+      const matches = text.match(flag.pattern);
+      if (matches) {
+        const adjustedWeight = Math.round(flag.weight * contentType.type.trustWeight);
+        result.adjustments.push({
+          type: 'red_flag',
+          pattern: flag.type,
+          impact: -adjustedWeight,
+          matches: matches.slice(0, 2)
+        });
+        result.baseScore -= adjustedWeight;
+      }
     }
   }
   
-  for (const indicator of QUALITY_INDICATORS.negative) {
-    const matches = text.match(indicator.pattern);
-    if (matches) {
-      results.score -= indicator.weight;
-      results.negative_signals.push({ type: indicator.type, matches: matches.slice(0, 2) });
+  // Apply green flags (with category-specific weights)
+  if (contentType.type.greenFlags) {
+    for (const flag of contentType.type.greenFlags) {
+      const matches = text.match(flag.pattern);
+      if (matches) {
+        const adjustedWeight = Math.round(flag.weight * contentType.type.trustWeight);
+        result.adjustments.push({
+          type: 'green_flag',
+          pattern: flag.type,
+          impact: adjustedWeight,
+          matches: matches.slice(0, 2)
+        });
+        result.baseScore += adjustedWeight;
+      }
     }
   }
   
-  // Check blog misinformation patterns
-  for (const pattern of VN_BLOG_MISINFO) {
-    const matches = text.match(pattern.pattern);
-    if (matches) {
-      results.score -= pattern.weight;
-      results.issues.push({ type: pattern.type, weight: pattern.weight, matches: matches.slice(0, 2) });
+  // Platform-specific adjustments
+  if (url) {
+    const platformAdjustment = getPlatformAdjustment(url);
+    if (platformAdjustment) {
+      result.adjustments.push(platformAdjustment);
+      result.baseScore += platformAdjustment.impact;
     }
   }
   
-  // Check high-risk patterns
-  for (const pattern of HIGH_RISK_BLOG_PATTERNS) {
-    const matches = text.match(pattern.pattern);
-    if (matches) {
-      results.score -= pattern.weight;
-      results.issues.push({ type: pattern.type, weight: pattern.weight, matches: matches.slice(0, 2) });
+  // Content length adjustment
+  const wordCount = text.split(/\s+/).length;
+  if (wordCount < 50) {
+    result.adjustments.push({ type: 'length', impact: -10, detail: 'Nội dung quá ngắn' });
+    result.baseScore -= 10;
+  } else if (wordCount > 500) {
+    result.adjustments.push({ type: 'length', impact: 5, detail: 'Nội dung chi tiết' });
+    result.baseScore += 5;
+  } else if (wordCount > 1000) {
+    result.adjustments.push({ type: 'length', impact: 10, detail: 'Nội dung rất chi tiết' });
+    result.baseScore += 10;
+  }
+  
+  // Language quality
+  const languageQuality = analyzeLanguageQuality(text);
+  result.adjustments.push(...languageQuality.adjustments);
+  result.baseScore += languageQuality.score;
+  
+  // Clamp score
+  result.finalScore = Math.max(0, Math.min(100, result.baseScore));
+  
+  return result;
+}
+
+// ============ PLATFORM ADJUSTMENTS ============
+function getPlatformAdjustment(url) {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+    
+    // Premium platforms (higher trust)
+    if (hostname.includes('medium.com')) {
+      return { type: 'platform', impact: 10, detail: 'Medium (nền tảng uy tín)' };
     }
+    if (hostname.includes('substack.com')) {
+      return { type: 'platform', impact: 8, detail: 'Substack (newsletter chuyên nghiệp)' };
+    }
+    if (hostname.includes('dev.to') || hostname.includes('hashnode.dev')) {
+      return { type: 'platform', impact: 10, detail: 'Nền tảng dev uy tín' };
+    }
+    
+    // Free hosted (lower trust)
+    if (hostname.includes('blogspot.com') || hostname.includes('blogger.com')) {
+      return { type: 'platform', impact: -8, detail: 'Blogspot (nền tảng miễn phí)' };
+    }
+    if (hostname.includes('wixsite.com') || hostname.includes('webs.com')) {
+      return { type: 'platform', impact: -12, detail: 'Website builder miễn phí' };
+    }
+    
+    // Social media (lower trust for facts)
+    if (hostname.includes('facebook.com')) {
+      return { type: 'platform', impact: -15, detail: 'Facebook (mạng xã hội)' };
+    }
+    if (hostname.includes('tiktok.com')) {
+      return { type: 'platform', impact: -20, detail: 'TikTok (nền tảng ngắn)' };
+    }
+    
+    // Custom domain (neutral to positive)
+    return null;
+  } catch {
+    return null;
   }
-  
-  // Text structure analysis
-  const sentences = text.split(/[.!?。！？]+/).filter(s => s.trim().length > 10);
-  const avgSentenceLength = text.length / Math.max(sentences.length, 1);
-  
-  if (avgSentenceLength > 100) {
-    results.score -= 5;
-    results.issues.push({ type: 'long_sentences', weight: 5, detail: 'Câu quá dài, khó đọc' });
-  }
+}
+
+// ============ LANGUAGE QUALITY ANALYSIS ============
+function analyzeLanguageQuality(text) {
+  const result = { score: 0, adjustments: [] };
   
   // Check for excessive capitalization
   const capsWords = (text.match(/[A-Z]{3,}/g) || []).length;
   const totalWords = text.split(/\s+/).length;
   if (capsWords / totalWords > 0.1) {
-    results.score -= 10;
-    results.issues.push({ type: 'excessive_caps', weight: 10, detail: 'Quá nhiều chữ in hoa' });
+    result.score -= 10;
+    result.adjustments.push({ type: 'language', impact: -10, detail: 'Quá nhiều chữ in hoa' });
   }
   
-  results.score = Math.max(0, Math.min(100, results.score));
-  return results;
+  // Check for excessive punctuation
+  const exclamationMarks = (text.match(/[!！]{2,}/g) || []).length;
+  if (exclamationMarks > 2) {
+    result.score -= 5;
+    result.adjustments.push({ type: 'language', impact: -5, detail: 'Quá nhiều dấu !' });
+  }
+  
+  // Check for spammy words
+  const spammyWords = (text.match(/(?:free|miễn phí|click|ngay|now|urgent|hot|new|free)/gi) || []).length;
+  if (spammyWords > 3) {
+    result.score -= 8;
+    result.adjustments.push({ type: 'language', impact: -8, detail: 'Từ ngữ spam' });
+  }
+  
+  // Check for proper paragraphs
+  const paragraphs = text.split(/\n\s*\n/).length;
+  if (paragraphs < 2 && totalWords > 100) {
+    result.score -= 5;
+    result.adjustments.push({ type: 'language', impact: -5, detail: 'Thiếu đoạn văn' });
+  }
+  
+  return result;
 }
 
-// Cross-verify blog claims with other sources
-async function crossVerifyBlogClaims(text, keywords) {
-  const results = {
-    other_blogs_mentioning: [],
-    news_sources_mentioning: [],
-    fact_check_sites: [],
-    overall_corroboration: 'none'
-  };
-  
-  const query = keywords.slice(0, 3).join(' ');
-  
-  // Search for other blogs discussing the same topic
+// ============ BLOG METADATA EXTRACTION ============
+function extractBlogMetadata(html) {
   try {
-    const { data } = await axios.get(
-      `https://www.bing.com/search?q=${encodeURIComponent(query)}&format=rss&setlang=vi`,
-      { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 8000 }
-    );
-    const $ = cheerio.load(data, { xmlMode: true });
-    
-    $('item').each((i, el) => {
-      if (i >= 10) return;
-      const title = $(el).find('title').text().trim();
-      const link = $(el).find('link').text().trim();
-      const source = $(el).find('source').text().trim() || '';
-      
-      if (title && link) {
-        const domain = new URL(link).hostname;
-        const isNewsSource = ['vnexpress.net', 'tuoitre.vn', 'thanhnien.vn', 'dantri.com.vn', 'vietnamnet.vn'].some(d => domain.includes(d));
-        
-        if (isNewsSource) {
-          results.news_sources_mentioning.push({ title, link, source });
-        } else {
-          results.other_blogs_mentioning.push({ title, link, source });
-        }
-      }
-    });
-  } catch {}
-  
-  // Determine corroboration level
-  if (results.news_sources_mentioning.length >= 3) {
-    results.overall_corroboration = 'strong';
-  } else if (results.news_sources_mentioning.length >= 1) {
-    results.overall_corroboration = 'moderate';
-  } else if (results.other_blogs_mentioning.length >= 3) {
-    results.overall_corroboration = 'weak';
+    const $ = cheerio.load(html);
+    return {
+      title: $('title').text().trim() || $('h1').first().text().trim(),
+      author: $('meta[name="author"]').attr('content') || 
+              $('[rel="author"]').text().trim() ||
+              $('.author').first().text().trim(),
+      publishDate: $('meta[property="article:published_time"]').attr('content') ||
+                   $('time[datetime]').first().attr('datetime'),
+      wordCount: $('article, .post-content, .entry-content').text().split(/\s+/).length,
+      hasComments: $('.comments, #comments').length > 0,
+      images: $('article img, .post-content img').length,
+      links: $('article a, .post-content a').length,
+    };
+  } catch {
+    return null;
   }
-  
-  return results;
 }
 
-// Main blog verification function
+// ============ MAIN BLOG VERIFICATION ============
 async function verifyBlogContent(text, url = null) {
   const startTime = Date.now();
-  const results = {
+  
+  // 1. Classify content type
+  const contentType = classifyContentType(text);
+  
+  // 2. Calculate nuanced score
+  const blogScore = calculateBlogScore(text, contentType, url);
+  
+  // 3. Extract metadata if URL provided
+  let metadata = null;
+  if (url) {
+    try {
+      const { data } = await axios.get(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        timeout: 8000
+      });
+      metadata = extractBlogMetadata(data);
+    } catch {}
+  }
+  
+  // 4. Generate verdict based on category
+  let verdict = '';
+  const score = blogScore.finalScore;
+  
+  if (contentType.type.factCheckRequired) {
+    // For health/finance, be stricter
+    if (score >= 70) verdict = 'Nội dung có cơ sở,但仍 cần verify thêm';
+    else if (score >= 45) verdict = 'Cần kiểm chứng kỹ trước khi tin';
+    else verdict = 'Có dấu hiệu nguy hiểm, không nên tin';
+  } else {
+    // For personal/opinion, be more lenient
+    if (score >= 75) verdict = 'Blog có chất lượng tốt';
+    else if (score >= 55) verdict = 'Blog ở mức trung bình, nên đọc có chọn lọc';
+    else verdict = 'Blog có nhiều vấn đề, nên cẩn trọng';
+  }
+  
+  return {
     text: text.substring(0, 200),
     url,
     timestamp: new Date().toISOString(),
-    blog_credibility: null,
-    content_quality: null,
-    cross_verification: null,
-    tools_used: [],
-    overall_score: 50,
-    verdict: null,
-    confidence: 0,
-    execution_time_ms: 0
+    content_type: contentType.type.label,
+    content_type_id: contentType.type.id,
+    content_type_confidence: contentType.confidence,
+    trust_weight: contentType.type.trustWeight,
+    fact_check_required: contentType.type.factCheckRequired,
+    score: score,
+    verdict: verdict,
+    adjustments: blogScore.adjustments,
+    metadata: metadata,
+    tools_used: ['classifyContentType', 'calculateBlogScore', 'analyzeLanguageQuality'],
+    execution_time_ms: Date.now() - startTime
   };
-  
-  // 1. Blog credibility analysis (if URL provided)
-  if (url) {
-    console.log('[BlogVerify] Step 1: Blog credibility');
-    try {
-      results.blog_credibility = await analyzeBlogCredibility(url);
-      results.tools_used.push('blogCredibility');
-    } catch (e) {
-      console.error('[BlogVerify] Blog credibility error:', e.message);
-    }
-  }
-  
-  // 2. Content quality analysis
-  console.log('[BlogVerify] Step 2: Content quality');
-  results.content_quality = analyzeBlogContent(text);
-  results.tools_used.push('blogContentQuality');
-  
-  // 3. Cross-verification
-  console.log('[BlogVerify] Step 3: Cross-verification');
-  const keywords = text.split(/\s+/).filter(w => w.length > 3).slice(0, 5);
-  try {
-    results.cross_verification = await crossVerifyBlogClaims(text, keywords);
-    results.tools_used.push('crossVerify');
-  } catch (e) {
-    console.error('[BlogVerify] Cross-verification error:', e.message);
-  }
-  
-  // 4. Calculate overall score
-  let score = 50;
-  
-  // Blog credibility impact
-  if (results.blog_credibility?.credibility_score) {
-    const credDiff = results.blog_credibility.credibility_score - 50;
-    score += credDiff * 0.3; // 30% weight
-  }
-  
-  // Content quality impact
-  if (results.content_quality?.score) {
-    const qualDiff = results.content_quality.score - 50;
-    score += qualDiff * 0.4; // 40% weight
-  }
-  
-  // Cross-verification impact
-  if (results.cross_verification) {
-    const corroboration = results.cross_verification.overall_corroboration;
-    if (corroboration === 'strong') score += 15;
-    else if (corroboration === 'moderate') score += 8;
-    else if (corroboration === 'weak') score -= 5;
-    else score -= 10; // No corroboration
-  }
-  
-  score = Math.max(0, Math.min(100, score));
-  results.overall_score = score;
-  
-  // Determine verdict
-  if (score >= 75) results.verdict = 'Blog có độ tin cậy cao';
-  else if (score >= 55) results.verdict = 'Blog cần kiểm chứng thêm';
-  else if (score >= 35) results.verdict = 'Blog có dấu hiệu nghi vấn';
-  else results.verdict = 'Blog có khả năng cao là không đáng tin';
-  
-  // Calculate confidence
-  let confidence = 30;
-  if (results.blog_credibility) confidence += 15;
-  if (results.content_quality) confidence += 15;
-  if (results.cross_verification) confidence += 10;
-  if (results.cross_verification?.news_sources_mentioning?.length > 0) confidence += 10;
-  results.confidence = Math.min(90, confidence);
-  
-  results.execution_time_ms = Date.now() - startTime;
-  console.log(`[BlogVerify] Completed in ${results.execution_time_ms}ms. Score: ${score}`);
-  
-  return results;
 }
 
 module.exports = {
-  analyzeBlogCredibility,
-  analyzeBlogContent,
-  crossVerifyBlogClaims,
+  classifyContentType,
+  calculateBlogScore,
   verifyBlogContent,
-  BLOG_PLATFORMS,
-  HIGH_RISK_BLOG_PATTERNS,
-  VN_BLOG_MISINFO
+  analyzeLanguageQuality,
+  CONTENT_TYPES
 };
