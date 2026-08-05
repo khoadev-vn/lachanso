@@ -449,14 +449,14 @@ app.post('/api/full-scan', async (req, res) => {
 // ============ COMPREHENSIVE VERIFICATION ENDPOINT ============
 app.post('/api/verify-comprehensive', async (req, res) => {
     try {
-        const { text } = req.body;
+        const { text, url } = req.body;
         if (!text) return res.status(400).json({ error: 'Missing text input' });
         
         console.log(`\n[API] 🔍 Bắt đầu Comprehensive Verify: "${text.substring(0, 50)}..."`);
         const startTime = Date.now();
         
-        // Run comprehensive verification
-        const verification = await verifyNewsComprehensive(text);
+        // Run comprehensive verification with URL if provided
+        const verification = await verifyNewsComprehensive(text, { url });
         
         // Also run existing systems for comparison
         let legacyScoring = null;
@@ -488,22 +488,32 @@ app.post('/api/verify-comprehensive', async (req, res) => {
 // ============ FAST VERIFY WITH ENHANCED TOOLS ============
 app.post('/api/verify-fast', async (req, res) => {
     try {
-        const { text } = req.body;
+        const { text, url } = req.body;
         if (!text) return res.status(400).json({ error: 'Missing text input' });
         
         const { extractClaims, detectSensationalism, checkSourceReliability } = require('./services/claimAnalyzer');
         const { detectVNFakePatterns, getTrustedSourceScore } = require('./services/vietnameseFactCheck');
         const { aggregateNews } = require('./services/newsAggregator');
+        const { analyzeBlogContent, analyzeBlogCredibility, BLOG_PLATFORMS } = require('./services/blogVerifier');
         
         const startTime = Date.now();
         
         // Fast parallel analysis
-        const [claims, sensationalism, vnPatterns, articles] = await Promise.all([
+        const [claims, sensationalism, vnPatterns, articles, blogContentQuality] = await Promise.all([
             Promise.resolve(extractClaims(text)),
             Promise.resolve(detectSensationalism(text)),
             Promise.resolve(detectVNFakePatterns(text)),
-            aggregateNews(text, { maxResults: 10 }).catch(() => [])
+            aggregateNews(text, { maxResults: 10 }).catch(() => []),
+            Promise.resolve(analyzeBlogContent(text))
         ]);
+        
+        // Blog credibility analysis (if URL provided)
+        let blogCredibility = null;
+        if (url) {
+            try {
+                blogCredibility = await analyzeBlogCredibility(url);
+            } catch {}
+        }
         
         // Cross-reference with trusted sources
         const crossRefs = articles.map(a => {
@@ -528,6 +538,18 @@ app.post('/api/verify-fast', async (req, res) => {
         
         score = Math.max(0, Math.min(100, score));
         
+        // Add blog verification scoring
+        if (blogCredibility?.credibility_score) {
+            const credDiff = blogCredibility.credibility_score - 50;
+            score += Math.round(credDiff * 0.3);
+        }
+        if (blogContentQuality?.score) {
+            const qualDiff = blogContentQuality.score - 50;
+            score += Math.round(qualDiff * 0.4);
+        }
+        
+        score = Math.max(0, Math.min(100, score));
+        
         res.json({
             success: true,
             score,
@@ -537,7 +559,9 @@ app.post('/api/verify-fast', async (req, res) => {
             vn_fake_patterns: vnPatterns,
             cross_references: crossRefs.slice(0, 5),
             articles_count: articles.length,
-            tools_used: ['claimAnalyzer', 'vietnameseFactCheck', 'newsAggregator'],
+            blog_credibility: blogCredibility,
+            blog_content_quality: blogContentQuality,
+            tools_used: ['claimAnalyzer', 'vietnameseFactCheck', 'newsAggregator', 'blogVerifier'],
             execution_time_ms: Date.now() - startTime
         });
     } catch (error) {

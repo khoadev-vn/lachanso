@@ -4,13 +4,16 @@ const { extractClaims, detectSensationalism, extractNumbers, checkSourceReliabil
 const { fullDomainAnalysis, analyzeDomainName } = require('./domainReputation');
 const { googleFactCheck, claimBusterCheck, fullFactCheck } = require('./factCheckApis');
 const { detectVNFakePatterns, getTrustedSourceScore, crossReferenceWithTrustedSources, checkGovWarnings, TRUSTED_VN_SOURCES } = require('./vietnameseFactCheck');
+const { verifyBlogContent, analyzeBlogCredibility, analyzeBlogContent, BLOG_PLATFORMS } = require('./blogVerifier');
 
 // ============ COMPREHENSIVE NEWS VERIFICATION ENGINE ============
 
 async function verifyNewsComprehensive(text, options = {}) {
   const startTime = Date.now();
+  const url = options.url || null;
   const results = {
     text: text.substring(0, 200),
+    url,
     timestamp: new Date().toISOString(),
     tools_used: [],
     signals: [],
@@ -20,6 +23,7 @@ async function verifyNewsComprehensive(text, options = {}) {
     claim_analysis: null,
     sensationalism: null,
     vietnamese_specific: null,
+    blog_verification: null,
     overall_verdict: null,
     confidence: 0,
     execution_time_ms: 0
@@ -130,9 +134,28 @@ async function verifyNewsComprehensive(text, options = {}) {
     if (govWarnings.length > 0) results.tools_used.push('govWarnings');
   } catch {}
 
-  // 8. Calculate overall verdict
-  console.log('[Verify] Step 8: Scoring');
-  const scoring = calculateComprehensiveScore(results);
+  // 8. Blog-specific verification (for non-news content OR when URL is provided)
+  console.log('[Verify] Step 8: Blog verification');
+  let blogVerification = null;
+  const hasNoTrustedSources = !results.cross_references?.some(r => r.is_trusted);
+  const isLowCredibility = results.sensationalism?.level === 'high' || 
+                           results.claim_analysis?.source_reliability?.reliability < 50 ||
+                           hasNoTrustedSources;
+  
+  // Always run blog verification if URL is provided or content looks like a blog
+  if (url || isLowCredibility) {
+    try {
+      blogVerification = await verifyBlogContent(text, url);
+      results.blog_verification = blogVerification;
+      results.tools_used.push('blogVerifier');
+    } catch (e) {
+      console.error('[Verify] Blog verification error:', e.message);
+    }
+  }
+
+  // 9. Calculate overall verdict
+  console.log('[Verify] Step 9: Scoring');
+  const scoring = calculateComprehensiveScore(results, blogVerification);
   results.overall_verdict = scoring.verdict;
   results.confidence = scoring.confidence;
   results.score = scoring.score;
@@ -144,7 +167,7 @@ async function verifyNewsComprehensive(text, options = {}) {
   return results;
 }
 
-function calculateComprehensiveScore(results) {
+function calculateComprehensiveScore(results, blogVerification = null) {
   let score = 50; // Start neutral
   const signals = [];
 
@@ -239,6 +262,49 @@ function calculateComprehensiveScore(results) {
   if (results.vietnamese_specific?.gov_warnings?.length > 0) {
     score -= 15;
     signals.push({ type: 'negative', reason: 'Government warning found on topic', impact: -15 });
+  }
+
+  // Blog verification impact (NEW)
+  if (blogVerification) {
+    // Blog credibility
+    if (blogVerification.blog_credibility?.credibility_score) {
+      const credDiff = blogVerification.blog_credibility.credibility_score - 50;
+      score += credDiff * 0.3;
+      if (blogVerification.blog_credibility.level === 'low') {
+        score -= 15;
+        signals.push({ type: 'negative', reason: `Blog credibility LOW: ${blogVerification.blog_credibility.warnings?.join(', ') || 'Low platform credibility'}`, impact: -15 });
+      } else if (blogVerification.blog_credibility.level === 'high') {
+        score += 10;
+        signals.push({ type: 'positive', reason: 'Blog has high credibility indicators', impact: 10 });
+      }
+    }
+    
+    // Content quality
+    if (blogVerification.content_quality?.score) {
+      const qualDiff = blogVerification.content_quality.score - 50;
+      score += qualDiff * 0.4;
+      if (blogVerification.content_quality.negative_signals?.length > 0) {
+        signals.push({ type: 'negative', reason: `Blog content issues: ${blogVerification.content_quality.negative_signals.map(s => s.type).join(', ')}`, impact: -10 });
+      }
+    }
+    
+    // Cross-verification
+    if (blogVerification.cross_verification) {
+      const corroboration = blogVerification.cross_verification.overall_corroboration;
+      if (corroboration === 'strong') {
+        score += 15;
+        signals.push({ type: 'positive', reason: 'Blog claims strongly corroborated by news sources', impact: 15 });
+      } else if (corroboration === 'moderate') {
+        score += 8;
+        signals.push({ type: 'positive', reason: 'Blog claims moderately corroborated', impact: 8 });
+      } else if (corroboration === 'weak') {
+        score -= 5;
+        signals.push({ type: 'negative', reason: 'Blog claims only weakly corroborated', impact: -5 });
+      } else {
+        score -= 10;
+        signals.push({ type: 'negative', reason: 'Blog claims not corroborated by any source', impact: -10 });
+      }
+    }
   }
 
   // Clamp score
