@@ -13,6 +13,7 @@ async function verifyNewsComprehensive(text, options = {}) {
   const url = options.url || null;
   const results = {
     text: text.substring(0, 200),
+    fullText: text,
     url,
     timestamp: new Date().toISOString(),
     tools_used: [],
@@ -24,6 +25,7 @@ async function verifyNewsComprehensive(text, options = {}) {
     sensationalism: null,
     vietnamese_specific: null,
     blog_verification: null,
+    numeric_verification: null,
     overall_verdict: null,
     confidence: 0,
     execution_time_ms: 0
@@ -310,13 +312,74 @@ function calculateComprehensiveScore(results, blogVerification = null) {
       });
     }
   }
-      } else if (corroboration === 'weak') {
-        score -= 5;
-        signals.push({ type: 'negative', reason: 'Blog claims only weakly corroborated', impact: -5 });
-      } else {
-        score -= 10;
-        signals.push({ type: 'negative', reason: 'Blog claims not corroborated by any source', impact: -10 });
+
+  // Numeric claim verification — detect modified numbers from real articles
+  // Use results.text (the original input text passed through from verifyNewsComprehensive)
+  const inputText = results.fullText || results.text || '';
+  if (results.cross_references && results.cross_references.length > 0) {
+    const textNumbers = [];
+    const percentPattern = /(\d+(?:\.\d+)?)\s*%/g;
+    const countPattern = /(\d+(?:\.\d+)?)\s*(?:phiếu|người|tỷ|triệu|nghìn|ngàn|đồng|USD|VND|năm|ngày|tháng)/gi;
+    let match;
+    while ((match = percentPattern.exec(inputText)) !== null) {
+      textNumbers.push({ value: parseFloat(match[1]), type: 'percent', context: inputText.substring(Math.max(0, match.index - 40), match.index + match[0].length + 40) });
+    }
+    while ((match = countPattern.exec(inputText)) !== null) {
+      textNumbers.push({ value: parseFloat(match[1]), type: 'count', context: inputText.substring(Math.max(0, match.index - 40), match.index + match[0].length + 40) });
+    }
+
+    if (textNumbers.length > 0) {
+      const mismatches = [];
+      let verifiedCount = 0;
+
+      for (const ref of results.cross_references.slice(0, 5)) {
+        const articleText = ((ref.title || '') + ' ' + (ref.snippet || '')).toLowerCase();
+        const articleNums = [];
+        for (const am of (articleText.matchAll(/(\d+(?:\.\d+)?)\s*%/g) || [])) articleNums.push(parseFloat(am[1]));
+        for (const am of (articleText.matchAll(/(\d+(?:\.\d+)?)\s*(?:phiếu|người|tỷ|triệu|nghìn|ngàn|đồng|USD|VND|năm|ngày|tháng)/gi) || [])) articleNums.push(parseFloat(am[1]));
+
+        for (const tn of textNumbers) {
+          for (const an of articleNums) {
+            if (tn.value > 0 && an > 0) {
+              const ratio = an / tn.value;
+              if (ratio > 3 || ratio < 0.33) {
+                mismatches.push({ textNumber: tn.value, articleNumber: an, articleTitle: ref.title, context: tn.context.trim(), source: ref.source });
+              } else {
+                verifiedCount++;
+              }
+            }
+          }
+        }
       }
+
+      if (mismatches.length > 0) {
+        // Direct mismatch: numbers in text differ from article numbers
+        const penalty = Math.min(60, mismatches.length * 20);
+        score -= penalty;
+        results.numeric_verification = { hasMismatch: true, mismatches: mismatches.slice(0, 5), penalty, type: 'modified' };
+        signals.push({
+          type: 'negative',
+          reason: `Phát hiện ${mismatches.length} số liệu bị chỉnh sửa so với bài báo gốc (mức phạt: -${penalty})`,
+          impact: -penalty
+        });
+        results.tools_used.push('numericVerification');
+      } else if (verifiedCount === 0 && textNumbers.length > 0) {
+        // No numbers in articles match — unverified specific claim
+        // The text has specific numbers but articles about the same topic don't mention them
+        const penalty = 25;
+        score -= penalty;
+        results.numeric_verification = { hasMismatch: false, mismatches: [], penalty, type: 'unverified', textNumbers: textNumbers.map(n => ({ value: n.value, context: n.context.trim() })) };
+        signals.push({
+          type: 'negative',
+          reason: `Có ${textNumbers.length} số liệu cụ thể trong bài nhưng không được bài báo nào xác nhận (mức phạt: -${penalty})`,
+          impact: -penalty
+        });
+        results.tools_used.push('numericVerification');
+      } else {
+        results.numeric_verification = { hasMismatch: false, mismatches: [], penalty: 0, type: 'verified' };
+      }
+    } else {
+      results.numeric_verification = { hasMismatch: false, mismatches: [], penalty: 0, type: 'no_numbers' };
     }
   }
 
