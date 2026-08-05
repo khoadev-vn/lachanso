@@ -847,7 +847,7 @@ export default function App() {
           if (hasBlockingMismatch) {
             score = Math.min(score, 42);
           } else
-            if (!verificationLayers.hasTrustedEvidence && reasons.some((item) => item.status !== "success")) {
+            if (checkType !== "web" && !verificationLayers.hasTrustedEvidence && reasons.some((item) => item.status !== "success")) {
               score = Math.min(score, 69);
             }
         if (articleExtraction && score < 75 && liveNewsCheck.enabled) {
