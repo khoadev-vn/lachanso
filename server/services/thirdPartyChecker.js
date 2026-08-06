@@ -112,12 +112,9 @@ async function checkHostname(hostname) {
     } catch (e) {}
   }
 
-  // 3) PhishStats real-time
-  const ps = await checkPhishStats(host);
+  // 3) PhishStats real-time + 4) tinnhiemmang — chạy song song
+  const [ps, tnm] = await Promise.all([checkPhishStats(host), checkTinnhiemmang(host)]);
   if (ps) results.push(ps);
-
-  // 4) tinnhiemmang
-  const tnm = await checkTinnhiemmang(host);
   if (tnm) results.push(tnm);
 
   // Loại trùng

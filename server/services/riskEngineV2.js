@@ -175,7 +175,7 @@ async function collectC3(hostname) {
       const arr = await dns.resolve4(hostname);
       for (const ip of arr) ipSet.add(ip);
     } catch (e) {}
-    if (i < 2) await new Promise(res => setTimeout(res, 1500));
+    if (i < 2) await new Promise(res => setTimeout(res, 1000));
   }
 
   let risk = 0;
@@ -209,8 +209,10 @@ function isWafBlock(status, html) {
 }
 
 async function collectC4(url, hostname, isPaaS) {
-  const botRes = await fetchOnce(url, BOT_UA);
-  const mobileRes = await fetchOnce(url, MOBILE_UA);
+  const [botRes, mobileRes] = await Promise.all([
+    fetchOnce(url, BOT_UA),
+    fetchOnce(url, MOBILE_UA)
+  ]);
 
   const botHtml = botRes.html || '';
   const mobileHtml = mobileRes.html || '';
@@ -251,23 +253,19 @@ async function collectC4(url, hostname, isPaaS) {
     }
   }
 
-  // JS bundle scan (phát hiện SPA form)
+  // JS bundle scan (phát hiện SPA form) — chạy song song, giới hạn tối đa 4 file, 3s mỗi file
   if (content && !blockedByWaf) {
-    const srcs = [...content.matchAll(/<script[^>]*src=["']([^"']+)["']/gi)].map(m => m[1]).slice(0, 12);
-    const scanned = new Set();
-    for (const src of srcs) {
-      if (scanned.has(src)) continue;
-      scanned.add(src);
+    const srcs = [...content.matchAll(/<script[^>]*src=["']([^"']+)["']/gi)].map(m => m[1]).slice(0, 4);
+    await Promise.all(srcs.map(async (src) => {
       try {
         const abs = /^https?:\/\//i.test(src) ? src : new URL(src, url).href;
-        const jr = await axios.get(abs, { timeout: 4000, headers: { 'User-Agent': MOBILE_UA }, validateStatus: () => true });
+        const jr = await axios.get(abs, { timeout: 3000, headers: { 'User-Agent': MOBILE_UA }, validateStatus: () => true });
         const js = String(jr.data || '');
         if (/createElement\s*\(\s*['"]form|type\s*=\s*['"]password|input_otp|login_submit|otp_input|password\s*field/i.test(js)) {
           risk += 50;
-          break;
         }
       } catch (e) {}
-    }
+    }));
   }
 
   return {
@@ -310,6 +308,27 @@ function collectC6(hostname, paasToken) {
     risk += 45; matchedBrand = p.brand; break;
   }
 
+  // Near-miss: host KHÔNG chứa từ khóa thương hiệu nhưng gần-giống domain chính thức
+  // (vd: biance.com ~ binance.com, thiếu 1 ký tự). Chỉ khi độ dài tương đồng để hạn chế FP.
+  if (!matchedBrand && compact.length >= 6) {
+    for (const p of brandPatterns.PATTERNS) {
+      const isOfficial = p.officialDomains.some(o => {
+        const oc = o.replace(/^www\./, '');
+        return hostname === oc || hostname.endsWith('.' + oc);
+      });
+      if (isOfficial) continue;
+      for (const d of p.officialDomains.map(x => x.replace(/[^a-z0-9]/g, ''))) {
+        const dist = damerauLevenshtein(compact, d);
+        const lenDiff = Math.abs(compact.length - d.length);
+        // edit distance ≤ 2 và độ lệch chiều dài ≤ 3 → nghi vấn typosquat
+        if (dist > 0 && dist <= 2 && lenDiff <= 3) {
+          risk += 50; matchedBrand = p.brand; break;
+        }
+      }
+      if (matchedBrand) break;
+    }
+  }
+
   let entropy = null;
   if (!risk && compact.length >= 12) {
     entropy = +shannonEntropy(compact).toFixed(2);
@@ -326,11 +345,11 @@ async function collectC7(url) {
   let current = url;
   let hops = 0;
   const seen = new Set();
-  while (hops < 8 && current && !seen.has(current)) {
+  while (hops < 6 && current && !seen.has(current)) {
     seen.add(current);
     try {
       const r = await axios.get(current, {
-        timeout: 4000, maxRedirects: 0, validateStatus: () => true,
+        timeout: 2500, maxRedirects: 0, validateStatus: () => true,
         headers: { 'User-Agent': MOBILE_UA }
       });
       const status = r.status;

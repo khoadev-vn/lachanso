@@ -98,6 +98,7 @@ module.exports = {
     { brand: 'LinkedIn', group: 'SOCIAL', keywords: ['linkedin'], officialDomains: ['linkedin.com'] },
 
     // ============ NHÓM DỊCH VỤ CÔNG & BẢO HIỂM ============
+    { brand: 'Chính phủ Việt Nam', group: 'GOV_SERVICES', keywords: ['chinhphu', 'chinh phu', 'govvn', 'cong thong tin chinh phu', 'ttcp', 'baochinhphu'], officialDomains: ['chinhphu.vn', 'gov.vn', 'baochinhphu.vn'] },
     { brand: 'VSS (BHXH)', group: 'GOV_SERVICES', keywords: ['bhxh', 'baohiemxahoi', 'bao hiem xa hoi', 'vss', 'baohiem'], officialDomains: ['bhxh.gov.vn'] },
     { brand: 'VNeID', group: 'GOV_SERVICES', keywords: ['vneid', 'vneid'], officialDomains: ['vneid.gov.vn'] },
     { brand: 'Cổng DVC Quốc gia', group: 'GOV_SERVICES', keywords: ['dichvucong', 'dvc quoc gia', 'dich-vu-cong', 'congdichvucong'], officialDomains: ['dichvucong.gov.vn'] },
@@ -109,6 +110,14 @@ module.exports = {
     { brand: 'eTax', group: 'GOV_SERVICES', keywords: ['etax', 'e tax'], officialDomains: ['etaxvn.com'] },
     { brand: 'VssID', group: 'GOV_SERVICES', keywords: ['vssid'], officialDomains: ['vssid.vn'] },
     { brand: 'Sổ sức khỏe điện tử', group: 'GOV_SERVICES', keywords: ['sosuckhoedientu', 'so suc khoe dien tu', 'suckhoedientu'], officialDomains: ['sosuckhoedientu.vn'] },
-    { brand: 'Cơ quan BHXH VN', group: 'GOV_SERVICES', keywords: ['baohiemxahoi'], officialDomains: ['baohiemxahoi.gov.vn'] }
+    { brand: 'Cơ quan BHXH VN', group: 'GOV_SERVICES', keywords: ['baohiemxahoi'], officialDomains: ['baohiemxahoi.gov.vn'] },
+
+    // ============ NHÓM CRYPTO / VÍ ĐIỆN TỬ ============
+    { brand: 'Binance', group: 'SOCIAL', keywords: ['binance', 'binancecoin', 'bnb', 'binance-us'], officialDomains: ['binance.com', 'binance.us'] },
+    { brand: 'OKX', group: 'SOCIAL', keywords: ['okx', 'okex', 'ok x'], officialDomains: ['okx.com'] },
+    { brand: 'Bybit', group: 'SOCIAL', keywords: ['bybit', 'by bit'], officialDomains: ['bybit.com'] },
+    { brand: 'Coinbase', group: 'SOCIAL', keywords: ['coinbase', 'coin base'], officialDomains: ['coinbase.com'] },
+    { brand: 'Gate.io', group: 'SOCIAL', keywords: ['gateio', 'gate io'], officialDomains: ['gate.io'] },
+    { brand: 'Bitget', group: 'SOCIAL', keywords: ['bitget', 'bit get'], officialDomains: ['bitget.com'] }
   ]
 };

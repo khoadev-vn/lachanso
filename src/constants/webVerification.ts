@@ -71,7 +71,33 @@ const BRAND_KEYWORDS = [
 "facebook",
 "google",
 "microsoft",
-"apple"];
+"apple",
+"chinhphu",
+"chinh phu",
+"dichvucong",
+"binance",
+"bybit",
+"okx",
+"coinbase"];
+
+// Damerau–Levenshtein phía client để bắt typosquat thiếu/đổi 1 ký tự (biance ~ binance)
+function levenshtein(a: string, b: string): number {
+  a = a.toLowerCase(); b = b.toLowerCase();
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        dp[i][j] = Math.min(dp[i][j], dp[i - 2][j - 2] + 1);
+      }
+    }
+  }
+  return dp[m][n];
+}
 
 const DANGEROUS_PATH_KEYWORDS = [
 "login",
@@ -155,20 +181,36 @@ function hasLookalikeBrand(hostname: string): boolean {
     "facebook": ["facebook.com"],
     "google": ["google.com", "google.com.vn"],
     "microsoft": ["microsoft.com"],
-    "apple": ["apple.com"]
+    "apple": ["apple.com"],
+    "chinhphu": ["chinhphu.vn", "gov.vn", "baochinhphu.vn"],
+    "chinh phu": ["chinhphu.vn", "gov.vn", "baochinhphu.vn"],
+    "gov": ["gov.vn", "chinhphu.vn", "dichvucong.gov.vn"],
+    "binance": ["binance.com", "binance.us"],
+    "bybit": ["bybit.com"],
+    "okx": ["okx.com"],
+    "coinbase": ["coinbase.com"]
   };
-  
-  return BRAND_KEYWORDS.some((brand) => {
-    // Check if brand is in the hostname
-    if (!compactHost.includes(brand)) return false;
-    
-    // Check if it's an official domain
+
+  // Nghi vấn nếu chứa từ khóa thương hiệu nhưng không phải domain chính thức
+  for (const brand of BRAND_KEYWORDS) {
+    if (!compactHost.includes(brand.replace(/\s/g, ""))) continue;
     const official = officialDomains[brand] || [];
     const isOfficial = official.some(d => hostname.endsWith(d) || hostname === d);
-    
-    // If it's not official, it's a lookalike
-    return !isOfficial;
-  });
+    if (!isOfficial) return true;
+  }
+
+  // Near-miss: không chứa từ khóa nhưng gần-giống domain chính thức (biance ~ binance)
+  for (const brand in officialDomains) {
+    for (const d of officialDomains[brand]) {
+      const dc = d.replace(/[^a-z0-9]/g, "");
+      if (dc.length < 6) continue;
+      if (Math.abs(compactHost.length - dc.length) > 3) continue;
+      const dist = levenshtein(compactHost, dc);
+      if (dist > 0 && dist <= 2) return true;
+    }
+  }
+
+  return false;
 }
 function hasCredentialPath(url: URL): boolean {
   const value = `${url.pathname} ${url.search}`.toLowerCase();
