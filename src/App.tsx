@@ -1706,20 +1706,25 @@ export default function App() {
 
                     {resultData.type === "web" && (() => {
                       const st = resolveWebState(resultData);
-                      return <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 px-6 py-4">
-                        {st === "verify" && <button type="button" onClick={() => setOwnerVerifyOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors">
-                          <ShieldCheck className="h-4 w-4" />
-                          Tôi là chủ website — Yêu cầu xác minh
-                        </button>}
-                        <button type="button" onClick={() => setReportIssueOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
-                          <Flag className="h-4 w-4" />
-                          Báo kết quả sai (khiếu nại)
-                        </button>
-                        <button type="button" onClick={() => setColorLegendOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
-                          <HelpCircle className="h-4 w-4" />
-                          Giải thích 4 mức
-                        </button>
-                        <span className="ml-auto text-[11px] font-medium text-gray-400">Kết quả chỉ mang tính tham khảo</span>
+                      return <div className="flex flex-col gap-3 border-t border-gray-100 px-6 py-5">
+                        <div className="flex flex-wrap items-center gap-3">
+                          {st === "verify" && <button type="button" onClick={() => setOwnerVerifyOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl bg-blue-600 px-6 py-3.5 text-[15px] font-bold text-white shadow-md transition-colors hover:bg-blue-700">
+                            <ShieldCheck className="h-5 w-5" />
+                            Tôi là chủ website — Yêu cầu xác minh
+                          </button>}
+                          <button type="button" onClick={() => setReportIssueOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-gray-300 bg-white px-6 py-3.5 text-[15px] font-bold text-gray-800 shadow-md transition-colors hover:border-orange-400 hover:bg-orange-50 hover:text-orange-700">
+                            <Flag className="h-5 w-5" />
+                            Báo kết quả sai (khiếu nại)
+                          </button>
+                          <button type="button" onClick={() => setColorLegendOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-gray-300 bg-white px-6 py-3.5 text-[15px] font-bold text-gray-800 shadow-md transition-colors hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700">
+                            <HelpCircle className="h-5 w-5" />
+                            Giải thích 4 mức
+                          </button>
+                        </div>
+                        <div className="inline-flex w-full items-center justify-center gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+                          <AlertTriangle className="h-5 w-5 shrink-0" />
+                          Kết quả chỉ mang tính tham khảo — luôn kiểm tra kỹ địa chỉ website trước khi đăng nhập hoặc thanh toán.
+                        </div>
                       </div>;
                     })()}
                   </motion.div>
