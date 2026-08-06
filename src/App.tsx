@@ -1,7 +1,10 @@
 import { motion, AnimatePresence, animate, useMotionValue, useSpring, useTransform } from "motion/react";
 import { Analytics } from "@vercel/analytics/react";
 import GlobeViz from "./components/GlobeViz";
-import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users, Landmark, Scale, HeartPulse, Info } from "lucide-react";
+import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users, Landmark, Scale, HeartPulse, Info, HelpCircle, Flag } from "lucide-react";
+import OwnerVerifyModal from "./components/OwnerVerifyModal";
+import ReportIssueModal from "./components/ReportIssueModal";
+import ColorLegendModal from "./components/ColorLegendModal";
 import { useState, useEffect, FormEvent, useRef } from "react";
 import type { PointerEvent } from "react";
 import { extractArticleForAnalysis } from "./constants/articleExtraction";
@@ -56,6 +59,26 @@ const WEB_REASON_STATUS_ICON = (status: string) =>
   status === "danger" ? "bg-red-100 text-red-700" :
   status === "warning" ? "bg-amber-100 text-amber-700" :
   "bg-emerald-100 text-emerald-700";
+
+// ===== 4-trạng thái Zero-Trust (v2.0) =====
+type WebStateKey = "safe" | "verify" | "warning" | "danger";
+const resolveWebState = (r: any): WebStateKey => {
+  if (r?.state === "safe") return "safe";
+  if (r?.state === "suspicious") return "warning";
+  if (r?.state === "verify") return "verify";
+  if (r?.state === "danger") return "danger";
+  if (r?.needsVerification) return "verify";
+  if (r?.isSafe) return "safe";
+  if (r?.isWarning) return "warning";
+  if (r?.isDanger) return "danger";
+  return "warning";
+};
+const STATE_UI: Record<WebStateKey, { stroke: string; badge: string; icon: any; label: string; badgeLong: string; bar: string }> = {
+  safe: { stroke: "#22c55e", badge: "bg-green-50 text-green-700", icon: ShieldCheck, label: "AN TOÀN", badgeLong: "An toàn", bar: "bg-green-500" },
+  verify: { stroke: "#eab308", badge: "bg-yellow-50 text-yellow-700", icon: HelpCircle, label: "CẦN XÁC MINH THÊM", badgeLong: "Cần xác minh thêm", bar: "bg-yellow-500" },
+  warning: { stroke: "#f97316", badge: "bg-orange-50 text-orange-700", icon: AlertTriangle, label: "ĐÁNG NGỜ", badgeLong: "Đáng ngờ", bar: "bg-orange-500" },
+  danger: { stroke: "#ef4444", badge: "bg-red-50 text-red-700", icon: X, label: "NGUY HIỂM", badgeLong: "Nguy hiểm", bar: "bg-red-500" }
+};
 
 function WebReasonGroupCard({ group, reasons }: { group: { key: string; label: string; icon: any; description: string; accent: string }; reasons: any[] }) {
   if (reasons.length === 0) return null;
@@ -228,6 +251,9 @@ export default function App() {
   const [checkType, setCheckType] = useState<"web" | "news">("web");
   const [previewCandidateIndex, setPreviewCandidateIndex] = useState(0);
   const [analysisExpanded, setAnalysisExpanded] = useState(false);
+  const [ownerVerifyOpen, setOwnerVerifyOpen] = useState(false);
+  const [reportIssueOpen, setReportIssueOpen] = useState(false);
+  const [colorLegendOpen, setColorLegendOpen] = useState(false);
   const [selectedInfoItem, setSelectedInfoItem] = useState<{ title: string; description: string; link: string; category: string; } | null>(null);
   const [selectedBlogSlug, setSelectedBlogSlug] = useState<string | null>(() => {
     const path = window.location.pathname;
@@ -478,9 +504,19 @@ export default function App() {
         if (checkType === "web") {
           const webCheck = await analyzeWebsite(searchQuery);
           setResultData({
+            state: webCheck.state,
             isSafe: webCheck.isSafe,
             isWarning: webCheck.isWarning,
             isDanger: webCheck.isDanger,
+            needsVerification: webCheck.needsVerification,
+            riskScore: webCheck.riskScore,
+            coverage: webCheck.coverage,
+            criteria: webCheck.criteria,
+            ownerVerifyEmail: webCheck.ownerVerifyEmail,
+            ownerVerifyAvailable: webCheck.ownerVerifyAvailable,
+            blacklisted: webCheck.blacklisted,
+            blacklistSources: webCheck.blacklistSources,
+            backendV2: webCheck.backendV2,
             isEducational: false,
             type: "web",
             url: webCheck.normalizedUrl,
@@ -1612,7 +1648,7 @@ export default function App() {
                             <circle cx="50" cy="50" r="45" stroke="#f3f4f6" strokeWidth="8" fill="none" />
                             <motion.circle
                               cx="50" cy="50" r="45"
-                              stroke={resultData.isSafe ? "#22c55e" : resultData.isWarning ? "#fbbf24" : "#ef4444"}
+                              stroke={STATE_UI[resolveWebState(resultData)].stroke}
                               strokeWidth="8"
                               fill="none"
                               strokeLinecap="round"
@@ -1631,10 +1667,24 @@ export default function App() {
                       </div>
 
                       <div className="min-w-0">
-                        <div className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black uppercase ${resultData.isSafe ? "bg-green-50 text-green-700" : resultData.isWarning ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
+                        {resultData.type === "web" && (() => {
+                          const st = resolveWebState(resultData);
+                          const meta = STATE_UI[st];
+                          const Icon = meta.icon;
+                          return <>
+                            <div className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black uppercase ${meta.badge}`}>
+                              <Icon className="h-4 w-4" />
+                              {meta.badgeLong}
+                            </div>
+                            {typeof resultData.riskScore === "number" && <span className="mb-3 ml-1 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-bold text-gray-600">
+                              Rủi ro {resultData.riskScore}/100 · Phủ {Math.round((resultData.coverage ?? 0) * 100)}%
+                            </span>}
+                          </>;
+                        })()}
+                        {resultData.type !== "web" && <div className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black uppercase ${resultData.isSafe ? "bg-green-50 text-green-700" : resultData.isWarning ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
                           {resultData.isSafe ? <ShieldCheck className="h-4 w-4" /> : resultData.isWarning ? <AlertTriangle className="h-4 w-4" /> : <X className="h-4 w-4" />}
                           {resultData.isSafe ? "An toàn" : resultData.isWarning ? "Cần xác thực" : "Nguy hiểm"}
-                        </div>
+                        </div>}
                         {resultData.isEducational && (
                           <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-black uppercase text-blue-700 ml-2">
                             <Info className="h-4 w-4" />
@@ -1653,6 +1703,25 @@ export default function App() {
                         <p className="mt-2 break-all text-sm font-bold text-gray-900">{resultData.url}</p>
                       </div>
                     </div>
+
+                    {resultData.type === "web" && (() => {
+                      const st = resolveWebState(resultData);
+                      return <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 px-6 py-4">
+                        {st === "verify" && <button type="button" onClick={() => setOwnerVerifyOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors">
+                          <ShieldCheck className="h-4 w-4" />
+                          Tôi là chủ website — Yêu cầu xác minh
+                        </button>}
+                        <button type="button" onClick={() => setReportIssueOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
+                          <Flag className="h-4 w-4" />
+                          Báo kết quả sai (khiếu nại)
+                        </button>
+                        <button type="button" onClick={() => setColorLegendOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
+                          <HelpCircle className="h-4 w-4" />
+                          Giải thích 4 mức
+                        </button>
+                        <span className="ml-auto text-[11px] font-medium text-gray-400">Kết quả chỉ mang tính tham khảo</span>
+                      </div>;
+                    })()}
                   </motion.div>
 
                   {resultData.type === "news" && (() => {
@@ -2446,6 +2515,9 @@ export default function App() {
           }
         `
       }} />
+      <OwnerVerifyModal open={ownerVerifyOpen} onOpenChange={setOwnerVerifyOpen} domain={resultData?.displayUrl ?? ""} verifyEmail={resultData?.ownerVerifyEmail} />
+      <ReportIssueModal open={reportIssueOpen} onOpenChange={setReportIssueOpen} targetUrl={resultData?.url ?? resultData?.displayUrl ?? ""} />
+      <ColorLegendModal open={colorLegendOpen} onOpenChange={setColorLegendOpen} />
     </div>);
 
 }

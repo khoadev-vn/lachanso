@@ -785,23 +785,19 @@ async function checkTinnhiemmang(hostname) {
     const cheerio = require('cheerio');
     const $ = cheerio.load(html);
 
-    // Look for domain in search results
-    const found = $('table tbody tr, .result-item, .item').filter((i, el) => {
+    // Chỉ chốt blacklisted khi KHỚP CHÍNH XÁC hostname trong bảng kết quả,
+    // KHÔNG dùng keyword scan toàn trang (tránh false-positive "lừa đảo"/"phishing"
+    // xuất hiện trong hướng dẫn/UI của chính trang tinnhiemmang).
+    const target = hostname.replace(/^www\./, '').toLowerCase();
+    const targetRe = new RegExp(`(?:^|[^a-z0-9])${target.replace(/\./g, '\\.')}(?:[^a-z0-9]|$)`, 'i');
+
+    let found = false;
+    $('.table-result tr, table tbody tr, table tr, .result-item, .item').each((i, el) => {
       const text = $(el).text().toLowerCase();
-      return text.includes(hostname.toLowerCase()) || text.includes(hostname.replace(/^www\./, '').toLowerCase());
-    }).length > 0;
+      if (targetRe.test(text)) { found = true; return false; }
+    });
 
-    // Also check for blacklist indicators
-    const blacklistIndicators = [
-      'lừa đảo', 'phishing', 'giả mạo', 'cảnh báo', 'đen', 'blacklist',
-      'fake', 'scam', 'fraud', 'malicious'
-    ];
-
-    const hasBlacklistIndicator = blacklistIndicators.some(indicator =>
-      html.toLowerCase().includes(indicator)
-    );
-
-    if (found || hasBlacklistIndicator) {
+    if (found) {
       result.available = true;
       result.isBlacklisted = true;
       result.details = `Domain "${hostname}" được tìm thấy trên tinnhiemmang.vn - cổng cảnh báo tin nhắn lừa đảo của Việt Nam.`;

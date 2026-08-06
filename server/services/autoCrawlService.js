@@ -136,6 +136,38 @@ class AutoCrawlService {
           } catch {}
           return domains;
         }
+      },
+      // Source 3: OpenPhish (no-key public feed)
+      {
+        name: 'openphish',
+        url: 'https://openphish.com/feed.txt',
+        parser: (data) => {
+          const domains = [];
+          for (const line of data.split('\n')) {
+            const trim = line.trim();
+            if (!trim) continue;
+            try { domains.push(new URL(trim).hostname.toLowerCase()); } catch {}
+          }
+          return domains;
+        }
+      },
+      // Source 4: PhishStats (no-key, recent phishing)
+      {
+        name: 'phishstats',
+        url: 'https://phishstats.info/phish_score.php?b=recent',
+        parser: (data) => {
+          const domains = [];
+          try {
+            const lines = data.split('\n');
+            for (const line of lines) {
+              const trim = line.trim();
+              if (trim && /\./.test(trim) && !trim.includes(' ')) {
+                domains.push(trim.toLowerCase());
+              }
+            }
+          } catch {}
+          return domains;
+        }
       }
     ];
 

@@ -2,6 +2,7 @@ import { AlertTriangle, Database, ExternalLink, Globe, Info, Search, ShieldCheck
 import { WEB_API_CONFIG } from "../config/webApis";
 import { extractLinksFromText, isDomainTrusted, isGovVnDomain, isSuspiciousTLD } from "./trustedDomains";
 export type WebReasonCategory = "technology" | "reputation" | "security" | "reference";
+export type WebVerdictState = "safe" | "verify" | "warning" | "danger";
 export interface WebVerificationReason {
   id: string;
   name: string;
@@ -11,10 +12,32 @@ export interface WebVerificationReason {
   category?: WebReasonCategory;
   scoreDelta?: number;
 }
+export interface WebCriterionDetail {
+  key: string;
+  name: string;
+  weight: number;
+  collected: boolean;
+  risk: number;
+  reason?: string;
+  status: "danger" | "warning" | "success";
+  icon: any;
+  category: WebReasonCategory;
+}
 export interface WebVerificationResult {
+  state: WebVerdictState;
   isSafe: boolean;
   isWarning: boolean;
   isDanger: boolean;
+  needsVerification: boolean;
+  riskScore: number;
+  coverage: number;
+  criteria: WebCriterionDetail[];
+  ownerVerifyEmail?: string;
+  ownerVerifyAvailable?: boolean;
+  blacklisted?: boolean;
+  blacklistSources?: string[];
+  executionTimeMs?: number;
+  backendV2?: boolean;
   normalizedUrl: string;
   displayUrl: string;
   score: number;
@@ -360,6 +383,64 @@ async function detectGoogleWarningPage(url: string): Promise<{ isWarning: boolea
   }
 }
 
+// Mức an toàn hiển thị: backend dùng R (risk) — frontend hiển thị dưới dạng điểm an toàn 0-100
+function stateFromScore(score: number, collectedSignals: number): WebVerdictState {
+  if (score < 45) return "danger";
+  if (score < 60) return "warning";
+  // Chỉ ghi nhận AN TOÀN khi đủ bằng chứng đã thu thập
+  if (score >= 75 && collectedSignals >= 3) return "safe";
+  return "verify";
+}
+
+// ===== Metadata 8 tiêu chí (khớp server riskEngineV2) =====
+const CRITERIA_META: Record<string, { name: string; weight: number; icon: any; category: WebReasonCategory }> = {
+  c1: { name: "Tuổi tên miền", weight: 0.20, icon: Database, category: "technology" },
+  c2: { name: "Chứng chỉ HTTPS", weight: 0.15, icon: ShieldCheck, category: "technology" },
+  c3: { name: "Cấu hình DNS", weight: 0.10, icon: Globe, category: "technology" },
+  c4: { name: "Nội dung trang", weight: 0.15, icon: Search, category: "security" },
+  c5: { name: "Feed bên thứ 3", weight: 0.15, icon: AlertTriangle, category: "security" },
+  c6: { name: "Typosquat thương hiệu", weight: 0.10, icon: AlertTriangle, category: "reputation" },
+  c7: { name: "Chuỗi chuyển hướng", weight: 0.08, icon: ExternalLink, category: "technology" },
+  c8: { name: "Dấu vết web (Wayback)", weight: 0.07, icon: Database, category: "reference" }
+};
+
+// ===== Lấy kết quả từ Backend Zero-Trust v2 (nếu máy chủ phản hồi) =====
+interface BackendWebResult {
+  success: boolean;
+  state: "safe" | "verify" | "suspicious" | "danger";
+  R: number;
+  C: number;
+  collectedCriteria: number;
+  criteria: Record<string, { collected: boolean; risk: number }>;
+  reasons: string[];
+  isPaaS: boolean;
+  paasToken?: string;
+  cloakDetected: boolean;
+  blacklisted: boolean;
+  blacklistSources: string[];
+  ownerVerify?: { available: boolean };
+  coreCriteriaOk: boolean;
+}
+async function fetchBackendWebVerify(url: string): Promise<BackendWebResult | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    const response = await fetch("/api/v2/web-verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (!data || data.success !== true || !data.state) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 export async function analyzeWebsite(input: string): Promise<WebVerificationResult> {
   const reasons: WebVerificationReason[] = [];
   let score = 70;
@@ -590,10 +671,150 @@ export async function analyzeWebsite(input: string): Promise<WebVerificationResu
   const scoreRef = { value: score };
   await mergeBackendAnalysis(reasons, scoreRef, hostname);
   score = Math.max(0, Math.min(100, scoreRef.value));
+
+  // ===== Ưu tiên kết quả authoritative từ Backend Zero-Trust v2 =====
+  const backendV2 = await fetchBackendWebVerify(normalizedUrl);
+
+  if (backendV2) {
+    const R = Math.min(100, Math.max(0, Number(backendV2.R) || 0));
+    const C = Math.min(1, Math.max(0, Number(backendV2.C) || 0));
+    const safetyScore = Math.round(100 - R);
+    const state: WebVerdictState = backendV2.state === "suspicious" ? "warning" : backendV2.state;
+
+    const criteria: WebCriterionDetail[] = Object.keys(CRITERIA_META).map((key) => {
+      const meta = CRITERIA_META[key];
+      const raw = backendV2.criteria?.[key];
+      const risk = raw?.risk || 0;
+      return {
+        key,
+        name: meta.name,
+        weight: meta.weight,
+        collected: Boolean(raw?.collected),
+        risk,
+        status: risk >= 45 ? "danger" : risk >= 20 ? "warning" : "success",
+        icon: meta.icon,
+        category: meta.category
+      };
+    });
+
+    const v2reasons: WebVerificationReason[] = [];
+    if (backendV2.blacklisted) {
+      v2reasons.push({
+        id: "WEB_BLACKLIST_HIT",
+        name: "NẰM TRONG DANH SÁCH ĐEN",
+        detail: `Domain xuất hiện trong ${backendV2.blacklistSources?.length ? backendV2.blacklistSources.join(", ") : "feed bên thứ 3"}.`,
+        status: "danger",
+        icon: AlertTriangle,
+        category: "security",
+        scoreDelta: -100
+      });
+    }
+    if (backendV2.cloakDetected) {
+      v2reasons.push({
+        id: "WEB_CLOAK_DETECTED",
+        name: "Phát hiện cloaking",
+        detail: "Website trả nội dung khác nhau giữa bot quét và trình duyệt thật — kỹ thuật che giấu điển hình của trang lừa đảo.",
+        status: "danger",
+        icon: AlertTriangle,
+        category: "technology",
+        scoreDelta: -45
+      });
+    }
+    if (backendV2.isPaaS) {
+      v2reasons.push({
+        id: "WEB_PAAS_SUBDOMAIN",
+        name: "Subdomain PaaS/SaaS",
+        detail: backendV2.paasToken ? `Subdomain "${backendV2.paasToken}" trên nền tảng PaaS — không kế thừa uy tín của root domain.` : "Subdomain trên nền tảng PaaS — không kế thừa uy tín của root domain.",
+        status: "warning",
+        icon: Info,
+        category: "technology",
+        scoreDelta: 0
+      });
+    }
+    for (const c of criteria) {
+      v2reasons.push({
+        id: `C_${c.key}`,
+        name: c.name,
+        detail: c.collected ? `Đã thu thập (độ phủ ${Math.round(c.weight * 100)}%).${c.risk > 0 ? ` Điểm rủi ro tiêu chí: ${c.risk}.` : ""}` : `Chưa đủ dữ liệu thu thập (trọng số ${Math.round(c.weight * 100)}%) — không tính phạt nhưng cũng không thể xác nhận an toàn.`,
+        status: c.collected ? (c.risk >= 45 ? "danger" : c.risk >= 20 ? "warning" : "success") : "warning",
+        icon: c.icon,
+        category: c.category,
+        scoreDelta: 0
+      });
+    }
+    for (const r of backendV2.reasons || []) {
+      v2reasons.push({
+        id: "WEB_BACKEND_NOTE",
+        name: "Ghi chú engine",
+        detail: r,
+        status: "warning",
+        icon: Info,
+        category: "reference",
+        scoreDelta: 0
+      });
+    }
+
+    return {
+      state,
+      isSafe: state === "safe",
+      isWarning: state === "warning",
+      isDanger: state === "danger",
+      needsVerification: state === "verify",
+      riskScore: R,
+      coverage: C,
+      criteria,
+      ownerVerifyEmail: undefined,
+      ownerVerifyAvailable: Boolean(backendV2.ownerVerify?.available),
+      blacklisted: backendV2.blacklisted,
+      blacklistSources: backendV2.blacklistSources || [],
+      executionTimeMs: undefined,
+      backendV2: true,
+      normalizedUrl,
+      displayUrl: hostname,
+      score: safetyScore,
+      title: backendV2.blacklisted ? `Cảnh báo ${hostname}` : `Đánh giá website ${hostname}`,
+      description: `Hệ thống Zero-Trust 8 tiêu chí đã phân tích (điểm rủi ro ${R}/100, độ phủ dữ liệu ${Math.round(C * 100)}%, ${backendV2.collectedCriteria}/8 tiêu chí thu thập được).`,
+      screenshot: previewCandidates[0] ?? "",
+      previewCandidates,
+      reasons: v2reasons
+    };
+  }
+
+  // ===== Fallback cục bộ khi backend v2 không khả dụng =====
+  const state = stateFromScore(score, reasons.length);
+  const localCriteria: WebCriterionDetail[] = Object.keys(CRITERIA_META).map((key) => {
+    const meta = CRITERIA_META[key];
+    const knownLocal: Record<string, { collected: boolean; risk: number }> = {
+      c2: { collected: true, risk: isHttps ? 0 : 40 },
+      c6: { collected: true, risk: hasBrandLookalike ? 60 : 0 }
+    };
+    const k = knownLocal[key] || { collected: false, risk: 0 };
+    return {
+      key,
+      name: meta.name,
+      weight: meta.weight,
+      collected: k.collected,
+      risk: k.risk,
+      status: k.risk >= 45 ? "danger" : k.risk >= 20 ? "warning" : "success",
+      icon: meta.icon,
+      category: meta.category
+    };
+  });
   return {
-    isSafe: score >= 75,
-    isWarning: score >= 50 && score < 75,
-    isDanger: score < 50,
+    state,
+    isSafe: state === "safe",
+    isWarning: state === "warning",
+    isDanger: state === "danger",
+    needsVerification: state === "verify",
+    riskScore: Math.round(100 - score),
+    coverage: 0.3,
+    criteria: localCriteria,
+    ownerVerifyEmail: undefined,
+    ownerVerifyAvailable: false,
+    blacklisted: isDestroylistThreat,
+    blacklistSources: [],
+    executionTimeMs: undefined,
+    backendV2: false,
     normalizedUrl,
     displayUrl: hostname,
     score,

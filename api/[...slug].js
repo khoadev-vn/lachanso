@@ -153,6 +153,7 @@ app.get("/api/cached-news", (req, res) => {
 
 // Danh Sách Endpoint Nặng Bắt Buộc Cần Chuyển Tiếp Sang Backend Vietnix
 const HEAVY_PREFIXES = [
+  "/api/v2",
   "/api/verify-news",
   "/api/full-scan",
   "/api/verify-comprehensive",

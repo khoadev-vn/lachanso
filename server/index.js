@@ -578,7 +578,83 @@ app.post('/api/cache/clear', (req, res) => {
   res.json({ success: true, message: 'Cache cleared' });
 });
 
-// Auto-crawl endpoints
+// ============ 6-LAYER PIPELINE VERIFICATION ============
+const { verifyContent: layerVerify } = require('./layers/pipeline');
+
+app.post('/api/v2/verify', async (req, res) => {
+    try {
+        const { text, url } = req.body;
+        if (!text) return res.status(400).json({ error: 'Missing text input' });
+        
+        console.log(`\n[API-v2] 🔄 Layered Pipeline Verify: "${text.substring(0, 50)}..."`);
+        const startTime = Date.now();
+        
+        const result = await layerVerify(text, {
+            ip: req.ip,
+            userAgent: req.get('user-agent'),
+            skipLLM: false,
+            llmOverrides: {}
+        });
+        
+        // Frontend-compatible wrapper
+        const responseData = {
+            success: true,
+            trustScore: result.score,
+            verdict: result.verdict,
+            verdictLabel: result.verdictLabel,
+            confidence: result.confidence,
+            educational: result.educational,
+            newsSearch: result.newsSearch,
+            trustedVerification: result.trustedVerification,
+            contextAnalysis: result.contextAnalysis,
+            factVerification: result.factVerification,
+            cascade: result.cascade,
+            explanations: result.explanations,
+            execution_time_ms: Date.now() - startTime,
+            pipeline: 'layered-v2'
+        };
+        
+        console.log(`[API-v2] ✅ Score=${result.score} Verdict=${result.verdict} (${responseData.execution_time_ms}ms)`);
+        res.json(responseData);
+    } catch (error) {
+        console.error('[API-v2] ❌ Error:', error.message);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============ v2.0 RISK ENGINE — WEB/URL VERIFICATION (8 tiêu chí Zero-Trust) ============
+const { verifyWebsite: verifyWebsiteV2 } = require('./services/riskEngineV2');
+
+app.post('/api/v2/web-verify', async (req, res) => {
+    try {
+        const { url } = req.body;
+        if (!url) return res.status(400).json({ error: 'Missing url input' });
+
+        console.log(`\n[API-v2][web] 🔍 Zero-Trust Web Verify: "${String(url).substring(0, 50)}..."`);
+        const startTime = Date.now();
+
+        const result = await verifyWebsiteV2(url);
+
+        const responseData = {
+            success: true,
+            ...result,
+            ownerVerifyEmail: process.env.PROCESS_VERIFY_EMAIL || 'kanh05113@gmail.com',
+            execution_time_ms: Date.now() - startTime
+        };
+
+        console.log(`[API-v2][web] ✅ state=${result.state} R=${result.R} C=${result.C} (${responseData.execution_time_ms}ms)`);
+        res.json(responseData);
+    } catch (error) {
+        console.error('[API-v2][web] ❌ Error:', error.message);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ============ REPORT / COMPLAINT ROUTES ============
+const reportRoutes = require('./routes/reportRoutes');
+app.use('/api/v2', reportRoutes);
+
+// ============ AUTO-CRAWL ENDPOINTS ============
 app.get('/api/crawl/stats', (req, res) => {
   res.json(autoCrawlService.getStats());
 });
