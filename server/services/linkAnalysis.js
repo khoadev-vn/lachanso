@@ -4,6 +4,7 @@ const axios = require('axios');
 const dns = require('dns').promises;
 const tls = require('tls');
 const { URL } = require('url');
+const tinnhiemmang = require('./tinnhiemmang');
 
 const scamDataPath = path.join(__dirname, '../data/scamDomains.json');
 const scamData = JSON.parse(fs.readFileSync(scamDataPath, 'utf8'));
@@ -767,71 +768,31 @@ async function checkTinnhiemmang(hostname) {
   const cached = cacheGet(cacheKey);
   if (cached) return cached;
 
-  const result = { available: false, isBlacklisted: false, details: null };
-
-  try {
-    // Try the search API first
-    const searchUrl = `https://tinnhiemmang.vn/tim-kiem?q=${encodeURIComponent(hostname)}`;
-    const response = await axios.get(searchUrl, {
-      timeout: 8000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/html,application/xhtml+xml'
-      },
-      validateStatus: (s) => s < 400
-    });
-
-    const html = String(response.data || '');
-    const cheerio = require('cheerio');
-    const $ = cheerio.load(html);
-
-    // Chỉ chốt blacklisted khi KHỚP CHÍNH XÁC hostname trong bảng kết quả,
-    // KHÔNG dùng keyword scan toàn trang (tránh false-positive "lừa đảo"/"phishing"
-    // xuất hiện trong hướng dẫn/UI của chính trang tinnhiemmang).
-    const target = hostname.replace(/^www\./, '').toLowerCase();
-    const targetRe = new RegExp(`(?:^|[^a-z0-9])${target.replace(/\./g, '\\.')}(?:[^a-z0-9]|$)`, 'i');
-
-    let found = false;
-    $('.table-result tr, table tbody tr, table tr, .result-item, .item').each((i, el) => {
-      const text = $(el).text().toLowerCase();
-      if (targetRe.test(text)) { found = true; return false; }
-    });
-
-    if (found) {
-      result.available = true;
-      result.isBlacklisted = true;
-      result.details = `Domain "${hostname}" được tìm thấy trên tinnhiemmang.vn - cổng cảnh báo tin nhắn lừa đảo của Việt Nam.`;
-    } else {
-      result.available = true;
-      result.isBlacklisted = false;
-    }
-  } catch (e) {
-    // If search fails, try direct lookup
-    try {
-      const directUrl = `https://tinnhiemmang.vn/website-lua-dao`;
-      const directResponse = await axios.get(directUrl, {
-        timeout: 8000,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept': 'text/html,application/xhtml+xml'
-        },
-        validateStatus: (s) => s < 400
-      });
-
-      const directHtml = String(directResponse.data || '');
-      const domainInPage = directHtml.toLowerCase().includes(hostname.toLowerCase());
-
-      if (domainInPage) {
-        result.available = true;
-        result.isBlacklisted = true;
-        result.details = `Domain "${hostname}" có mặt trong danh sách cảnh báo trên tinnhiemmang.vn.`;
-      } else {
-        result.available = true;
-        result.isBlacklisted = false;
-      }
-    } catch {
-      result.available = false;
-    }
+  const res = await tinnhiemmang.searchTinnhiemmang(hostname);
+  let result;
+  if (res.available && res.listed && res.item) {
+    const it = res.item;
+    result = {
+      available: true,
+      isBlacklisted: true,
+      details: `Domain "${hostname}" được tìm thấy trên tinnhiemmang.vn (cổng cảnh báo lừa đảo của Việt Nam). Phát hiện ${it.detectedDate || 'không rõ ngày'}, mạo danh tổ chức "${it.org || 'không rõ'}", trạng thái ${it.status || 'đang xử lý'}.`,
+      org: it.org,
+      detectedDate: it.detectedDate,
+      status: it.status,
+      type: it.type
+    };
+  } else if (res.available) {
+    result = {
+      available: true,
+      isBlacklisted: false,
+      details: 'Domain không nằm trong danh sách cảnh báo của tinnhiemmang.vn.',
+      org: null,
+      detectedDate: null,
+      status: null,
+      type: null
+    };
+  } else {
+    result = { available: false, isBlacklisted: false, details: null, error: res.error || null };
   }
 
   cacheSet(cacheKey, result, CACHE_TTL.destroylist);
@@ -1061,7 +1022,7 @@ async function analyzeLink(input) {
     addReason({
       id: 'LINK_TINNHIEMMANG',
       name: 'CẢNH BÁO: Tinnhiemmang.vn',
-      detail: tinnhiemmang.details,
+      detail: tinnhiemmang.details + (tinnhiemmang.org ? ` Tổ chức bị mạo danh: ${tinnhiemmang.org}${tinnhiemmang.detectedDate ? ` (phát hiện ${tinnhiemmang.detectedDate})` : ''}.` : ''),
       status: 'danger',
       scoreDelta: -50
     });
@@ -1324,7 +1285,7 @@ async function analyzeLink(input) {
     dns: dnsRep.available ? { hasMx: dnsRep.hasMx, hasSpf: dnsRep.hasSpf, hasDmarc: dnsRep.hasDmarc, legitimacyScore: dnsRep.legitimacyScore } : null,
     redirect: redirectInfo.chainLength >= 2 ? { chainLength: redirectInfo.chainLength, domainChanged: redirectInfo.domainChanged, finalHostname: redirectInfo.finalHostname, redirects: redirectInfo.redirects.map(r => r.hostname) } : null,
     pageAnalysis: pageAnalysis && pageAnalysis.available ? { hasLoginForm: pageAnalysis.hasLoginForm, urgencyScore: pageAnalysis.urgencyScore, cryptoWalletDetected: pageAnalysis.cryptoWalletDetected, obfuscatedScripts: pageAnalysis.obfuscatedScripts, phishingSignals: pageAnalysis.phishingSignals } : null,
-    tinnhiemmang: tinnhiemmang.available ? { isBlacklisted: tinnhiemmang.isBlacklisted, details: tinnhiemmang.details } : null
+    tinnhiemmang: tinnhiemmang.available ? { isBlacklisted: tinnhiemmang.isBlacklisted, details: tinnhiemmang.details, org: tinnhiemmang.org, detectedDate: tinnhiemmang.detectedDate, status: tinnhiemmang.status, type: tinnhiemmang.type } : null
   };
 }
 

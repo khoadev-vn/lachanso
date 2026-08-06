@@ -633,6 +633,15 @@ app.post('/api/v2/web-verify', async (req, res) => {
         console.log(`\n[API-v2][web] 🔍 Zero-Trust Web Verify: "${String(url).substring(0, 50)}..."`);
         const startTime = Date.now();
 
+        // Cache kết quả theo URL gốc (10 phút) — lần check sau gần như tức thì,
+        // tránh tình trạng backend chậm hơn giới hạn timeout của Vercel proxy.
+        const cacheKey = String(url).toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, '');
+        const cached = cacheService.get('web-verify', cacheKey);
+        if (cached) {
+            console.log(`[API-v2][web] ⚡ Cache hit: ${cacheKey} (${Date.now() - startTime}ms)`);
+            return res.json({ ...cached, cached: true, cacheHit: true });
+        }
+
         const result = await verifyWebsiteV2(url);
 
         const responseData = {
@@ -641,6 +650,8 @@ app.post('/api/v2/web-verify', async (req, res) => {
             ownerVerifyEmail: process.env.PROCESS_VERIFY_EMAIL || 'kanh05113@gmail.com',
             execution_time_ms: Date.now() - startTime
         };
+
+        cacheService.set('web-verify', cacheKey, responseData, 10);
 
         console.log(`[API-v2][web] ✅ state=${result.state} R=${result.R} C=${result.C} (${responseData.execution_time_ms}ms)`);
         res.json(responseData);

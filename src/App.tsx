@@ -5,6 +5,7 @@ import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTria
 import OwnerVerifyModal from "./components/OwnerVerifyModal";
 import ReportIssueModal from "./components/ReportIssueModal";
 import ColorLegendModal from "./components/ColorLegendModal";
+import ThirdPartyModal from "./components/ThirdPartyModal";
 import { useState, useEffect, FormEvent, useRef } from "react";
 import type { PointerEvent } from "react";
 import { extractArticleForAnalysis } from "./constants/articleExtraction";
@@ -254,6 +255,7 @@ export default function App() {
   const [ownerVerifyOpen, setOwnerVerifyOpen] = useState(false);
   const [reportIssueOpen, setReportIssueOpen] = useState(false);
   const [colorLegendOpen, setColorLegendOpen] = useState(false);
+  const [thirdPartyOpen, setThirdPartyOpen] = useState(false);
   const [selectedInfoItem, setSelectedInfoItem] = useState<{ title: string; description: string; link: string; category: string; } | null>(null);
   const [selectedBlogSlug, setSelectedBlogSlug] = useState<string | null>(() => {
     const path = window.location.pathname;
@@ -516,6 +518,8 @@ export default function App() {
             ownerVerifyAvailable: webCheck.ownerVerifyAvailable,
             blacklisted: webCheck.blacklisted,
             blacklistSources: webCheck.blacklistSources,
+            thirdParty: webCheck.thirdParty,
+            ipInfo: webCheck.ipInfo,
             backendV2: webCheck.backendV2,
             isEducational: false,
             type: "web",
@@ -1790,9 +1794,17 @@ export default function App() {
                           <Database className="h-5 w-5 text-gray-700" />
                           Tín Hiệu LCS
                         </h3>
-                        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-black uppercase text-gray-500">
-                          {resultData.analysisReasons.length} tín hiệu
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {resultData.type === "web" && resultData.thirdParty?.length ? <button type="button" onClick={() => setThirdPartyOpen(true)} className="rounded-full bg-sky-50 px-3 py-1 text-xs font-black text-sky-700 hover:bg-sky-100 transition-colors">
+                            Bên thứ 3 ({resultData.thirdParty.length})
+                          </button> : null}
+                          {resultData.type === "web" && resultData.ipInfo?.detail?.ips?.length ? <button type="button" onClick={() => setThirdPartyOpen(true)} className="rounded-full bg-violet-50 px-3 py-1 text-xs font-black text-violet-700 hover:bg-violet-100 transition-colors">
+                            IP ({resultData.ipInfo.detail.ips.length})
+                          </button> : null}
+                          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-black uppercase text-gray-500">
+                            {resultData.analysisReasons.length} tín hiệu
+                          </span>
+                        </div>
                       </div>
 
                       {resultData.type === "web" ? <div className="space-y-4">
@@ -2523,6 +2535,7 @@ export default function App() {
       <OwnerVerifyModal open={ownerVerifyOpen} onOpenChange={setOwnerVerifyOpen} domain={resultData?.displayUrl ?? ""} verifyEmail={resultData?.ownerVerifyEmail} />
       <ReportIssueModal open={reportIssueOpen} onOpenChange={setReportIssueOpen} targetUrl={resultData?.url ?? resultData?.displayUrl ?? ""} />
       <ColorLegendModal open={colorLegendOpen} onOpenChange={setColorLegendOpen} />
+      <ThirdPartyModal open={thirdPartyOpen} onOpenChange={setThirdPartyOpen} thirdParty={resultData?.thirdParty} ipInfo={resultData?.ipInfo} />
     </div>);
 
 }

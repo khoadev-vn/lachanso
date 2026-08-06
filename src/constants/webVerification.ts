@@ -36,6 +36,8 @@ export interface WebVerificationResult {
   ownerVerifyAvailable?: boolean;
   blacklisted?: boolean;
   blacklistSources?: string[];
+  thirdParty?: BackendThirdPartySource[];
+  ipInfo?: { collected: boolean; detail: BackendIpInfoDetail } | null;
   executionTimeMs?: number;
   backendV2?: boolean;
   normalizedUrl: string;
@@ -447,6 +449,37 @@ const CRITERIA_META: Record<string, { name: string; weight: number; icon: any; c
 };
 
 // ===== Lấy kết quả từ Backend Zero-Trust v2 (nếu máy chủ phản hồi) =====
+interface BackendThirdPartySource {
+  source: string;
+  name: string;
+  listed: boolean;
+  severity: "high" | "clear" | "unknown";
+  detail: string;
+  item?: {
+    domain?: string;
+    detectedDate?: string | null;
+    org?: string | null;
+    orgSlug?: string | null;
+    status?: string | null;
+    type?: string | null;
+  };
+}
+
+interface BackendIpInfoDetail {
+  hostname: string;
+  ips: string[];
+  hosting: boolean | null;
+  isp: string | null;
+  org: string | null;
+  country: string | null;
+  region: string | null;
+  city: string | null;
+  asn: string | null;
+  asName: string | null;
+  rdapCidr: string | null;
+  rdapName: string | null;
+}
+
 interface BackendWebResult {
   success: boolean;
   state: "safe" | "verify" | "suspicious" | "danger";
@@ -460,6 +493,8 @@ interface BackendWebResult {
   cloakDetected: boolean;
   blacklisted: boolean;
   blacklistSources: string[];
+  thirdParty?: BackendThirdPartySource[];
+  ipInfo?: { collected: boolean; detail: BackendIpInfoDetail };
   ownerVerify?: { available: boolean };
   coreCriteriaOk: boolean;
 }
@@ -596,7 +631,7 @@ export async function analyzeWebsite(input: string): Promise<WebVerificationResu
     reasons.push({
       id: "WEB_DESTROYLIST_HIT",
       name: "Có trong Destroylist",
-      detail: `Destroylist đánh dấu domain này là nguy cơ ${severity}, điểm rủi ro ${destroylistRiskScore || "không rõ"}/100 (${destroylist.source === "raw-feed" ? "raw feed GitHub" : "live API"}).`,
+      detail: `Destroylist đánh dấu domain này là nguy cơ ${severity}, điểm rủi ro ${destroylistRiskScore || "không rõ"}/100 (${destroylist?.source === "raw-feed" ? "raw feed GitHub" : "live API"}).`,
       status: "danger",
       icon: AlertTriangle,
       category: "security",
@@ -812,6 +847,8 @@ export async function analyzeWebsite(input: string): Promise<WebVerificationResu
       ownerVerifyAvailable: Boolean(backendV2.ownerVerify?.available),
       blacklisted: backendV2.blacklisted,
       blacklistSources: backendV2.blacklistSources || [],
+      thirdParty: backendV2.thirdParty || [],
+      ipInfo: backendV2.ipInfo || null,
       executionTimeMs: undefined,
       backendV2: true,
       normalizedUrl,

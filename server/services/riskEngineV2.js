@@ -278,7 +278,15 @@ async function collectC4(url, hostname, isPaaS) {
 // ============ c5: Third-Party Feeds (blocklist → R=100) ============
 async function collectC5(hostname) {
   const blacklists = await thirdParty.checkHostname(hostname);
-  return { collected: true, risk: 0, blacklisted: blacklists.length > 0, sources: blacklists };
+  const all = await thirdParty.checkAllSources(hostname);
+  return {
+    collected: true,
+    risk: 0,
+    blacklisted: blacklists.length > 0,
+    sources: blacklists,
+    thirdParty: all.sources,
+    ipInfo: all.ipInfo
+  };
 }
 
 // ============ c6: Typosquatting / Entropy ============
@@ -494,6 +502,8 @@ async function verifyWebsite(input, opts = {}) {
     cloakDetected: !!c4.cloakDetected,
     blacklisted: !!c5.blacklisted,
     blacklistSources: c5.sources || [],
+    thirdParty: c5.thirdParty || [],
+    ipInfo: c5.ipInfo || { collected: false, detail: {} },
     ownerVerify: { available: state === 'verify' },
     verified: !!verifiedEntry,
     verifiedDomain: verifiedEntry ? {

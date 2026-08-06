@@ -6,6 +6,8 @@
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const dns = require('dns').promises;
+const tinnhiemmang = require('./tinnhiemmang');
 
 let redisClient = null;
 let redisReady = false;
@@ -65,32 +67,21 @@ async function checkPhishStats(hostname) {
   }
 }
 
-// Tinnhiemmang blacklist (scrape, bóc .table-result chính xác)
+// Tinnhiemmang blacklist (live search qua /filterObj — cơ chế tìm kiếm đúng)
 async function checkTinnhiemmang(hostname) {
-  try {
-    const r = await axios.get(`https://tinnhiemmang.vn/tim-kiem?q=${encodeURIComponent(hostname)}`, {
-      timeout: 6000,
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html' },
-      validateStatus: (s) => s < 400
-    });
-    const cheerio = require('cheerio');
-    const $ = cheerio.load(String(r.data || ''));
-    const target = hostname.replace(/^www\./, '').toLowerCase();
-    // Bóc chính xác từ bảng .table-result
-    let found = false;
-    $('.table-result tr, table tr, .result-item, .item, tbody tr').each((i, el) => {
-      const text = $(el).text().toLowerCase();
-      if (text.includes(target) || text.includes(hostname.toLowerCase())) {
-        // chỉ chốt khi khớp đúng hostname, không phải keyword
-        const re = new RegExp(`(?:^|[^a-z0-9])${target.replace(/\./g, '\\.')}(?:[^a-z0-9]|$)`, 'i');
-        if (re.test(text)) { found = true; return false; }
-      }
-    });
-    if (found) {
-      return { source: 'tinnhiemmang', severity: 'medium', detail: 'Domain có mặt trong danh sách cảnh báo tinnhiemmang.vn' };
-    }
-  } catch (e) {}
-  return null;
+  const res = await tinnhiemmang.searchTinnhiemmang(hostname);
+  if (!res.available || !res.listed || !res.item) return null;
+  const it = res.item;
+  return {
+    source: 'tinnhiemmang',
+    severity: 'high',
+    detail: `Domain có trong danh sách cảnh báo tinnhiemmang.vn (phát hiện ${it.detectedDate || '?'}, mạo danh "${it.org || '?'}", trạng thái ${it.status || '?'})`,
+    matchedOrg: it.org,
+    detectedDate: it.detectedDate,
+    status: it.status,
+    type: it.type,
+    orgSlug: it.orgSlug
+  };
 }
 
 // ============ MAIN CHECK ============
@@ -142,4 +133,103 @@ async function syncToRedis() {
   } catch (e) {}
 }
 
-module.exports = { checkHostname, syncToRedis, loadCrawledDomains };
+// ============ IP INFO (no-key): DNS resolve + RDAP netrange + ip-api.com ============
+// ip-api.com là nguồn miễn phí không cần key (45 req/phút) — đủ cho luồng từng-check.
+let ipCache = new Map(); // ip -> { expiresAt, data }
+
+async function getIpInfo(hostname) {
+  const root = hostname.split('.').slice(-2).join('.');
+  let ips = [];
+  try { ips = await dns.resolve4(hostname); } catch (e) {}
+
+  const detail = { hostname, ips, hosting: null, isp: null, org: null, country: null, region: null, city: null, asn: null, asName: null, rdapCidr: null, rdapName: null };
+  if (!ips.length) return { collected: false, detail };
+
+  const primary = ips[0];
+  const cached = ipCache.get(primary);
+  if (cached && Date.now() < cached.expiresAt) return { collected: true, ...cached.data };
+
+  // 1) RDAP cho IP (cung cấp CIDR + tên tổ chức mạng)
+  let rdap = null;
+  try {
+    const r = await axios.get(`https://rdap.org/ip/${primary}`, { timeout: 5000, headers: { 'Accept': 'application/rdap+json, application/json' } });
+    const data = r.data || {};
+    const cidr = (data.cidr || []).map(c => `${c.address}/${c.length}`).join(', ') || null;
+    const name = data.name || null;
+    const ent = (data.entities || []).find(e => e.vcardArray && e.vcardArray[1] && e.vcardArray[1].some(line => line[0] === 'fn'));
+    const org = ent ? (ent.vcardArray[1].find(line => line[0] === 'fn') || [])[3] || null : null;
+    rdap = { cidr, name, org };
+    detail.rdapCidr = cidr;
+    detail.rdapName = name || org;
+  } catch (e) {}
+
+  // 2) ip-api.com (miễn phí, http)
+  try {
+    const r = await axios.get(`http://ip-api.com/json/${primary}?fields=status,country,regionName,city,isp,org,as,asname,hosting,proxy,query`, { timeout: 5000 });
+    const d = r.data || {};
+    if (d.status === 'success') {
+      detail.country = d.country;
+      detail.region = d.regionName;
+      detail.city = d.city;
+      detail.isp = d.isp;
+      detail.org = d.org;
+      detail.asn = d.as;
+      detail.asName = d.asname;
+      detail.hosting = !!d.hosting || !!d.proxy;
+    }
+  } catch (e) {}
+
+  const data = { detail };
+  ipCache.set(primary, { expiresAt: Date.now() + 30 * 60 * 1000, data });
+  return { collected: true, ...data };
+}
+
+// ============ CHECK ALL SOURCES — trả về mảng đầy đủ mọi nguồn (matched + clear) ============
+// Khác checkHostname (chỉ trả matched), hàm này trả cả trạng thái "clear" để
+// frontend render modal "Kết quả từ bên thứ 3".
+async function checkAllSources(hostname) {
+  const host = compactHost(hostname);
+  const sources = [];
+
+  // Tinnhiemmang (live search qua filterObj)
+  const tnm = await tinnhiemmang.searchTinnhiemmang(host);
+  if (tnm.available) {
+    sources.push(tnm.listed
+      ? { source: 'Tín Nhiệm Mạng', name: 'Tinnhiemmang.vn', listed: true, severity: 'high', detail: `Có trong danh sách lừa đảo. Phát hiện ${tnm.item.detectedDate || '?'}, mạo danh "${tnm.item.org || '?'}", trạng thái ${tnm.item.status || '?'}.`, item: tnm.item }
+      : { source: 'Tín Nhiệm Mạng', name: 'Tinnhiemmang.vn', listed: false, severity: 'clear', detail: 'Không có trong danh sách cảnh báo lừa đảo của tinnhiemmang.vn.' });
+  } else {
+    sources.push({ source: 'Tín Nhiệm Mạng', name: 'Tinnhiemmang.vn', listed: false, severity: 'unknown', detail: `Không lấy được dữ liệu (${tnm.error || 'network-error'}).`, error: tnm.error });
+  }
+
+  // PhishStats (real-time, no key)
+  const ps = await checkPhishStats(host);
+  if (ps) {
+    sources.push({ source: 'PhishStats', name: 'PhishStats', listed: true, severity: ps.severity, detail: ps.detail });
+  } else {
+    sources.push({ source: 'PhishStats', name: 'PhishStats', listed: false, severity: 'clear', detail: 'PhishStats chưa ghi nhận domain này.' });
+  }
+
+  // Local crawled feed (URLhaus, OpenPhish, Destroylist feed, ThreatFox)
+  const local = loadCrawledDomains();
+  const inLocal = local.has(host) || Array.from(local).some(d => host.endsWith('.' + d));
+  sources.push({ source: 'Feed Bên Thứ 3', name: 'URLhaus / OpenPhish / Destroylist / ThreatFox', listed: inLocal, severity: inLocal ? 'high' : 'clear', detail: inLocal ? 'Domain có trong danh sách feed phishing đã crawl.' : 'Không có trong các feed phishing đã crawl.' });
+
+  // Destroylist API (real-time, không key)
+  let dl = null;
+  try {
+    const r = await axios.get(`https://api.destroy.tools/v1/check?domain=${encodeURIComponent(host)}`, { timeout: 4000, headers: { 'Accept': 'application/json' } });
+    const d = r.data || {};
+    const riskScore = Number(d.risk_score ?? d.riskScore ?? 0);
+    dl = { listed: Boolean(d.threat || d.listed || riskScore >= 40), riskScore, severity: d.severity || d.status || 'unknown' };
+  } catch (e) {}
+  sources.push(dl
+    ? { source: 'Destroylist', name: 'Destroylist', listed: dl.listed, severity: dl.listed ? 'high' : 'clear', detail: dl.listed ? `Destroylist đánh dấu nguy cơ ${dl.severity}, điểm rủi ro ${dl.riskScore}/100.` : `Destroylist chưa ghi nhận (điểm ${dl.riskScore}).` }
+    : { source: 'Destroylist', name: 'Destroylist', listed: false, severity: 'unknown', detail: 'Không lấy được dữ liệu Destroylist.' });
+
+  // IP info (no-key)
+  const ipInfo = await getIpInfo(host);
+
+  return { sources, ipInfo };
+}
+
+module.exports = { checkHostname, syncToRedis, loadCrawledDomains, getIpInfo, checkAllSources };
