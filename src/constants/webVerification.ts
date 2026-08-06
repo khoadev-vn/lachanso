@@ -711,12 +711,15 @@ export async function analyzeWebsite(input: string): Promise<WebVerificationResu
   }
 
   const scoreRef = { value: score };
-  await mergeBackendAnalysis(reasons, scoreRef, hostname);
+  // Chạy SONG SONG: lấy kết quả authoritative từ backend (AI 8 tiêu chí) VÀ merge phân tích link.
+  // Trước đây gọi tuần tự khiến backend chậm → UI hay rơi xuống heuristics cục bộ.
+  const [, backendV2] = await Promise.all([
+    mergeBackendAnalysis(reasons, scoreRef, hostname),
+    fetchBackendWebVerify(normalizedUrl)
+  ]) as [void, BackendWebResult | null];
   score = Math.max(0, Math.min(100, scoreRef.value));
 
   // ===== Ưu tiên kết quả authoritative từ Backend Zero-Trust v2 =====
-  const backendV2 = await fetchBackendWebVerify(normalizedUrl);
-
   if (backendV2) {
     const R = Math.min(100, Math.max(0, Number(backendV2.R) || 0));
     const C = Math.min(1, Math.max(0, Number(backendV2.C) || 0));
@@ -823,7 +826,10 @@ export async function analyzeWebsite(input: string): Promise<WebVerificationResu
   }
 
   // ===== Fallback cục bộ khi backend v2 không khả dụng =====
-  const state = stateFromScore(score, reasons.length);
+  let state = stateFromScore(score, reasons.length);
+  // KHÔNG tự khẳng định "An toàn" nếu chưa có xác nhận từ backend AI hoặc domain tin cậy:
+  // nếu backend không phản hồi, kết quả cao nhất là "Cần xác minh".
+  if (state === "safe" && !trusted) state = "verify";
   const localCriteria: WebCriterionDetail[] = Object.keys(CRITERIA_META).map((key) => {
     const meta = CRITERIA_META[key];
     const knownLocal: Record<string, { collected: boolean; risk: number }> = {
@@ -863,7 +869,7 @@ export async function analyzeWebsite(input: string): Promise<WebVerificationResu
     title: trusted ? `Đã nhận diện ${trusted.note || hostname}` : `Đánh giá website ${hostname}`,
     description: trusted ?
     "Domain khớp nguồn đã xác minh. Ảnh preview được tải qua lớp trung gian để không cần mở trực tiếp trong trình duyệt." :
-    "Hệ thống đã phân tích cấu trúc URL, domain, HTTPS và dấu hiệu phishing trước khi hiển thị preview.",
+    "Kết quả PHÂN TÍCH NHANH TẠI MÁY BẠN (backend AI chưa phản hồi kịp) — chỉ đánh giá URL, HTTPS và dấu hiệu phishing cơ bản, độ phủ thấp. Hãy thử lại sau để có đánh giá 8 tiêu chí từ máy chủ.",
     screenshot: previewCandidates[0] ?? "",
     previewCandidates,
     reasons
