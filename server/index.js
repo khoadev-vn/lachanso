@@ -654,6 +654,39 @@ app.post('/api/v2/web-verify', async (req, res) => {
 const reportRoutes = require('./routes/reportRoutes');
 app.use('/api/v2', reportRoutes);
 
+// ============ ADMIN — QUẢN LÝ DOMAIN ĐÃ XÁC MINH (thêm/gỡ trusted) ============
+// Được gọi TRỰC TIẾP lên VPS (kèm header x-lcs-admin-secret), không qua Vercel proxy.
+const verifiedDomains = require('./services/verifiedDomains');
+
+app.get('/api/v2/admin/trusted', (req, res) => {
+  const secret = process.env.LCS_ADMIN_SECRET;
+  if (secret && req.get('x-lcs-admin-secret') !== secret) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  return res.json({ success: true, list: verifiedDomains.list() });
+});
+
+app.post('/api/v2/admin/trusted', (req, res) => {
+  const secret = process.env.LCS_ADMIN_SECRET;
+  if (secret && req.get('x-lcs-admin-secret') !== secret) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const { action } = req.body || {};
+  try {
+    if (action === 'remove') {
+      const r = verifiedDomains.remove(req.body?.domain);
+      console.log(`[Admin] Gỡ domain trusted: ${req.body?.domain} (removed:${r.removed})`);
+      return res.json({ success: true, ...r });
+    }
+    const r = verifiedDomains.add(req.body || {});
+    if (!r.ok) return res.status(400).json(r);
+    console.log(`[Admin] Thêm domain trusted: ${r.entry.domain} (score ${r.entry.trustScore})`);
+    return res.json({ success: true, ...r });
+  } catch (e) {
+    return res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // ============ AUTO-CRAWL ENDPOINTS ============
 app.get('/api/crawl/stats', (req, res) => {
   res.json(autoCrawlService.getStats());

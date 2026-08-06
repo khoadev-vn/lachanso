@@ -1,16 +1,19 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
 import { Checkbox } from "./ui/checkbox";
-import { Loader2, Flag, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, Flag, AlertCircle, CheckCircle2, ImagePlus, X } from "lucide-react";
 
 interface ReportIssueModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   targetUrl: string;
 }
+
+const IMG_MAX_BYTES = 1 * 1024 * 1024;
+const IMG_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
 export default function ReportIssueModal({ open, onOpenChange, targetUrl }: ReportIssueModalProps) {
   const [email, setEmail] = useState("");
@@ -19,8 +22,39 @@ export default function ReportIssueModal({ open, onOpenChange, targetUrl }: Repo
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [imageData, setImageData] = useState("");
+  const [imageName, setImageName] = useState("");
+  const [imageError, setImageError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const canSubmit = email.trim().length > 3 && evidence.trim().length >= 10 && agreeTerms && !submitting;
+
+  const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageError("");
+    if (!IMG_TYPES.includes(file.type)) {
+      setImageError("Chỉ chấp nhận ảnh PNG/JPG/WebP/GIF.");
+      return;
+    }
+    if (file.size > IMG_MAX_BYTES) {
+      setImageError("Ảnh tối đa 1MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageData(String(reader.result));
+      setImageName(file.name);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearImage = () => {
+    setImageData("");
+    setImageName("");
+    setImageError("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -35,7 +69,8 @@ export default function ReportIssueModal({ open, onOpenChange, targetUrl }: Repo
           targetUrl,
           reportType,
           evidence: evidence.trim(),
-          agreeTerms: true
+          agreeTerms: true,
+          screenshotData: imageData || undefined
         })
       });
       const data = await response.json();
@@ -44,6 +79,7 @@ export default function ReportIssueModal({ open, onOpenChange, targetUrl }: Repo
         setEmail("");
         setEvidence("");
         setAgreeTerms(false);
+        clearImage();
       } else {
         setMessage({ ok: false, text: data.message || "Không thể gửi khiếu nại. Vui lòng thử lại." });
       }
@@ -123,6 +159,45 @@ export default function ReportIssueModal({ open, onOpenChange, targetUrl }: Repo
               value={evidence}
               onChange={(e) => setEvidence(e.target.value)}
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Ảnh bằng chứng (tùy chọn, tối đa 1MB)</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              onChange={onPickImage}
+              className="hidden"
+            />
+            {imageData ? (
+              <div className="relative overflow-hidden rounded-xl border border-gray-200">
+                <img src={imageData} alt="Bằng chứng" className="h-40 w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={clearImage}
+                  className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                  aria-label="Xóa ảnh"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-500 transition-colors hover:border-gray-400 hover:bg-gray-100"
+              >
+                <ImagePlus className="h-5 w-5" />
+                Chọn file ảnh (GPKD, Mã số thuế, ảnh chụp trang lừa đảo,...)
+              </button>
+            )}
+            {imageName && !imageError && (
+              <p className="text-xs text-gray-500">Đã chọn: {imageName}</p>
+            )}
+            {imageError && (
+              <p className="text-xs text-red-600">{imageError}</p>
+            )}
           </div>
 
           <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-gray-200 p-3">

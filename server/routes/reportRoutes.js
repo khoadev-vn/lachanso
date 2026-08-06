@@ -1,5 +1,6 @@
 // ============ REPORT ROUTES — Khiếu nại kết quả sai (False Positive / False Negative) ============
 // Nhận form báo cáo từ ReportIssueModal, gửi thông báo qua Telegram (ưu tiên) + ghi JSON (luôn).
+// Hỗ trợ đính kèm 1 ảnh bằng chứng (base64 data-URL → Telegram sendPhoto).
 // KHÔNG dùng SMTP. Không cần key email.
 // Anti-spam: rate limit 5 báo cáo / 15 phút / IP.
 
@@ -24,27 +25,66 @@ function isRateLimited(ip) {
   return false;
 }
 
-// ---- Telegram gửi thông báo (chỉ khi có token) ----
+// ---- Giải mã ảnh bằng chứng (data:image/*;base64,...) — tối đa 1MB ----
+const MAX_IMG_BYTES = 1 * 1024 * 1024;
+function decodeImage(dataUrl) {
+  const m = /^data:(image\/(png|jpe?g|webp|gif));base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl || ''));
+  if (!m) return null;
+  const buf = Buffer.from(m[3], 'base64');
+  if (!buf.length || buf.length > MAX_IMG_BYTES) return null;
+  return { buffer: buf, mime: m[1], ext: m[2] === 'jpeg' ? 'jpg' : m[2] };
+}
+
+// ---- Xây caption chung cho tin nhắn Telegram ----
+function buildCaption(report) {
+  const lines = [];
+  if (report.kind === 'owner_verify') {
+    lines.push(`🛡️ <b>YÊU CẦU XÁC MINH CHỦ WEB — Lá Chắn Số</b>`);
+    lines.push(``);
+    lines.push(`🌐 Domain: ${report.domain}`);
+    lines.push(`📧 Email: ${report.email}`);
+    if (report.note) {
+      lines.push(``);
+      lines.push(`📝 Nội dung: ${report.note}`);
+    }
+  } else {
+    lines.push(`⚠️ <b>KHIẾU NẠI KẾT QUẢ SAI — Lá Chắn Số</b>`);
+    lines.push(``);
+    lines.push(`🔗 URL: ${report.targetUrl}`);
+    lines.push(`📌 Loại: ${report.reportType}`);
+    lines.push(`📧 Email: ${report.email}`);
+    lines.push(``);
+    lines.push(`📝 Bằng chứng / Lý do:`);
+    lines.push(report.evidence);
+  }
+  if (report.screenshotData) lines.push(``, `🖼️ Đính kèm: ảnh bằng chứng.`);
+  return lines.join('\n');
+}
+
+// ---- Telegram gửi thông báo (tin nhắn hoặc ảnh kèm caption) ----
 async function sendTelegram(report) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return false;
   try {
-    const text = [
-      `⚠️ *KHIẾU NẠI KẾT QUẢ SAI — Lá Chắn Số*`,
-      ``,
-      `🔗 URL: ${report.targetUrl}`,
-      `📌 Loại: ${report.reportType}`,
-      `📧 Email: ${report.email}`,
-      ``,
-      `📝 Bằng chứng / Lý do:`,
-      report.evidence
-    ].join('\n');
-    const r = await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-      chat_id: chatId,
-      text,
-      parse_mode: 'Markdown'
-    }, { timeout: 8000 });
+    const text = buildCaption(report);
+    const photo = report.screenshotData ? decodeImage(report.screenshotData) : null;
+
+    let url;
+    let body;
+    if (photo) {
+      url = `https://api.telegram.org/bot${token}/sendPhoto`;
+      const form = new FormData();
+      form.append('chat_id', chatId);
+      form.append('caption', text.slice(0, 1024));
+      form.append('photo', new Blob([photo.buffer], { type: photo.mime }), `evidence.${photo.ext}`);
+      body = form;
+    } else {
+      url = `https://api.telegram.org/bot${token}/sendMessage`;
+      body = { chat_id: chatId, text, parse_mode: 'HTML' };
+    }
+
+    const r = await axios.post(url, body, { timeout: 10000 });
     return r.data?.ok === true;
   } catch (e) {
     console.error('[Report] Lỗi gửi Telegram:', e.message);
@@ -78,7 +118,7 @@ router.post('/report-issue', async (req, res) => {
     return res.status(429).json({ success: false, message: 'Bạn đã gửi quá nhiều báo cáo. Vui lòng thử lại sau 15 phút.' });
   }
 
-  const { email, targetUrl, reportType, evidence, agreeTerms } = req.body || {};
+  const { email, targetUrl, reportType, evidence, agreeTerms, screenshotData } = req.body || {};
 
   if (!email || !targetUrl || !evidence || !agreeTerms) {
     return res.status(400).json({ success: false, message: 'Vui lòng điền đầy đủ thông tin bắt buộc.' });
@@ -94,6 +134,9 @@ router.post('/report-issue', async (req, res) => {
   if (!['false_positive', 'false_negative'].includes(reportType)) {
     return res.status(400).json({ success: false, message: 'Loại báo cáo không hợp lệ.' });
   }
+  if (screenshotData && !decodeImage(screenshotData)) {
+    return res.status(400).json({ success: false, message: 'Ảnh đính kèm không hợp lệ (chỉ chấp nhận PNG/JPG/WebP/GIF, tối đa 1MB).' });
+  }
 
   const report = {
     email,
@@ -101,20 +144,74 @@ router.post('/report-issue', async (req, res) => {
     reportType,
     evidence: String(evidence).slice(0, 5000),
     agreeTerms: true,
+    screenshotData: screenshotData || undefined,
     ip: process.env.LOG_REPORTER_IP === '1' ? ip : undefined
   };
 
-  // Luôn ghi JSON (không mất dữ liệu kể cả khi Telegram chưa cấu hình)
-  const saved = appendToLog(report);
+  // Luôn ghi JSON (không mất dữ liệu kể cả khi Telegram chưa cấu hình) — KHÔNG lưu base64 ảnh
+  const logReport = { ...report };
+  logReport.hasScreenshot = !!logReport.screenshotData;
+  delete logReport.screenshotData;
+  delete logReport.ip;
+  if (process.env.LOG_REPORTER_IP === '1') logReport.ip = ip;
+  const saved = appendToLog(logReport);
 
-  // Gửi Telegram nếu có token
+  // Gửi Telegram nếu có token (kèm ảnh nếu có)
   const telegramSent = await sendTelegram(report);
 
-  console.log(`[Report] Khiếu nại mới: ${report.reportType} - ${report.targetUrl} (telegram:${telegramSent ? 'OK' : 'SKIP'})`);
+  console.log(`[Report] Khiếu nại mới: ${report.reportType} - ${report.targetUrl} (telegram:${telegramSent ? 'OK' : 'SKIP'}${report.screenshotData ? ', img:1' : ''})`);
 
   return res.json({
     success: true,
     message: 'Đã gửi khiếu nại thành công. Đội ngũ sẽ xem xét trong 24h-48h.',
+    telegramSent,
+    saved
+  });
+});
+
+// ---- POST /api/v2/owner-issue — Chủ web gửi yêu cầu xác minh (kèm ảnh tùy chọn) ----
+router.post('/owner-issue', async (req, res) => {
+  const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+
+  if (isRateLimited(ip)) {
+    return res.status(429).json({ success: false, message: 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau 15 phút.' });
+  }
+
+  const { email, domain, note, screenshotData } = req.body || {};
+
+  if (!email || !domain) {
+    return res.status(400).json({ success: false, message: 'Vui lòng cung cấp email và tên miền.' });
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ success: false, message: 'Email không hợp lệ.' });
+  }
+  if (screenshotData && !decodeImage(screenshotData)) {
+    return res.status(400).json({ success: false, message: 'Ảnh đính kèm không hợp lệ (chỉ chấp nhận PNG/JPG/WebP/GIF, tối đa 1MB).' });
+  }
+
+  const owner = {
+    kind: 'owner_verify',
+    email,
+    domain: String(domain).trim().slice(0, 255),
+    note: String(note || '').slice(0, 3000),
+    screenshotData: screenshotData || undefined,
+    ip: process.env.LOG_REPORTER_IP === '1' ? ip : undefined
+  };
+
+  const logOwner = { ...owner };
+  logOwner.hasScreenshot = !!logOwner.screenshotData;
+  delete logOwner.screenshotData;
+  delete logOwner.ip;
+  if (process.env.LOG_REPORTER_IP === '1') logOwner.ip = ip;
+  const saved = appendToLog(logOwner);
+
+  const telegramSent = await sendTelegram(owner);
+
+  console.log(`[Owner] Yêu cầu xác minh mới: ${owner.domain} (telegram:${telegramSent ? 'OK' : 'SKIP'}${owner.screenshotData ? ', img:1' : ''})`);
+
+  return res.json({
+    success: true,
+    message: 'Đã gửi yêu cầu xác minh. Đội ngũ sẽ xem xét bằng chứng trong 24h-48h.',
     telegramSent,
     saved
   });

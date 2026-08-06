@@ -16,6 +16,7 @@ const cheerio = require('cheerio');
 const brandPatterns = require('../config/brandPatterns');
 const paasHosts = require('../config/paasHosts');
 const thirdParty = require('./thirdPartyChecker');
+const verifiedDomains = require('./verifiedDomains');
 
 const WEIGHTS = { c1: 0.20, c2: 0.15, c3: 0.10, c4: 0.15, c5: 0.15, c6: 0.10, c7: 0.08, c8: 0.07 };
 
@@ -440,6 +441,13 @@ async function verifyWebsite(input, opts = {}) {
   else if (R < 35 && (C < 0.65 || !coreOk)) state = 'verify';          // 🟡 CẦN XÁC MINH THÊM
   else state = 'safe';                                                 // 🟢 AN TOÀN
 
+  // Domain đã được xác minh chủ web (admin duyệt) → ép safe, trừ khi đang nằm trong blacklist
+  const verifiedEntry = verifiedDomains.isTrusted(hostname);
+  if (verifiedEntry && blacklistTrigger !== 100) {
+    state = 'safe';
+    R = Math.min(R, 20);
+  }
+
   // Lý do chính
   const reasons = [];
   if (blacklistTrigger === 100) reasons.push(`Nguy hiểm: domain có mặt trong danh sách đen bên thứ 3 (${c5.sources.join(', ')}).`);
@@ -450,6 +458,7 @@ async function verifyWebsite(input, opts = {}) {
   if (c1.hijack) reasons.push('Domain tuổi cao nhưng vừa được đăng ký/cập nhật lại gần đây (nghi tái sử dụng domain hết hạn).');
   if (c6.matchedBrand) reasons.push(`Nghi vấn mạo danh thương hiệu "${c6.matchedBrand}" (typosquatting).`);
   if (c4.sensitiveForm) reasons.push('Phát hiện form nhạy cảm (mật khẩu/OTP/thẻ tín dụng) trên domain chưa xác minh thương hiệu.');
+  if (verifiedEntry) reasons.push(`Domain đã được xác minh chủ sở hữu (${verifiedEntry.note || 'Lá Chắn Số'}) — ngày ${new Date(verifiedEntry.verifiedAt).toLocaleDateString('vi-VN')}.`);
   if (state === 'verify') reasons.push(`Chưa đủ tiêu chí đánh giá để xác minh (C=${C.toFixed(2)}, domain ${c1.ageDays !== null ? c1.ageDays + ' ngày' : 'không xác định được'}).`);
 
   return {
@@ -467,6 +476,13 @@ async function verifyWebsite(input, opts = {}) {
     blacklisted: !!c5.blacklisted,
     blacklistSources: c5.sources || [],
     ownerVerify: { available: state === 'verify' },
+    verified: !!verifiedEntry,
+    verifiedDomain: verifiedEntry ? {
+      note: verifiedEntry.note,
+      category: verifiedEntry.category,
+      trustScore: verifiedEntry.trustScore,
+      verifiedAt: verifiedEntry.verifiedAt
+    } : null,
     coreCriteriaOk: coreOk,
     executionTimeMs: Date.now() - start
   };
