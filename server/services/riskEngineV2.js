@@ -17,8 +17,10 @@ const brandPatterns = require('../config/brandPatterns');
 const paasHosts = require('../config/paasHosts');
 const thirdParty = require('./thirdPartyChecker');
 const verifiedDomains = require('./verifiedDomains');
+const { llmChat, isLLMConfigured } = require('./llmClient');
+const { openrouterChat, isOpenRouterConfigured } = require('./openrouterClient');
 
-const WEIGHTS = { c1: 0.20, c2: 0.15, c3: 0.10, c4: 0.15, c5: 0.15, c6: 0.10, c7: 0.08, c8: 0.07 };
+const WEIGHTS = { c1: 0.18, c2: 0.14, c3: 0.08, c4: 0.14, c5: 0.15, c6: 0.10, c7: 0.06, c8: 0.05, c9: 0.10 };
 
 // Điểm phạt mỗi tiêu chí (rủi ro cao = nguy hiểm hơn)
 const MOBILE_UA = 'Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Mobile Safari/537.36';
@@ -411,6 +413,187 @@ async function collectC8(hostname) {
   return { collected: true, risk: 0, hasHistory, snapshotCount: snapshots.length };
 }
 
+// ============ c9: AI phân tích nội dung (đọc trang → tóm tắt → phân loại) ============
+// Crawl nội dung thật của trang, cho LLM tóm tắt "web này về gì" và phân loại bản chất.
+// Web doanh nghiệp/tin tức thật → không phạt (thậm chí tăng C). Cờ bạc/lừa đảo/landing
+// lạm dụng brand → phạt mạnh. Giúp giảm false-positive cho web legit dùng đuôi rẻ.
+const c9Cache = new Map();
+const C9_CACHE_TTL = 30 * 60 * 1000; // 30 phút
+
+async function extractPageText(url, userAgentOverride) {
+  try {
+    const r = await axios.get(url, {
+      timeout: 7000,
+      maxRedirects: 5,
+      headers: {
+        'User-Agent': userAgentOverride || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+        'Accept-Language': 'vi,en;q=0.9',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9'
+      },
+      validateStatus: () => true
+    });
+    const html = String(r.data || '');
+    if (!html || html.length < 200) return null;
+
+    // Lấy tiêu đề + meta description trước (dễ bắt bản chất web)
+    let title = (html.match(/<title[^>]*>([^<]*)<\/title>/i) || [])[1] || '';
+    let desc = (html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)["']/i) || [])[1]
+      || (html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+name=["']description["']/i) || [])[1] || '';
+
+    // Fallback OpenGraph (nhiều trang chặn bot vẫn trả meta og:*)
+    const ogTitle = (html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']*)["']/i) || [])[1]
+      || (html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+property=["']og:title["']/i) || [])[1] || '';
+    const ogDesc = (html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']*)["']/i) || [])[1]
+      || (html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+property=["']og:description["']/i) || [])[1] || '';
+    const ogSite = (html.match(/<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']*)["']/i) || [])[1]
+      || (html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+property=["']og:site_name["']/i) || [])[1] || '';
+
+    // Lọc body text: bỏ script/style/tag, nén khoảng trắng
+    const $ = cheerio.load(html);
+    $('script,style,noscript,svg,iframe,form').remove();
+    const bodyText = $('body').text()
+      .replace(/\s+/g, ' ')
+      .trim()
+      .substring(0, 2200);
+    const h1 = $('h1').first().text().replace(/\s+/g, ' ').trim().substring(0, 200);
+
+    if (!title && ogTitle) title = ogTitle;
+    if (!desc && ogDesc) desc = ogDesc;
+
+    return {
+      title: title.trim().substring(0, 200),
+      desc: desc.trim().substring(0, 300),
+      ogSite: ogSite.trim().substring(0, 120),
+      h1,
+      body: bodyText,
+      htmlLength: html.length
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+async function collectC9(url) {
+  const cacheKey = url;
+  const cached = c9Cache.get(cacheKey);
+  if (cached && Date.now() < cached.expiresAt) return { collected: true, ...cached.data };
+
+  try {
+    let page = await extractPageText(url);
+
+    // Retry #1: UA Googlebot (nhiều trang chặn bot thường vẫn phục vụ googlebot)
+    if (!page || !page.body) {
+      const googlebot = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+      page = await extractPageText(url, googlebot);
+    }
+    // Retry #2: đổi scheme https -> http (một số vhost redirect khác)
+    if (!page || (!page.body && !page.desc && !page.title)) {
+      try {
+        const u = new URL(url);
+        if (u.protocol === 'https:') {
+          u.protocol = 'http:';
+          const httpPage = await extractPageText(u.toString(), 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)');
+          if (httpPage) page = httpPage;
+        }
+      } catch (e) { /* bỏ qua */ }
+    }
+
+    if (!page) {
+      return { collected: false, risk: 0, summary: null, category: null };
+    }
+
+    // Nội dung tối thiểu để LLM phân tích: body, nếu rỗng thì dùng meta/title/h1/og
+    const hasSignal = page.body || page.title || page.desc || page.h1 || page.ogSite;
+    if (!hasSignal) {
+      return { collected: false, risk: 0, summary: null, category: null };
+    }
+
+    // Không gọi LLM nếu chưa cấu hình → vẫn báo collected nhưng không chấm
+    let analysis = null;
+    const textSample = `TITLE: ${page.title}\nSITE: ${page.ogSite}\nH1: ${page.h1}\nDESC: ${page.desc}\nBODY: ${page.body}`;
+    const llmReady = await isLLMConfigured();
+    if (llmReady) {
+      // Bước 1: OpenRouter free (Nemotron Ultra) — tóm tắt + phân loại + chấm điểm trong 1 call
+      if (isOpenRouterConfigured()) {
+        const ultraPrompt = 'Bạn là chuyên gia an toàn thông tin Việt Nam. Phân tích nội dung website được cho rồi trả về JSON tuyệt đối không thêm bất kỳ text nào khác. Schema: {"summary":"<tóm tắt 1-2 câu bằng tiếng Việt: web này làm gì>","category":"<một trong: legit_business|ecommerce|news|blog|gov_edu|gambling|scam|phishing|parked|redirect|adult|unknown>","risk":<số nguyên 0-100: 0=hoàn toàn bình thường (doanh nghiệp thật/tin tức), 30=đáng ngờ, 60=lừa đảo/cờ bạc rõ ràng, 90=phishing nguy hiểm>","keywords":["<5 từ khóa chính>"]}. Phải MỞ ĐẦU câu trả lời bằng ký tự { một cách trực tiếp.';
+        try {
+          const safetyRaw = await openrouterChat([
+            { role: 'system', content: ultraPrompt },
+            { role: 'user', content: `Nội dung website:\n"""\n${textSample}\n"""` }
+          ], { temperature: 0.1, maxTokens: 450, jsonMode: true, timeout: 45000 });
+
+          const rawStr = String((safetyRaw && typeof safetyRaw === 'object') ? JSON.stringify(safetyRaw) : safetyRaw || '');
+          const start = rawStr.indexOf('{');
+          const end = rawStr.lastIndexOf('}');
+          if (start !== -1 && end > start) {
+            const parsed = JSON.parse(rawStr.slice(start, end + 1));
+            analysis = {
+              summary: String(parsed.summary || '').substring(0, 300),
+              category: String(parsed.category || 'unknown'),
+              risk: clamp(Number(parsed.risk) || 0, 0, 100),
+              keywords: Array.isArray(parsed.keywords) ? parsed.keywords.slice(0, 5) : []
+            };
+            console.log(`[riskEngineV2] c9 OpenRouter: category=${analysis.category} risk=${analysis.risk} summary=${String(analysis.summary).substring(0, 60)}`);
+          }
+        } catch (e) {
+          console.warn(`[riskEngineV2] c9 OpenRouter error: ${e.message}`);
+        }
+      }
+
+      // Fallback: nếu OpenRouter không khả dụng → dùng llmChat (Groq/Gemini/DeepSeek/Ollama)
+      if (!analysis) {
+        const systemPrompt = 'Bạn là chuyên gia an toàn thông tin Việt Nam. Phân tích nội dung website được cho và trả về JSON tuyệt đối không có text khác. Schema: {"summary":"<tóm tắt 1-2 câu web này về gì, bằng tiếng Việt>","category":"<legit_business|ecommerce|news|blog|gov_edu|gambling|scam|phishing|parked|redirect|adult|unknown>","risk":<số nguyên 0-100: 0=hoàn toàn bình thường, 30=đáng ngờ, 60=lừa đảo/cờ bạc rõ, 90=phishing nguy hiểm>,"keywords":["<5 từ khóa chính>"]}.';
+        try {
+          const raw = await llmChat([
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `Nội dung website:\n"""\n${textSample}\n"""` }
+          ], { temperature: 0.1, maxTokens: 400, jsonMode: true, timeout: 45000 });
+
+          const rawStr = String(raw || '');
+          const start = rawStr.indexOf('{');
+          const end = rawStr.lastIndexOf('}');
+          if (start !== -1 && end > start) {
+            const parsed = JSON.parse(rawStr.slice(start, end + 1));
+            analysis = {
+              summary: String(parsed.summary || '').substring(0, 300),
+              category: String(parsed.category || 'unknown'),
+              risk: clamp(Number(parsed.risk) || 0, 0, 100),
+              keywords: Array.isArray(parsed.keywords) ? parsed.keywords.slice(0, 5) : []
+            };
+          }
+        } catch (e) {
+        console.warn(`[riskEngineV2] c9 LLM error: ${e.message}`);
+      }
+      }
+    }
+
+    // Quy đổi category → điểm rủi ro (nếu LLM không trả risk hợp lý)
+    const CATEGORY_RISK = {
+      legit_business: 5, ecommerce: 8, news: 5, blog: 8, gov_edu: 2,
+      parked: 35, redirect: 40, gambling: 70, adult: 55, scam: 80, phishing: 90, unknown: 20
+    };
+    let risk = analysis && typeof analysis.risk === 'number' ? analysis.risk : 15;
+    if (analysis && analysis.category && analysis.category !== 'unknown') {
+      risk = Math.max(risk, CATEGORY_RISK[analysis.category] || 15);
+    }
+    // Tiêu chí nội dung: nội dung bình thường + có LLM → coi như "collected" mạnh (C cao), risk thấp
+    const result = {
+      collected: true,
+      risk: clamp(risk, 0, 90),
+      summary: analysis ? analysis.summary : null,
+      category: analysis ? analysis.category : null,
+      keywords: analysis ? analysis.keywords : [],
+      aiUsed: !!analysis,
+      contentLength: page.htmlLength,
+      title: page.title
+    };
+    c9Cache.set(cacheKey, { data: result, expiresAt: Date.now() + C9_CACHE_TTL });
+    return result;
+  } catch (e) {
+    return { collected: false, risk: 0, summary: null, category: null };
+  }
+}
+
 // ============ MAIN ORCHESTRATOR ============
 async function verifyWebsite(input, opts = {}) {
   const start = Date.now();
@@ -424,7 +607,7 @@ async function verifyWebsite(input, opts = {}) {
   const isPaaS = paasHosts.isPaaSHost(hostname);
   const paasToken = paasHosts.getUserToken(hostname);
 
-  const [c1, c2, c3, c4, c5, c6, c7, c8] = await Promise.all([
+  const [c1, c2, c3, c4, c5, c6, c7, c8, c9] = await Promise.all([
     collectC1(hostname),
     collectC2(hostname),
     collectC3(hostname),
@@ -432,10 +615,11 @@ async function verifyWebsite(input, opts = {}) {
     collectC5(hostname),
     collectC6(hostname, paasToken),
     collectC7(normalizedUrl),
-    collectC8(hostname)
+    collectC8(hostname),
+    collectC9(normalizedUrl)
   ]);
 
-  const criteria = { c1, c2, c3, c4, c5, c6, c7, c8 };
+  const criteria = { c1, c2, c3, c4, c5, c6, c7, c8, c9 };
 
   // C = tổng trọng số tiêu chí thu thập thành công
   let C = 0, collectedCount = 0;
@@ -451,8 +635,9 @@ async function verifyWebsite(input, opts = {}) {
   const c3risk = c3.risk || 0;
   const c1risk = c1.risk || 0;
   const c7risk = c7.risk || 0;
+  const c9risk = c9.risk || 0;
   const blacklistTrigger = c5.blacklisted ? 100 : 0;
-  let R = blacklistTrigger + c1risk + c2risk + c3risk + c4risk + c6risk + c7risk;
+  let R = blacklistTrigger + c1risk + c2risk + c3risk + c4risk + c6risk + c7risk + c9risk;
   R = clamp(R, 0, 100);
 
   // Điều kiện 3 tiêu chí cốt lõi
@@ -485,6 +670,8 @@ async function verifyWebsite(input, opts = {}) {
   if (c1.hijack) reasons.push('Domain tuổi cao nhưng vừa được đăng ký/cập nhật lại gần đây (nghi tái sử dụng domain hết hạn).');
   if (c6.matchedBrand) reasons.push(`Nghi vấn mạo danh thương hiệu "${c6.matchedBrand}" (typosquatting).`);
   if (c4.sensitiveForm) reasons.push('Phát hiện form nhạy cảm (mật khẩu/OTP/thẻ tín dụng) trên domain chưa xác minh thương hiệu.');
+  if (c9.category && c9.risk >= 45) reasons.push(`Nội dung AI nhận diện: ${c9.summary || 'đáng ngờ'} (loại: ${c9.category}, rủi ro ${c9.risk}/100).`);
+  else if (c9.summary) reasons.push(`AI tóm tắt nội dung: ${c9.summary}`);
   if (verifiedEntry) reasons.push(`Domain đã được xác minh chủ sở hữu (${verifiedEntry.note || 'Lá Chắn Số'}) — ngày ${new Date(verifiedEntry.verifiedAt).toLocaleDateString('vi-VN')}.`);
   if (state === 'verify') reasons.push(`Chưa đủ tiêu chí đánh giá để xác minh (C=${C.toFixed(2)}, domain ${c1.ageDays !== null ? c1.ageDays + ' ngày' : 'không xác định được'}).`);
 
@@ -500,10 +687,16 @@ async function verifyWebsite(input, opts = {}) {
     isPaaS,
     paasToken,
     cloakDetected: !!c4.cloakDetected,
-    blacklisted: !!c5.blacklisted,
     blacklistSources: c5.sources || [],
     thirdParty: c5.thirdParty || [],
     ipInfo: c5.ipInfo || { collected: false, detail: {} },
+    aiAnalysis: {
+      available: !!c9.summary,
+      summary: c9.summary || null,
+      category: c9.category || null,
+      risk: c9.risk || 0,
+      keywords: c9.keywords || []
+    },
     ownerVerify: { available: state === 'verify' },
     verified: !!verifiedEntry,
     verifiedDomain: verifiedEntry ? {
@@ -517,4 +710,4 @@ async function verifyWebsite(input, opts = {}) {
   };
 }
 
-module.exports = { verifyWebsite, WEIGHTS, collectC1, collectC2, collectC3, collectC4, collectC5, collectC6, collectC7, collectC8 };
+module.exports = { verifyWebsite, WEIGHTS, collectC1, collectC2, collectC3, collectC4, collectC5, collectC6, collectC7, collectC8, collectC9 };

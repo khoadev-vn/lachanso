@@ -15,7 +15,7 @@ import { runLiveNewsCheck, enrichLiveNewsWithAI } from "./constants/liveNewsChec
 import { runNewsVerificationLayers } from "./constants/newsVerification";
 import { isDomainTrusted, isGovVnDomain, isSuspiciousTLD, extractLinksFromText } from "./constants/trustedDomains";
 import { runLCSEngine, lcsEngineToAnalysisDetails } from "./constants/lcsScoreEngine";
-import { analyzeWebsite } from "./constants/webVerification";
+import { analyzeWebsite, WEB_AI_CATEGORY_LABEL } from "./constants/webVerification";
 import shieldImg from "./imgs/shield-3d-nobg.png";
 import XAIHeatmap from "./components/XAIHeatmap";
 import FactCheckBanner from "./components/FactCheckBanner";
@@ -1806,6 +1806,41 @@ export default function App() {
                           </span>
                         </div>
                       </div>
+
+                      {resultData.type === "web" && resultData.aiAnalysis?.available && resultData.aiAnalysis.summary ? <div className="mb-4 overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50">
+                        {resultData.aiAnalysis.risk >= 45 || ["gambling", "scam", "phishing", "adult", "parked", "redirect"].includes((resultData.aiAnalysis.category || "").toLowerCase()) ? <div className="flex items-start gap-2.5 border-b border-red-100 bg-red-50 px-4 py-3">
+                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                          <div>
+                            <p className="text-xs font-black uppercase tracking-wide text-red-700">Cảnh báo AI: nội dung có dấu hiệu nguy hiểm</p>
+                            <p className="text-[11px] font-medium text-red-600">Hệ thống phân loại web này là "{resultData.aiAnalysis.category}" (rủi ro {resultData.aiAnalysis.risk}/100). Cân nhắc rất kỹ trước khi tin tưởng.</p>
+                          </div>
+                        </div> : null}
+                        <div className="flex items-center gap-2.5 border-b border-violet-100 bg-white/60 px-4 py-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                            <Sparkles className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-black tracking-tight text-gray-950">AI Tóm Tắt Nội Dung Web</p>
+                            <p className="text-[10px] font-medium text-gray-500">{WEB_AI_CATEGORY_LABEL[resultData.aiAnalysis.category || "unknown"]?.label || "Đọc trang qua GPT · phân loại bản chất"}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase ${resultData.aiAnalysis.risk >= 45 ? "bg-red-100 text-red-700" : resultData.aiAnalysis.risk >= 20 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
+                              {resultData.aiAnalysis.category || "unknown"}
+                            </span>
+                            <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-gray-600 ring-1 ring-gray-200">
+                              Rủi ro {resultData.aiAnalysis.risk}/100
+                            </span>
+                          </div>
+                        </div>
+                        <div className="p-4">
+                          <p className="text-sm font-medium leading-6 text-gray-800">{resultData.aiAnalysis.summary}</p>
+                          {resultData.aiAnalysis.keywords?.length ? <div className="mt-3 flex flex-wrap gap-1.5">
+                            {resultData.aiAnalysis.keywords.map((kw: string, idx: number) => <span key={idx} className="rounded-lg bg-white px-2.5 py-1 text-[11px] font-semibold text-violet-700 ring-1 ring-violet-200">
+                              #{kw}
+                            </span>)}
+                          </div> : null}
+                        </div>
+                      </div> : null}
 
                       {resultData.type === "web" ? <div className="space-y-4">
                         {WEB_CATEGORY_GROUPS.map((group) => {

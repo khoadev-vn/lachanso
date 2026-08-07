@@ -4,6 +4,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 const { deepseekChat } = require('./deepseekClient');
 const { geminiChat, isGeminiConfigured, getKeyCount, getKeyStats, GEMINI_MODEL } = require('./geminiClient');
 const { groqChat, isGroqConfigured, getGroqStats, GROQ_MODEL } = require('./groqClient');
+const { openrouterChat, isOpenRouterConfigured, getOpenRouterStats } = require('./openrouterClient');
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3:latest';
@@ -135,25 +136,31 @@ async function llmChat(messages, options = {}) {
   let result = null;
   let mode = null;
 
-  // 1. Try Groq first (fast, 280 tok/s)
+  // 1. OpenRouter free (NVIDIA Nemotron) — nhanh, miễn phí, giỏi tiếng Việt
+  if (!result && isOpenRouterConfigured()) {
+    result = await openrouterChat(messages, options);
+    if (result) mode = 'openrouter';
+  }
+
+  // 2. Try Groq first (fast, 280 tok/s)
   if (!result && isGroqConfigured()) {
     result = await groqChat(messages, options);
     if (result) mode = 'groq';
   }
 
-  // 2. Try Gemini (round-robin keys, good Vietnamese)
+  // 3. Try Gemini (round-robin keys, good Vietnamese)
   if (!result && isGeminiConfigured()) {
     result = await geminiChat(messages, options);
     if (result) mode = 'gemini';
   }
 
-  // 3. Fallback to DeepSeek
+  // 4. Fallback to DeepSeek
   if (!result) {
     result = await deepseekChat(messages, options);
     if (result) mode = 'deepseek';
   }
 
-  // 4. Fallback to Ollama (local, free)
+  // 5. Fallback to Ollama (local, free)
   if (!result) {
     const ollama = await checkOllama();
     if (ollama.available) {
@@ -181,6 +188,7 @@ async function llmChat(messages, options = {}) {
 async function getLLMStatus() {
   const ollama = await checkOllama(true);
   return {
+    openrouter: getOpenRouterStats(),
     groq: getGroqStats(),
     ollama: {
       baseUrl: OLLAMA_BASE_URL,
@@ -196,13 +204,13 @@ async function getLLMStatus() {
       stats: getKeyStats()
     },
     deepseekConfigured: Boolean(process.env.DEEPSEEK_API_KEY),
-    enabled: isGroqConfigured() || ollama.available || isGeminiConfigured() || Boolean(process.env.DEEPSEEK_API_KEY)
+    enabled: isOpenRouterConfigured() || isGroqConfigured() || ollama.available || isGeminiConfigured() || Boolean(process.env.DEEPSEEK_API_KEY)
   };
 }
 
 async function isLLMConfigured() {
   const ollama = await checkOllama();
-  return isGroqConfigured() || ollama.available || isGeminiConfigured() || Boolean(process.env.DEEPSEEK_API_KEY);
+  return isOpenRouterConfigured() || isGroqConfigured() || ollama.available || isGeminiConfigured() || Boolean(process.env.DEEPSEEK_API_KEY);
 }
 
 module.exports = {

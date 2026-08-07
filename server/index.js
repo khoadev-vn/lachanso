@@ -625,6 +625,98 @@ app.post('/api/v2/verify', async (req, res) => {
 // ============ v2.0 RISK ENGINE — WEB/URL VERIFICATION (8 tiêu chí Zero-Trust) ============
 const { verifyWebsite: verifyWebsiteV2 } = require('./services/riskEngineV2');
 
+function webVerifyCacheKey(url) {
+    return String(url).toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, '');
+}
+
+function buildWebVerifyResponse(result, startTime) {
+    return {
+        success: true,
+        ...result,
+        ownerVerifyEmail: process.env.PROCESS_VERIFY_EMAIL || 'kanh05113@gmail.com',
+        execution_time_ms: Date.now() - startTime
+    };
+}
+
+// ============ ASYNC JOB STORE — web-verify chạy nền, tránh timeout Vercel ============
+// Client POST /api/v2/web-verify/async -> nhận jobId ngay (~100ms)
+// Client poll GET /api/v2/web-verify/status?jobId=... mỗi 1.5s -> nhận kết quả khi xong
+const webVerifyJobs = new Map(); // jobId -> { status, result, url, createdAt }
+let webVerifySeq = 0;
+
+function normalizeWebUrl(input) {
+    let s = String(input || '').trim();
+    if (!s) return null;
+    if (!/^https?:\/\//i.test(s)) s = 'https://' + s;
+    try { return new URL(s).toString(); } catch { return null; }
+}
+
+function runWebVerifyJob(jobId, url) {
+    const startTime = Date.now();
+    verifyWebsiteV2(url).then((result) => {
+        const responseData = buildWebVerifyResponse(result, startTime);
+        const cacheKey = webVerifyCacheKey(url);
+        cacheService.set('web-verify', cacheKey, responseData, 10);
+        const job = webVerifyJobs.get(jobId);
+        if (job) {
+            job.status = 'done';
+            job.result = responseData;
+            job.doneAt = Date.now();
+        }
+        console.log(`[API-v2][web:async] ✅ job=${jobId} state=${result.state} R=${result.R} C=${result.C} (${responseData.execution_time_ms}ms)`);
+    }).catch((error) => {
+        console.error(`[API-v2][web:async] ❌ job=${jobId} error:`, error.message);
+        const job = webVerifyJobs.get(jobId);
+        if (job) { job.status = 'error'; job.error = error.message; }
+    });
+}
+
+app.post('/api/v2/web-verify/async', (req, res) => {
+    try {
+        const { url } = req.body;
+        const normalized = normalizeWebUrl(url);
+        if (!normalized) return res.status(400).json({ error: 'Missing or invalid url input' });
+
+        // Trả ngay kết quả cache nếu có (lần check sau ~0ms)
+        const cacheKey = webVerifyCacheKey(normalized);
+        const cached = cacheService.get('web-verify', cacheKey);
+        if (cached) {
+            console.log(`[API-v2][web:async] ⚡ Cache hit: ${cacheKey}`);
+            return res.json({ success: true, jobId: null, status: 'done', result: { ...cached, cached: true, cacheHit: true } });
+        }
+
+        const jobId = `wv_${Date.now().toString(36)}_${(webVerifySeq++).toString(36)}`;
+        webVerifyJobs.set(jobId, { status: 'running', url: normalized, createdAt: Date.now() });
+
+        // Dọn job quá cũ (> 10 phút)
+        for (const [id, j] of webVerifyJobs) {
+            if (Date.now() - j.createdAt > 10 * 60 * 1000) webVerifyJobs.delete(id);
+        }
+
+        // Chạy nền, KHÔNG await → response trả ngay
+        runWebVerifyJob(jobId, normalized);
+        console.log(`[API-v2][web:async] 🚀 job=${jobId} queued: "${normalized}"`);
+        return res.json({ success: true, jobId, status: 'running', cached: false });
+    } catch (error) {
+        console.error('[API-v2][web:async] ❌ Error:', error.message);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/api/v2/web-verify/status', (req, res) => {
+    try {
+        const jobId = String(req.query.jobId || '');
+        const job = webVerifyJobs.get(jobId);
+        if (!job) return res.status(404).json({ success: false, status: 'not_found', error: 'Job không tồn tại' });
+        if (job.status === 'done') return res.json({ success: true, jobId, status: 'done', result: job.result });
+        if (job.status === 'error') return res.json({ success: false, jobId, status: 'error', error: job.error || 'Job failed' });
+        return res.json({ success: true, jobId, status: 'running' });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+// Endpoint đồng bộ (giữ lại cho tương thích / test trực tiếp)
 app.post('/api/v2/web-verify', async (req, res) => {
     try {
         const { url } = req.body;
@@ -635,7 +727,7 @@ app.post('/api/v2/web-verify', async (req, res) => {
 
         // Cache kết quả theo URL gốc (10 phút) — lần check sau gần như tức thì,
         // tránh tình trạng backend chậm hơn giới hạn timeout của Vercel proxy.
-        const cacheKey = String(url).toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, '');
+        const cacheKey = webVerifyCacheKey(url);
         const cached = cacheService.get('web-verify', cacheKey);
         if (cached) {
             console.log(`[API-v2][web] ⚡ Cache hit: ${cacheKey} (${Date.now() - startTime}ms)`);
@@ -644,12 +736,7 @@ app.post('/api/v2/web-verify', async (req, res) => {
 
         const result = await verifyWebsiteV2(url);
 
-        const responseData = {
-            success: true,
-            ...result,
-            ownerVerifyEmail: process.env.PROCESS_VERIFY_EMAIL || 'kanh05113@gmail.com',
-            execution_time_ms: Date.now() - startTime
-        };
+        const responseData = buildWebVerifyResponse(result, startTime);
 
         cacheService.set('web-verify', cacheKey, responseData, 10);
 

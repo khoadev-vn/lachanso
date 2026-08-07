@@ -38,6 +38,7 @@ export interface WebVerificationResult {
   blacklistSources?: string[];
   thirdParty?: BackendThirdPartySource[];
   ipInfo?: { collected: boolean; detail: BackendIpInfoDetail } | null;
+  aiAnalysis?: BackendAiAnalysis | null;
   executionTimeMs?: number;
   backendV2?: boolean;
   normalizedUrl: string;
@@ -448,6 +449,71 @@ const CRITERIA_META: Record<string, { name: string; weight: number; icon: any; c
   c8: { name: "Dấu vết web (Wayback)", weight: 0.07, icon: Database, category: "reference" }
 };
 
+// ===== Lấy kết quả từ Backend Zero-Trust v2 qua Async Job + Polling =====
+// Gửi URL lên VPS, nhận jobId ngay (~100ms, không dính timeout Vercel),
+// rồi poll GET /status?jobId=... mỗi 1.5s cho tới khi có kết quả.
+const POLL_INTERVAL_MS = 1500;
+const POLL_MAX_WAIT_MS = 60000;
+
+interface WebVerifyJobResult extends BackendWebResult {
+  cached?: boolean;
+}
+
+async function submitWebVerifyJob(url: string): Promise<{ jobId: string | null; result?: WebVerifyJobResult } | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    const response = await fetch("/api/v2/web-verify/async", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (!data || data.success !== true) return null;
+    // Cache hit → có result ngay
+    if (data.status === "done" && data.result) {
+      return { jobId: null, result: data.result };
+    }
+    if (data.jobId) return { jobId: data.jobId };
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function pollWebVerifyJob(jobId: string): Promise<WebVerifyJobResult | null> {
+  const deadline = Date.now() + POLL_MAX_WAIT_MS;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const response = await fetch(`/api/v2/web-verify/status?jobId=${encodeURIComponent(jobId)}`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+      if (!response.ok) continue;
+      const data = await response.json();
+      if (data?.status === "done" && data?.result) return data.result;
+      if (data?.status === "error") return null;
+    } catch {
+      // lỗi mạng tạm thời → poll tiếp
+    }
+  }
+  return null;
+}
+
+async function fetchBackendWebVerify(url: string): Promise<BackendWebResult | null> {
+  const submitted = await submitWebVerifyJob(url);
+  if (!submitted) return null;
+  if (submitted.result) return submitted.result;
+  if (!submitted.jobId) return null;
+  return pollWebVerifyJob(submitted.jobId);
+}
+
 // ===== Lấy kết quả từ Backend Zero-Trust v2 (nếu máy chủ phản hồi) =====
 interface BackendThirdPartySource {
   source: string;
@@ -480,6 +546,14 @@ interface BackendIpInfoDetail {
   rdapName: string | null;
 }
 
+export interface BackendAiAnalysis {
+  available: boolean;
+  summary: string | null;
+  category: string | null;
+  risk: number;
+  keywords: string[];
+}
+
 interface BackendWebResult {
   success: boolean;
   state: "safe" | "verify" | "suspicious" | "danger";
@@ -495,27 +569,9 @@ interface BackendWebResult {
   blacklistSources: string[];
   thirdParty?: BackendThirdPartySource[];
   ipInfo?: { collected: boolean; detail: BackendIpInfoDetail };
+  aiAnalysis?: BackendAiAnalysis;
   ownerVerify?: { available: boolean };
   coreCriteriaOk: boolean;
-}
-async function fetchBackendWebVerify(url: string): Promise<BackendWebResult | null> {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000);
-    const response = await fetch("/api/v2/web-verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
-      signal: controller.signal
-    });
-    clearTimeout(timeout);
-    if (!response.ok) return null;
-    const data = await response.json();
-    if (!data || data.success !== true || !data.state) return null;
-    return data;
-  } catch {
-    return null;
-  }
 }
 
 export async function analyzeWebsite(input: string): Promise<WebVerificationResult> {
@@ -849,13 +905,14 @@ export async function analyzeWebsite(input: string): Promise<WebVerificationResu
       blacklistSources: backendV2.blacklistSources || [],
       thirdParty: backendV2.thirdParty || [],
       ipInfo: backendV2.ipInfo || null,
+      aiAnalysis: backendV2.aiAnalysis || null,
       executionTimeMs: undefined,
       backendV2: true,
       normalizedUrl,
       displayUrl: hostname,
       score: safetyScore,
       title: backendV2.blacklisted ? `Cảnh báo ${hostname}` : `Đánh giá website ${hostname}`,
-      description: `Hệ thống Zero-Trust 8 tiêu chí đã phân tích (điểm rủi ro ${R}/100, độ phủ dữ liệu ${Math.round(C * 100)}%, ${backendV2.collectedCriteria}/8 tiêu chí thu thập được).`,
+      description: `Hệ thống Zero-Trust 9 tiêu chí đã phân tích (điểm rủi ro ${R}/100, độ phủ dữ liệu ${Math.round(C * 100)}%, ${backendV2.collectedCriteria}/9 tiêu chí thu thập được).`,
       screenshot: previewCandidates[0] ?? "",
       previewCandidates,
       reasons: v2reasons
@@ -906,9 +963,28 @@ export async function analyzeWebsite(input: string): Promise<WebVerificationResu
     title: trusted ? `Đã nhận diện ${trusted.note || hostname}` : `Đánh giá website ${hostname}`,
     description: trusted ?
     "Domain khớp nguồn đã xác minh. Ảnh preview được tải qua lớp trung gian để không cần mở trực tiếp trong trình duyệt." :
-    "Kết quả PHÂN TÍCH NHANH TẠI MÁY BẠN (backend AI chưa phản hồi kịp) — chỉ đánh giá URL, HTTPS và dấu hiệu phishing cơ bản, độ phủ thấp. Hãy thử lại sau để có đánh giá 8 tiêu chí từ máy chủ.",
+    "Kết quả PHÂN TÍCH NHANH TẠI MÁY BẠN (backend AI chưa phản hồi kịp) — chỉ đánh giá URL, HTTPS và dấu hiệu phishing cơ bản, độ phủ thấp. Hãy thử lại sau để có đánh giá đầy đủ từ máy chủ.",
     screenshot: previewCandidates[0] ?? "",
     previewCandidates,
     reasons
   };
 }
+
+/**
+ * Nhãn tiếng Việt + mô tả ngắn cho từng loại bản chất web do AI phân loại (c9).
+ * Hiển thị trên khung "AI Tóm Tắt Nội Dung Web".
+ */
+export const WEB_AI_CATEGORY_LABEL: Record<string, { label: string; desc: string }> = {
+  legit_business: { label: "Doanh nghiệp thật", desc: "Web doanh nghiệp · phân loại bản chất" },
+  ecommerce: { label: "Bán hàng / TMĐT", desc: "Đọc trang qua GPT · phân loại bản chất" },
+  news: { label: "Trang tin tức", desc: "Đọc trang qua GPT · phân loại bản chất" },
+  blog: { label: "Blog / nội dung", desc: "Đọc trang qua GPT · phân loại bản chất" },
+  gov_edu: { label: "Chính phủ / giáo dục", desc: "Đọc trang qua GPT · phân loại bản chất" },
+  parked: { label: "Tên miền đứng tên (parked)", desc: "Cảnh báo: web có thể không hoạt động" },
+  redirect: { label: "Chuyển hướng", desc: "Cảnh báo: web chuyển hướng đi nơi khác" },
+  gambling: { label: "Cờ bạc / cá cược", desc: "Cảnh báo: cờ bạc lừa đảo" },
+  adult: { label: "Nội dung người lớn", desc: "Cảnh báo: không phù hợp" },
+  scam: { label: "Lừa đảo", desc: "Cảnh báo: dấu hiệu lừa đảo" },
+  phishing: { label: "Lừa đảo chiếm đoạt", desc: "Cảnh báo cao: phishing" },
+  unknown: { label: "Không xác định", desc: "Đọc trang qua GPT · phân loại bản chất" }
+};

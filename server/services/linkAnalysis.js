@@ -6,6 +6,13 @@ const tls = require('tls');
 const { URL } = require('url');
 const tinnhiemmang = require('./tinnhiemmang');
 
+function safeDateStr(value) {
+  if (!value) return 'không rõ';
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return 'không rõ';
+  return d.toISOString().substring(0, 10);
+}
+
 const scamDataPath = path.join(__dirname, '../data/scamDomains.json');
 const scamData = JSON.parse(fs.readFileSync(scamDataPath, 'utf8'));
 const SCAM_DOMAINS = scamData.SCAM_DOMAINS || scamData.scamDomains || [];
@@ -671,16 +678,18 @@ async function checkWhoisAge(hostname) {
       const registration = events.find((e) => (e.eventAction || '').includes('registration'))?.eventDate
         || events[0]?.eventDate
         || null;
-      if (registration) {
-        const regDate = new Date(registration);
-        const ageDays = Math.floor((Date.now() - regDate.getTime()) / 86400000);
-        result = {
-          available: true,
-          registrationDate: registration,
-          ageDays: Math.max(0, ageDays),
-          isNew: ageDays < 90
-        };
-      } else {
+if (registration) {
+          const regDate = new Date(registration);
+          if (!isNaN(regDate.getTime())) {
+          const ageDays = Math.floor((Date.now() - regDate.getTime()) / 86400000);
+          result = {
+            available: true,
+            registrationDate: registration,
+            ageDays: Math.max(0, ageDays),
+            isNew: ageDays < 90
+          };
+          }
+        } else {
         result = { available: true, noDate: true };
       }
     }
@@ -702,6 +711,7 @@ async function checkWhoisAge(hostname) {
         const oldest = wbResponse.data[1];
         if (oldest && oldest[1]) {
           const firstSeen = new Date(oldest[1]);
+          if (!isNaN(firstSeen.getTime())) {
           const ageDays = Math.floor((Date.now() - firstSeen.getTime()) / 86400000);
           result = {
             available: true,
@@ -710,6 +720,7 @@ async function checkWhoisAge(hostname) {
             isNew: ageDays < 90,
             source: 'wayback'
           };
+          }
         }
       }
     } catch {
@@ -735,6 +746,7 @@ async function checkWhoisAge(hostname) {
           .filter((d) => !isNaN(d.getTime()));
         if (dates.length > 0) {
           const earliest = new Date(Math.min(...dates.map((d) => d.getTime())));
+          if (!isNaN(earliest.getTime())) {
           const ageDays = Math.floor((Date.now() - earliest.getTime()) / 86400000);
           result = {
             available: true,
@@ -743,6 +755,7 @@ async function checkWhoisAge(hostname) {
             isNew: ageDays < 90,
             source: 'crt.sh'
           };
+          }
         }
       }
     } catch {
@@ -927,14 +940,26 @@ async function analyzeLink(input) {
   }
 
   // --- 4. Suspicious TLD ---
+  // Đuôi giá rẻ một mình KHÔNG đủ để phạt (tránh -25 oan cho web thật dùng .online/.xyz).
+  // Chỉ phạt khi đi kèm ít nhất một dấu hiệu nguy cơ khác (brand-lookalike / typosquat /
+  // scam dataset / domain mới / obfuscation / homoglyph).
   if (isSuspiciousTld(hostname)) {
-    addReason({
-      id: 'LINK_SUSPICIOUS_TLD',
-      name: 'Đuôi tên miền rủi ro',
-      detail: 'Đuôi tên miền giá rẻ (.xyz, .top, .online...) thường dùng trong chiến dịch phishing.',
-      status: 'danger',
-      scoreDelta: -25
-    });
+    const tldCoSignal =
+      typosquat ||
+      scamMatch ||
+      isIpHostname(hostname) ||
+      hasPunycode(hostname) ||
+      hasHomoglyph(hostname) ||
+      hasAuthInjection(fullInput);
+    if (tldCoSignal) {
+      addReason({
+        id: 'LINK_SUSPICIOUS_TLD',
+        name: 'Đuôi tên miền rủi ro',
+        detail: 'Đuôi tên miền giá rẻ (.xyz, .top, .online...) kết hợp với dấu hiệu nghi vấn thương hiệu/giả mạo làm tăng rủi ro.',
+        status: 'danger',
+        scoreDelta: -25
+      });
+    }
   }
 
   // --- 5. Obfuscation (IP, punycode, auth injection) ---
@@ -1071,7 +1096,7 @@ async function analyzeLink(input) {
       addReason({
         id: 'LINK_DOMAIN_NEW',
         name: 'Tên miền mới đăng ký',
-        detail: `Domain chỉ mới đăng ký ${whois.ageDays} ngày (${new Date(whois.registrationDate).toISOString().substring(0, 10)}). Tên miền mới + nội dung nhạy cảm là dấu hiệu rủi ro cao.`,
+        detail: `Domain chỉ mới đăng ký ${whois.ageDays} ngày (${safeDateStr(whois.registrationDate)}). Tên miền mới + nội dung nhạy cảm là dấu hiệu rủi ro cao.`,
         status: 'danger',
         scoreDelta: -25
       });
@@ -1079,7 +1104,7 @@ async function analyzeLink(input) {
       addReason({
         id: 'LINK_DOMAIN_AGE_OK',
         name: 'Tên miền đã tồn tại lâu',
-        detail: `Domain đăng ký từ ${new Date(whois.registrationDate).toISOString().substring(0, 10)} (${whois.ageDays} ngày).`,
+        detail: `Domain đăng ký từ ${safeDateStr(whois.registrationDate)} (${whois.ageDays} ngày).`,
         status: 'success',
         scoreDelta: 6
       });
