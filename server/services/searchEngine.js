@@ -267,18 +267,62 @@ async function scrapeBingNews(query, limit = 15) {
   }
 }
 
+const WIKI_HEADERS = {
+  'User-Agent': 'LachanSoNewsVerifier/1.0 (https://lachansovn.com; contact: admin)',
+  'Accept': 'application/json'
+};
+
+async function scrapeWikipedia(query, limit = 5) {
+  const results = [];
+  const langs = ['vi', 'en'];
+  for (const lang of langs) {
+    try {
+      const params = new URLSearchParams({
+        action: 'query',
+        list: 'search',
+        srsearch: query,
+        srlimit: String(limit),
+        srprop: 'snippet',
+        format: 'json'
+      });
+      const { data } = await axios.get(`https://${lang}.wikipedia.org/w/api.php?${params.toString()}`, {
+        headers: WIKI_HEADERS,
+        timeout: 7000
+      });
+      const hits = data?.query?.search || [];
+      for (const h of hits) {
+        const title = h.title;
+        const description = String(h.snippet || '')
+          .replace(/<[^>]*>/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        results.push({
+          title,
+          description: description || `Tra cứu "${title}" trên Wikipedia`,
+          link: `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, '_'))}`,
+          source: `Wikipedia (${lang.toUpperCase()})`
+        });
+      }
+    } catch (e) {
+      console.error(`[Search Engine] Lỗi Wikipedia ${lang.toUpperCase()}:`, e.message);
+    }
+  }
+  return results;
+}
+
 async function searchVietnameseNews(query) {
   const fallbackQuery = query.replace(/"/g, '');
 
-  console.warn('[Search Engine] Đang tìm kiếm đa nguồn (Bing News + Google News + VnExpress + Dân Trí + VietnamNet + Tuổi Trẻ)...');
+  console.warn('[Search Engine] Đang tìm kiếm đa nguồn (Bing News + Google News + VnExpress + Dân Trí + VietnamNet + Tuổi Trẻ + Wikipedia)...');
 
-  const [bingNews, googleNews, vnexpress, dantri, vietnamnet, tuoitre] = await Promise.allSettled([
+  const [bingNews, googleNews, vnexpress, dantri, vietnamnet, tuoitre, wikipedia] = await Promise.allSettled([
     scrapeBingNews(fallbackQuery),
     scrapeGoogleNewsRSS(fallbackQuery),
     scrapeVnExpress(fallbackQuery),
     scrapeDantri(fallbackQuery),
     scrapeVietnamNet(fallbackQuery),
-    scrapeTuoitre(fallbackQuery)
+    scrapeTuoitre(fallbackQuery),
+    scrapeWikipedia(fallbackQuery)
   ]);
 
   const merged = [
@@ -287,7 +331,8 @@ async function searchVietnameseNews(query) {
     ...(vnexpress.status === 'fulfilled' ? vnexpress.value : []),
     ...(dantri.status === 'fulfilled' ? dantri.value : []),
     ...(vietnamnet.status === 'fulfilled' ? vietnamnet.value : []),
-    ...(tuoitre.status === 'fulfilled' ? tuoitre.value : [])
+    ...(tuoitre.status === 'fulfilled' ? tuoitre.value : []),
+    ...(wikipedia.status === 'fulfilled' ? wikipedia.value : [])
   ];
 
   const deduped = dedupeArticles(merged).slice(0, 20);
@@ -302,5 +347,6 @@ module.exports = {
   scrapeBingNews,
   scrapeDantri,
   scrapeVietnamNet,
-  scrapeTuoitre
+  scrapeTuoitre,
+  scrapeWikipedia
 };

@@ -44,6 +44,9 @@ const ALLOWED_ORIGINS = new Set([
   'https://la-chan-so.vercel.app',
   'https://lachansovn.vercel.app',
   'https://lachansovn-seven.vercel.app',
+  'https://lachansovn.com',
+  'https://www.lachansovn.com',
+  'http://45.115.17.54',
   ...parseOrigins(process.env.APP_ORIGIN)
 ]);
 

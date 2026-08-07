@@ -1,0 +1,39 @@
+# Lá Chắn Số — production HTTPS (kích hoạt khi domain trỏ A -> 45.115.17.54)
+lachansovn.com, www.lachansovn.com {
+	# Chặn truy cập trực tiếp một số route nội bộ nhạy cảm
+	@priv {
+		path /api/debug/*
+		path /api/config*
+		path /health/internal
+	}
+	handle @priv {
+		respond 404
+	}
+
+	encode zstd gzip
+
+	# API → backend ứng dụng
+	handle /api/* {
+		reverse_proxy 127.0.0.1:3001 {
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+		}
+	}
+
+	handle /health {
+		reverse_proxy 127.0.0.1:3001
+	}
+
+	# Frontend static (SPA) — vue router fallback → index.html
+	handle {
+		root * /opt/lachanso/dist
+		try_files {path} /index.html
+		file_server
+		header Cache-Control "public, max-age=0, must-revalidate"
+	}
+}
+
+# HTTP test — giữ dự phòng khi chưa trỏ DNS (cổng 8080)
+:8080 {
+	reverse_proxy 127.0.0.1:3001
+}
