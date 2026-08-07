@@ -31,14 +31,21 @@ const secretGate = (req, res, next) => {
 };
 
 // ---- CORS: chỉ cho phép frontend dev/prod, không mở bừa ----
+const parseOrigins = (val) =>
+  String(val || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
 const ALLOWED_ORIGINS = new Set([
   'http://localhost:3000',
   'http://127.0.0.1:3000',
   'http://localhost:3001',
   'https://la-chan-so.vercel.app',
   'https://lachansovn.vercel.app',
-  process.env.APP_ORIGIN
-].filter(Boolean));
+  'https://lachansovn-seven.vercel.app',
+  ...parseOrigins(process.env.APP_ORIGIN)
+]);
 
 app.use(cors({
   origin(origin, callback) {
