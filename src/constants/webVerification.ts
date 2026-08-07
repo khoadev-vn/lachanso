@@ -453,7 +453,7 @@ const CRITERIA_META: Record<string, { name: string; weight: number; icon: any; c
 // Gửi URL lên VPS, nhận jobId ngay (~100ms, không dính timeout Vercel),
 // rồi poll GET /status?jobId=... mỗi 1.5s cho tới khi có kết quả.
 const POLL_INTERVAL_MS = 1500;
-const POLL_MAX_WAIT_MS = 60000;
+const POLL_MAX_WAIT_MS = 75000;
 
 interface WebVerifyJobResult extends BackendWebResult {
   cached?: boolean;
@@ -462,7 +462,7 @@ interface WebVerifyJobResult extends BackendWebResult {
 async function submitWebVerifyJob(url: string): Promise<{ jobId: string | null; result?: WebVerifyJobResult } | null> {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const timeout = setTimeout(() => controller.abort(), 20000);
     const response = await fetch("/api/v2/web-verify/async", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

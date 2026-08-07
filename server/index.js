@@ -846,10 +846,12 @@ app.listen(PORT, () => {
   autoCrawlService.start(6);
 
   const { llmChat } = require('./services/llmClient');
+  // Warmup: chỉ nạp provider nhanh (Groq/Gemini/Ollama), KHÔNG qua OpenRouter
+  // (OpenRouter có token/reasoning phức tạp, warmup sẽ gây lỗi JSON parse ở log)
   llmChat([
     { role: 'system', content: 'Trả về JSON duy nhất.' },
     { role: 'user', content: 'Warmup: {"ok":true}' }
-  ], { jsonMode: true, maxTokens: 8, timeout: 60000 }).then(() => {
+  ], { jsonMode: true, maxTokens: 8, timeout: 60000, preferFastProvider: true }).then(() => {
     console.log('🔥 Model LLM đã warm (sẵn sàng phản hồi nhanh).');
   }).catch((e) => {
     console.warn('⚠️ Warmup LLM thất bại (sẽ tự nạp khi có yêu cầu):', e.message);

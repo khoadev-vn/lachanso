@@ -137,7 +137,8 @@ async function llmChat(messages, options = {}) {
   let mode = null;
 
   // 1. OpenRouter free (NVIDIA Nemotron) — nhanh, miễn phí, giỏi tiếng Việt
-  if (!result && isOpenRouterConfigured()) {
+  //    Bỏ qua khi preferFastProvider (warmup) — OpenRouter hay trả reasoning text không JSON.
+  if (!result && isOpenRouterConfigured() && !options.preferFastProvider) {
     result = await openrouterChat(messages, options);
     if (result) mode = 'openrouter';
   }
