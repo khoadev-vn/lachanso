@@ -2599,10 +2599,10 @@ export default function App() {
                   <div className="my-5 h-px w-full bg-gray-200" />
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {group.items.map((item) =>
-                      <button key={item.name} type="button" onClick={() => setSelectedInfoItem({ title: item.name, description: item.description, link: item.link, category: "Thương hiệu & đối tác" })} className="group flex h-44 flex-col items-center justify-center gap-4 rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg cursor-pointer">
-                        <div className="flex h-24 w-full items-center justify-center">
+<button key={item.name} type="button" onClick={() => setSelectedInfoItem({ title: item.name, description: item.description, link: item.link, category: "Thương hiệu & đối tác" })} className="group flex h-56 flex-col items-center justify-center gap-4 rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg cursor-pointer">
+                        <div className="flex h-36 w-full items-center justify-center">
                           {item.logo ? (
-                            <img src={item.logo} alt={item.name} loading="lazy" className="max-h-24 max-w-[220px] object-contain" />
+                            <img src={item.logo} alt={item.name} loading="lazy" className="max-h-36 max-w-[320px] w-auto object-contain" />
                           ) : (
                             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500/90 to-amber-500 text-xl font-black text-white">
                               {item.name.charAt(0)}
