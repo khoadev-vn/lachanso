@@ -102,11 +102,13 @@ async function collectC1(hostname) {
 
   if (privacy) risk += 15;
 
-  // Expired domain hijacking: domain cũ nhưng mới được cập nhật gần đây → tái đăng ký
+  // Expired domain hijacking: RDAP event "updated sau khi cũ" KHÔNG phải dấu hiệu hijack —
+  // "last changed" thường là đổi DNS/nameserver của chính doanh nghiệp, gây false positive cho web thật.
+  // Vậy chỉ phạt khi (a) domain cũ, (b) VÀ đăng ký lại thật sự (RDAP trả registration gần đây) — nhưng
+  // ageDays đã bắt case registration mới rồi. Nên bỏ phạt "updated" hoàn toàn; hijack chỉ đặt true để ghi chú.
   let hijack = false;
   if (ageDays !== null && ageDays > 365 && updatedDays !== null && updatedDays < 30) {
-    risk += 30;
-    hijack = true;
+    hijack = true; // chỉ là tín hiệu tham khảo: nameserver/DNS vừa đổi — không phạt
   }
 
   return { collected: true, risk, ageDays, updatedDays, privacy, hijack, registrar };
@@ -744,9 +746,14 @@ async function verifyWebsite(input, opts = {}) {
   let R = blacklistTrigger + c1risk + c2risk + c3risk + c4risk + c6risk + c7risk + c9risk;
   R = clamp(R, 0, 100);
 
-  // Điều kiện 3 tiêu chí cốt lõi
+// Điều kiện 3 tiêu chí cốt lõi
+  // ageDays = null (RDAP/WHOIS bị chặn, .vn nhiều nơi 404) KHÔNG tự động "verify" nếu các tín hiệu
+  // còn lại sạch và AI xác nhận doanh nghiệp thật → vẫn mở an toàn, tránh phạt nhầm web doanh nghiệp chính thức.
+  const ageOk = c1.ageDays === null
+    ? (R <= 20 && aiLegitCategory && blacklistTrigger !== 100) // không xác định được tuổi nhưng mọi thứ sạch + AI legit
+    : c1.ageDays >= 30;
   const coreOk = c1.collected && c2.collected && c3.collected &&
-    c1.ageDays !== null && c1.ageDays >= 30 &&
+    ageOk &&
     c2.risk === 0 &&
     c3.risk < 20;
 
@@ -754,7 +761,7 @@ async function verifyWebsite(input, opts = {}) {
   let state;
   if (R >= 80 || blacklistTrigger === 100) state = 'danger';          // 🔴 NGUY HIỂM
   else if (R >= 35) state = 'suspicious';                              // 🟠 ĐÁNG NGỜ
-  else if (R < 35 && (C < 0.65 || !coreOk)) state = 'verify';          // 🟡 CẦN XÁC MINH THÊM
+  else if (R < 35 && (C < 0.65 || !ageOk)) state = 'verify';           // 🟡 CẦN XÁC MINH THÊM
   else state = 'safe';                                                 // 🟢 AN TOÀN
 
   // Domain đã được xác minh chủ web (admin duyệt) → ép safe, trừ khi đang nằm trong blacklist
@@ -771,7 +778,6 @@ async function verifyWebsite(input, opts = {}) {
   if (isPaaS) reasons.push('Subdomain trên nền tảng PaaS/SaaS, không kế thừa uy tín của root domain.');
   if (c1.ageDays !== null && c1.ageDays < 7) reasons.push(`Domain mới tạo (<7 ngày), rủi ro lừa đảo rất cao.`);
   else if (c1.ageDays !== null && c1.ageDays < 30) reasons.push(`Domain mới (${c1.ageDays} ngày), cần thận trọng.`);
-  if (c1.hijack) reasons.push('Domain tuổi cao nhưng vừa được đăng ký/cập nhật lại gần đây (nghi tái sử dụng domain hết hạn).');
   if (c6.matchedBrand) reasons.push(`Nghi vấn mạo danh thương hiệu "${c6.matchedBrand}" (typosquatting).`);
   if (c4.govImpersonationDetected) reasons.push('Trang nhái giao diện/nội dung cơ quan nhà nước (cổng dịch vụ công, thuế, BHXH...) nhưng domain KHÔNG thuộc GOV — rất nghi mạo danh, tuyệt đối không đăng nhập hoặc nộp tiền.');
   if (formOnly && c4risk >= 25) reasons.push(c4.obfuscatedJsDetected || c4.suspiciousIframeDetected ? 'Phát hiện form đăng nhập kèm dấu hiệu mã độc (JS bị mã hoá / iframe ẩn) trên web chưa đủ tin.' : c4.creditCardDetected ? 'Phát hiện form thu thập thẻ tín dụng trên web chưa xác minh thương hiệu.' : 'Phát hiện form nhạy cảm (mật khẩu/OTP) kết hợp với các dấu hiệu đáng nghi, cần thận trọng khi đăng nhập.');
