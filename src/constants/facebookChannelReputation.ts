@@ -17,7 +17,7 @@ type FbScanResult = {
 } | null;
 
 const OFFICIAL_FB_PAGES: FacebookPage[] = [
-  { handles: ["chinhphuvn", "portalchinhphu", "vanphongchinhphu"], names: ["chính phủ", "cổng thông tin điện tử chính phủ", "chinh phu"], category: "gov", label: "Chính phủ Việt Nam" },
+  { handles: ["chinhphuvn", "portalchinhphu", "vanphongchinhphu", "thongtinchinhphu", "ttcp"], names: ["chính phủ", "cổng thông tin điện tử chính phủ", "chinh phu", "trang thông tin chính phủ", "thong tin chinh phu"], category: "gov", label: "Chính phủ Việt Nam" },
   { handles: ["cucantoanthongtin", "cucatt"], names: ["cục an toàn thông tin", "cục an toàn thông tin việt nam"], category: "gov", label: "Cục An toàn Thông tin – Bộ TT&TT" },
   { handles: ["bocongan", "bo cong an", "cand"], names: ["bộ công an", "cục an ninh mạng"], category: "gov", label: "Bộ Công an / Cục An ninh mạng" },
   { handles: ["boyt"], names: ["bộ y tế"], category: "gov", label: "Bộ Y tế" },

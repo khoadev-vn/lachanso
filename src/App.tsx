@@ -924,6 +924,7 @@ export default function App() {
           "URL_PHISHING"]
         );
         const hasBlockingMismatch = reasons.some((item) => blockingMismatchIds.has(item.id) || item.status === "danger" && /MISMATCH|SAI|KNOWN|WIKIPEDIA/i.test(item.id || ""));
+        const hasFbOfficial = fbChannelReason?.id === "FB_OFFICIAL_CHANNEL";
         if (liveNewsCheck.verifiedExternally && !hasBlockingMismatch) {
           const suppressedIds = new Set(["UNSOURCED_CLAIM", "LIVE_NO_EVIDENCE"]);
           for (let i = reasons.length - 1; i >= 0; i -= 1) {
@@ -941,7 +942,7 @@ export default function App() {
           if (hasBlockingMismatch) {
             score = Math.min(score, 42);
           } else
-            if (checkType !== "web" && !verificationLayers.hasTrustedEvidence && reasons.some((item) => item.status !== "success")) {
+            if (checkType !== "web" && !hasFbOfficial && !verificationLayers.hasTrustedEvidence && reasons.some((item) => item.status !== "success")) {
               score = Math.min(score, 69);
             }
         if (articleExtraction && score < 75 && liveNewsCheck.enabled) {
