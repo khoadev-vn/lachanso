@@ -416,17 +416,17 @@ export default function App() {
           name: "Vietnix",
           description: "Vietnix là nhà cung cấp hạ tầng và dịch vụ hosting, VPS, máy chủ riêng, giúp doanh nghiệp và người dùng vận hành nền tảng số ổn định và bảo mật.",
           link: "https://vietnix.vn/",
-          logo: "/partners/vietnix.svg",
+          logo: "/partners/vietnix.png",
         },
         {
           name: "Unikorn.vn",
-          description: "Nền tảng xếp hạng và là đối tác tài trợ hạ tầng công nghệ cho Lá Chắn Số.",
+          description: "Unikorn.vn là nền tảng khám phá và xếp hạng các sản phẩm công nghệ Việt Nam, giúp người dùng tìm kiếm ứng dụng và dịch vụ số đáng tin cậy, đồng thời là đối tác tài trợ hạ tầng công nghệ cho Lá Chắn Số.",
           link: "https://unikorn.vn/",
           logo: "/partners/unikorn-apple.png",
         },
 {
           name: "Retask.Work",
-          description: "Đối tác tài trợ hạ tầng công nghệ, đồng hành vận hành hệ thống kiểm chứng.",
+          description: "Retask.Work là nền tảng quản lý công việc AI-native, nơi con người và AI Agent cùng làm việc trên một bảng điều khiển trong môi trường sandbox bảo mật, giúp doanh nghiệp và đội ngũ vận hành nền tảng số nhanh chóng, an toàn, đồng thời đồng hành vận hành hệ thống kiểm chứng.",
           link: "https://retask.work/",
           logo: "/partners/retask_icon.svg",
         }
