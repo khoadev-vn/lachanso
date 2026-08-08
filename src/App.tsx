@@ -5,6 +5,7 @@ import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTria
 import OwnerVerifyModal from "./components/OwnerVerifyModal";
 import ReportIssueModal from "./components/ReportIssueModal";
 import NextStepsGuideModal from "./components/NextStepsGuideModal";
+import { buildFbChannelReason } from "./constants/facebookChannelReputation";
 import ColorLegendModal from "./components/ColorLegendModal";
 import ThirdPartyModal from "./components/ThirdPartyModal";
 import ThirdPartyResultsPanel from "./components/ThirdPartyResultsPanel";
@@ -871,6 +872,30 @@ export default function App() {
         liveNewsCheck.reasons.forEach((reason) => {
           addReason(reason);
         });
+        const fbChannelReason = buildFbChannelReason(text, [
+          ...(liveNewsCheck.pressArticles ?? []).map((a: any) => a.source ?? ""),
+          ...(liveNewsCheck.pressArticles ?? []).map((a: any) => a.link ?? ""),
+          ...(comprehensiveResult?.comprehensive?.sources ?? [])
+        ]);
+        if (fbChannelReason) {
+          addReason(fbChannelReason);
+          if (fbChannelReason.status === "success" && fbChannelReason.gain) {
+            score = Math.min(100, score + fbChannelReason.gain);
+          }
+          if (fbChannelReason.id === "FB_OFFICIAL_CHANNEL") {
+            const fbSuppressedIds = new Set(["UNSOURCED_CLAIM", "LIVE_NO_EVIDENCE"]);
+            for (let i = reasons.length - 1; i >= 0; i -= 1) {
+              if (fbSuppressedIds.has(reasons[i].id)) {
+                reasons.splice(i, 1);
+              }
+            }
+            for (let i = violatedRules.length - 1; i >= 0; i -= 1) {
+              if (fbSuppressedIds.has(violatedRules[i])) {
+                violatedRules.splice(i, 1);
+              }
+            }
+          }
+        }
         syncViolatedRules();
         updateProgress({
           score: Math.max(30, Math.min(80, score)),
