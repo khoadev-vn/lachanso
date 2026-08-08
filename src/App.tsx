@@ -1,7 +1,7 @@
 import { motion, AnimatePresence, animate, useMotionValue, useSpring, useTransform } from "motion/react";
 import { Analytics } from "@vercel/analytics/react";
 import GlobeViz from "./components/GlobeViz";
-import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users, Landmark, Scale, HeartPulse, Info, HelpCircle, Flag, LifeBuoy, ShieldAlert } from "lucide-react";
+import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users, Landmark, Scale, HeartPulse, Info, HelpCircle, Flag, LifeBuoy, ShieldAlert, Download } from "lucide-react";
 import OwnerVerifyModal from "./components/OwnerVerifyModal";
 import ReportIssueModal from "./components/ReportIssueModal";
 import NextStepsGuideModal from "./components/NextStepsGuideModal";
@@ -194,18 +194,43 @@ const PLAIN_REASON_TEXT: Record<string, string> = {
   KG_COD_SHIPPING: "Lừa đảo COD/giao hàng — đặt hàng ảo, hàng bị giữ, phí giải phóng bưu phẩm.",
   KG_FAKE_UTILITY: "Giả mạo nhân viên điện/nước/mạng ép thanh toán qua kênh không chính thức.",
   KG_CRYPTO: "Lừa đảo tiền mã hóa — ví bị khóa, seed phrase, airdrop cần nạp phí.",
-  KG_PHONE_EXTRACTION: "Ép nạn nhân chuyển kênh liên hệ riêng, giữ bí mật để tránh bị phát hiện."
+  KG_PHONE_EXTRACTION: "Ép nạn nhân chuyển kênh liên hệ riêng, giữ bí mật để tránh bị phát hiện.",
+  MSG_LINK: "Chứa đường dẫn lạ — không nhấn vào link không rõ nguồn gốc.",
+  MSG_OTP: "Tin nhắn hỏi mã OTP/mật khẩu — đây là dấu hiệu lừa đảo kinh điển.",
+  MSG_TRANSFER: "Yêu cầu chuyển/nạp tiền hoặc thanh toán trước — cảnh giác chiếm đoạt.",
+  MSG_JOB: "Mời việc nhẹ lương cao hoặc làm việc online để nhận tiền — bẫy lao động.",
+  MSG_PRIZE: "Trúng thưởng/quà tặng nhưng phải nạp phí trước — chiêu thức lừa đảo quen thuộc.",
+  MSG_URGENCY: "Gây áp lực thời gian/đe dọa — kỹ thuật thao túng tâm lý.",
+  MSG_LOAN: "Mời vay vốn nhanh/nổ hũ/tăng tiền — cho vay nóng lừa đảo.",
+  MSG_PERSONAL_INFO: "Dò hỏi thông tin cá nhân nhạy cảm.",
+  MSG_URL: "Chứa liên kết không xác minh được nguồn gốc.",
+  MSG_CONTACT_PHONE: "Số điện thoại lạ kèm nội dung nhạy cảm."
 };
 
 function buildPlainSummary(reasons: any[], input: any): { items: string[]; verdict: string; } {
   const safe = Boolean(input?.isSafe ?? input);
   const educational = Boolean(input?.isEducational);
+  const isMessage = Boolean(input?.isMessageCheck);
   const danger = reasons.filter((r) => r?.status === "danger");
   const warning = reasons.filter((r) => r?.status === "warning");
   const success = reasons.filter((r) => r?.status === "success");
   const picked = educational ? (success.length > 0 ? success : warning) : danger.length > 0 ? danger : safe ? success : warning;
   const items = picked.slice(0, 4).map((r) => PLAIN_REASON_TEXT[r?.id] ?? (r?.detail ? (r.detail as string).split(".")[0] + "." : r?.name ?? ""));
   let verdict = "Hệ thống chưa đủ dữ kiện để kết luận chắc chắn.";
+  if (isMessage) {
+    if (educational) {
+      verdict = "Đây là nội dung hướng dẫn/giáo dục về cách nhận biết lừa đảo qua tin nhắn.";
+    } else if (danger.length >= 2 || input?.isDanger) {
+      verdict = "Đây rất có khả năng là TIN NHẮN LỪA ĐẢO. Không chuyển tiền, không nhấn link, không cung cấp OTP/mật khẩu cho bất kỳ ai.";
+    } else if (danger.length === 1) {
+      verdict = "Có dấu hiệu nguy hiểm rõ rệt trong tin nhắn. Dừng lại và kiểm chứng người gửi trước khi hành động.";
+    } else if (safe || success.length > 0) {
+      verdict = "Nội dung phù hợp với ngữ cảnh xác nhận/quen biết — dường như an toàn. Vẫn cẩn trọng nếu có yêu cầu tài chính.";
+    } else if (warning.length > 0) {
+      verdict = "Có vài điểm bất thường — tin nhắn đáng ngờ. Hãy thận trọng, không vội tin hoặc chuyển tiền.";
+    }
+    return { items, verdict };
+  }
   if (educational) {
     verdict = "Đây là bài viết hướng dẫn/giáo dục về cách nhận biết tin giả và lừa đảo. Nội dung mang tính cảnh báo — KHÔNG phải là tin giả. Bạn có thể yên tâm đọc và áp dụng để bảo vệ bản thân.";
   } else if (danger.length >= 2) {
@@ -256,6 +281,32 @@ export default function App() {
         .catch(err => console.error("Error fetching cached news:", err));
     }
   }, [currentPage]);
+
+  useEffect(() => {
+    const handleInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPromptEvt(e);
+      setInstallBannerOpen(true);
+    };
+    window.addEventListener("beforeinstallprompt", handleInstallPrompt);
+    return () => window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
+  }, []);
+
+  const handleInstallClick = () => {
+    if (installPromptEvt) {
+      installPromptEvt.prompt();
+      installPromptEvt.userChoice?.then((choice: any) => {
+        if (choice && choice.outcome === "accepted") {
+          setInstallBannerOpen(false);
+          setInstallPromptEvt(null);
+        }
+      });
+      setInstallBannerOpen(false);
+    } else {
+      setInstallBannerOpen(true);
+    }
+  };
+  const isMobileDevice = typeof window !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   const [checkType, setCheckType] = useState<"web" | "news" | "message">("web");
   const [previewCandidateIndex, setPreviewCandidateIndex] = useState(0);
   const [analysisExpanded, setAnalysisExpanded] = useState(false);
@@ -265,6 +316,8 @@ export default function App() {
   const [colorLegendOpen, setColorLegendOpen] = useState(false);
   const [thirdPartyOpen, setThirdPartyOpen] = useState(false);
   const [nextStepsOpen, setNextStepsOpen] = useState(false);
+  const [installPromptEvt, setInstallPromptEvt] = useState<any>(null);
+  const [installBannerOpen, setInstallBannerOpen] = useState(false);
   const [selectedInfoItem, setSelectedInfoItem] = useState<{ title: string; description: string; link: string; category: string; } | null>(null);
   const [selectedBlogSlug, setSelectedBlogSlug] = useState<string | null>(() => {
     const path = window.location.pathname;
@@ -569,11 +622,94 @@ export default function App() {
         }
         return;
       }
+      if (checkType === "message") {
+        const verify = async () => {
+          try {
+            const apiRes = await fetch("/api/verify-message", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text: searchQuery.trim() })
+            });
+            if (!apiRes.ok) throw new Error("API failed");
+            return await apiRes.json();
+          } catch (e) {
+            console.error("verify-message API failed", e);
+            return null;
+          }
+        };
+        const api = await verify();
+        const usedAI = api?.usedAI ?? false;
+        const apiReasons = (api?.reasons ?? []).map((r: any) => ({
+          id: r.id || "MSG_LLM",
+          name: r.name || r.label,
+          detail: r.detail,
+          status: r.status === "verified" || r.source !== "ai" ? r.status : r.status,
+          icon: r.status === "danger" ? AlertTriangle : r.status === "success" ? ShieldCheck : Info
+        }));
+        const heuristicFallback = { verdict: "suspicious", score: 55, reasons: [{ id: "MSG_LINK", name: "Cần kiểm tra thủ công", detail: "Hệ thống tạm thời chưa liên kết được AI để phán quyết. Vui lòng kiểm tra nội dung cẩn thận trước khi tương tác.", status: "warning", icon: Info }] };
+        const reasons = apiReasons.length > 0 ? apiReasons : heuristicFallback.reasons;
+        const verdict = api?.verdict ?? heuristicFallback.verdict;
+        const score = api?.score ?? heuristicFallback.score;
+        const isDanger = verdict === "scam" || (score >= 0 && score < 40 && api?.heuristic?.verdict === "scam");
+        const isSafe = !isDanger && (verdict === "verified" || score >= 80);
+        const isWarning = !isDanger && !isSafe;
+
+        const analysisDetails = {
+          internal_verdict: isDanger ? `Hệ thống + AI chắc chắn đây là TIN NHẮN LỪA ĐẢO (${score}%).` : isSafe ? `AI phán loại tin nhắn là XÁC THỰC (${score}%).` : `AI đánh giá tin nhắn ĐÁNG NGỜ (${score}%). Nên kiểm chứng trước khi hành động.`,
+          heuristics: `Phát hiện ${reasons.filter((r: any) => r.status !== "success").length} dấu hiệu bất thường trong tin nhắn.`,
+          trust_analysis: usedAI ? "AI đã đối chiếu nội dung với các kịch bản lừa đảo phổ biến tại Việt Nam." : "Fallback heuristic — không dùng AI.",
+          url_verification: api?.contacts?.urls?.length ? `Phát hiện ${api.contacts.urls.length} liên kết: ${api.contacts.urls.join(", ")}. KHÔNG nhấn vào liên kết lạ.` : "Không phát hiện liên kết trong tin nhắn.",
+          source_audit: api?.contacts?.phones?.length ? `Có số điện thoại: ${api.contacts.phones.join(", ")}.` : "Không phát hiện số điện thoại đáng ngờ.",
+          press_comparison: "Không áp dụng cho tin nhắn — đây là phân loại thời gian thực theo nội dung.",
+          search_trace: "Không áp dụng.",
+          live_fact_check: "Không áp dụng.",
+          live_press_scan: "Không áp dụng.",
+          open_knowledge_check: "Không áp dụng."
+        };
+        const finalTitle = isDanger ? "CẢNH BÁO: TIN NHẮN LỪA ĐẢO" : isSafe ? "Tin nhắn an toàn" : "Tin nhắn cần kiểm chứng";
+        const finalDescription = isDanger
+          ? "Tin nhắn này mang nhiều dấu hiệu điển hình của lừa đảo. Tuyệt đối KHÔNG chuyển tiền, không cung cấp mã OTP/mật khẩu, không nhấn link lạ."
+          : isSafe
+            ? "Nội dung phù hợp với ngữ cảnh xác nhận/quen biết. Vui lòng vẫn kiểm tra kỹ nếu có yêu cầu tài chính."
+            : "Tin nhắn có vài điểm bất thường không rõ ràng. Nên giữ thái độ thận trọng, không vội tin hoặc chuyển tiền cho tới khi xác minh được người gửi.";
+        setResultData({
+          isSafe,
+          isWarning,
+          isDanger,
+          isEducational: false,
+          type: "news",
+          url: "",
+          score,
+          confidence: isDanger ? "Độ rủi ro rất cao" : isSafe ? "Độ an toàn cao" : "Cần kiểm chứng",
+          title: finalTitle,
+          description: finalDescription,
+          analysis: analysisDetails,
+          analysisReasons: reasons,
+          msgContacts: api?.contacts ?? null,
+          usedAI,
+          isMessageCheck: true,
+          textContent: searchQuery.trim(),
+          checkTypeLabel: "Tin nhắn / SMS lừa đảo"
+        });
+        setShowResults(true);
+        setIsChecking(false);
+        if ((window as any).__LCS_JOB_ID__ === jobId && api?.summary) {
+          setNewsAiSummary({
+            summary: api.summary,
+            key_points: [],
+            credibility_note: usedAI ? "" : "AI chưa khả dụng — kết quả bằng heuristic nội bộ.",
+            detection_note: isDanger ? "AI và hệ thống cùng đưa ra mức rủi ro cao." : "",
+            loading: false,
+            loaded: true
+          });
+        }
+        return;
+      }
         let score = 100;
         const inputLinks = extractLinksFromText(searchQuery);
         const articleExtraction = inputLinks.length > 0 ? await extractArticleForAnalysis(inputLinks[0]) : null;
         const text = articleExtraction?.contentForAnalysis ?? searchQuery;
-                const isMessage = checkType === "message";
+                const isMessage = (checkType as string) === "message";
         const emptyLiveNewsCheck: any = {
           enabled: false,
           scoreDelta: 0,
@@ -1174,6 +1310,9 @@ export default function App() {
             <button onClick={() => navigateToPage("check")} className="hidden md:block px-6 py-2.5 text-base font-semibold rounded-full hover:bg-gray-200 transition-all active:scale-95 bg-[#ff8904] text-[#ffff]">
               Kiểm Tra Ngay
             </button>
+            <button type="button" onClick={handleInstallClick} title="Thêm vào màn hình chính" className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-full border border-gray-300 bg-white text-gray-700 hover:border-[#ff8904] hover:text-[#ff8904] transition-all active:scale-95">
+              <Download className="h-4 w-4 inline" /> Cài ứng dụng
+            </button>
             <button className="md:hidden p-2 text-[#111111]" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X /> : <Menu />}
             </button>
@@ -1194,6 +1333,12 @@ export default function App() {
           }} className="w-full px-6 py-3 bg-white text-[#151414] font-semibold rounded-full mt-2">
             Kiểm Tra Ngay
           </button>
+          {isMobileDevice && <button onClick={() => {
+            handleInstallClick();
+            setIsMenuOpen(false);
+          }} className="w-full px-6 py-3 inline-flex items-center justify-center gap-2 bg-[#ff8904] text-white font-semibold rounded-full mt-2">
+            <Download className="h-4 w-4" /> Thêm vào màn hình chính
+          </button>}
         </motion.div>}
       </nav>
       <AnimatePresence mode="wait">
@@ -2735,6 +2880,56 @@ export default function App() {
         })()}
       />
       <ThirdPartyModal open={thirdPartyOpen} onOpenChange={setThirdPartyOpen} thirdParty={resultData?.thirdParty} ipInfo={resultData?.ipInfo} />
+
+      {installBannerOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setInstallBannerOpen(false)}>
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <img src="/logo.png" alt="Lá Chắn Số" className="h-12 w-12 rounded-xl" />
+                <div>
+                  <h3 className="text-lg font-black text-gray-900">Thêm Lá Chắn Số vào màn hình chính</h3>
+                  <p className="text-sm text-gray-500">Dùng như một ứng dụng riêng, mở nhanh hơn.</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setInstallBannerOpen(false)} className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {installPromptEvt ? (
+              <button type="button" onClick={handleInstallClick} className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#ff8904] px-5 py-3 font-bold text-white transition-colors hover:bg-orange-600">
+                <Download className="h-5 w-5" /> Cài đặt ngay
+              </button>
+            ) : (
+              <div className="mt-5 space-y-3">
+                {/iPhone|iPad|iPod/i.test(navigator.userAgent) ? (
+                  <>
+                    <p className="text-sm font-semibold text-gray-700">Trên iPhone/iPad:</p>
+                    <ol className="list-decimal pl-5 text-sm leading-7 text-gray-600">
+                      <li>Mở trang này bằng trình duyệt <strong>Safari</strong>.</li>
+                      <li>Chạm nút <strong>Chia sẻ</strong> (hộp có mũi tên lên) dưới trình duyệt.</li>
+                      <li>Chạm <strong>"Thêm vào Màn hình chính"</strong>.</li>
+                    </ol>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold text-gray-700">Trên Android:</p>
+                    <ol className="list-decimal space-y-3 pl-5 text-sm text-gray-600">
+                      <li>Mở trình duyệt <strong>Chrome</strong>.</li>
+                      <li>Chạm biểu tượng <strong>⋮</strong> (menu) trên góc phải.</li>
+                      <li>Chọn <strong>"Thêm vào màn hình chính"</strong> hoặc <strong>"Cài đặt ứng dụng"</strong>.</li>
+                    </ol>
+                  </>
+                )}
+                <p className="rounded-xl bg-gray-50 p-3 text-xs leading-relaxed text-gray-500">
+                  Mẹo: nếu Chromium đã mặc định ẩn nút, hãy tìm mục "Cài đặt ứng dụng" trong menu ⋮ của trình duyệt.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>);
 
 }

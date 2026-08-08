@@ -240,4 +240,74 @@ router.get('/reports', (req, res) => {
   }
 });
 
+// ---- PATCH /api/v2/reports/:id — Admin cập nhật trạng thái + phản hồi, gửi email cho người khiếu nại ----
+const { sendReportReplyEmail } = require('../services/emailService');
+
+router.patch('/reports/:index', async (req, res) => {
+  const secret = process.env.LCS_ADMIN_SECRET;
+  if (secret && req.get('x-lcs-admin-secret') !== secret) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const file = path.join(__dirname, '../data/reports.json');
+  if (!fs.existsSync(file)) return res.status(404).json({ error: 'Chưa có khiếu nại nào' });
+
+  let logs = [];
+  try { logs = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { logs = []; }
+  if (!Array.isArray(logs)) logs = [];
+
+  const idx = Number(req.params.index);
+  if (!Number.isInteger(idx) || idx < 0 || idx >= logs.length) {
+    return res.status(404).json({ error: 'Không tìm thấy khiếu nại' });
+  }
+
+  const { status, reply } = req.body || {};
+  const validStatuses = ['pending', 'investigating', 'resolved'];
+  if (status && !validStatuses.includes(status)) {
+    return res.status(400).json({ error: 'Trạng thái không hợp lệ' });
+  }
+
+  const old = logs[idx];
+  logs[idx] = {
+    ...old,
+    ...(status ? { status } : {}),
+    ...((reply !== undefined) ? { reply: String(reply).slice(0, 5000) } : {}),
+    resolvedAt: status === 'resolved' ? new Date().toISOString() : old.resolvedAt,
+    updatedAt: new Date().toISOString()
+  };
+
+  try {
+    fs.writeFileSync(file, JSON.stringify(logs, null, 2));
+  } catch (e) {
+    return res.status(500).json({ error: 'Lỗi lưu dữ liệu' });
+  }
+
+  // Gửi email thông báo cho người khiếu nại
+  let emailResult = { sent: false, reason: 'no_email' };
+  const targetLabel = logs[idx].kind === 'news'
+    ? (logs[idx].displayTarget || logs[idx].targetUrl)
+    : logs[idx].targetUrl;
+  const statusLabel = status === 'resolved'
+    ? 'Đã xử lý'
+    : status === 'investigating'
+      ? 'Đang xem xét'
+      : status || 'đã cập nhật';
+
+  if (logs[idx].email && reply) {
+    emailResult = await sendReportReplyEmail(logs[idx].email, {
+      reportLabel: targetLabel,
+      reply: reply || '(Chưa có nội dung phản hồi)',
+      status: status || 'updated'
+    });
+  }
+
+  console.log(`[Admin] Cập nhật khiếu nại #${idx} status=${status || 'keep'} reply=${reply ? reply.length + ' chars' : 'none'} email=${emailResult.sent ? 'SENT' : (emailResult.reason || 'SKIP')}`);
+
+  return res.json({
+    success: true,
+    report: logs[idx],
+    emailSent: emailResult.sent,
+    emailReason: emailResult.sent ? undefined : emailResult.reason
+  });
+});
+
 module.exports = router;

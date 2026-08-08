@@ -107,6 +107,7 @@ app.use('/api/analyze-text', throttleGeneral);
 app.use('/api/fact-check', throttleGeneral);
 app.use('/api/check-domain', throttleGeneral);
 app.use('/api/verify-nli', throttleGeneral);
+app.use('/api/verify-message', throttleGeneral);
 
 
 app.get('/health', (req, res) => {
@@ -829,6 +830,22 @@ app.post('/api/v2/web-verify', async (req, res) => {
         console.error('[API-v2][web] ❌ Error:', error.message);
         res.status(500).json({ error: 'Internal server error' });
     }
+});
+
+// ============ MESSAGE SCAM VERIFY — Tin nhắn / SMS ============
+const { verifyMessage } = require('./services/messageVerifyService');
+app.post('/api/verify-message', async (req, res) => {
+  const { text } = req.body || {};
+  if (!text || String(text).trim().length < 3) {
+    return res.status(400).json({ success: false, message: 'Vui lòng nhập nội dung tin nhắn cần kiểm tra.' });
+  }
+  try {
+    const result = await verifyMessage(text);
+    return res.json(result);
+  } catch (e) {
+    console.error('[verifyMessage] Error:', e.message);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
+  }
 });
 
 // ============ REPORT / COMPLAINT ROUTES ============
