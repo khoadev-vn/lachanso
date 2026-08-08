@@ -60,21 +60,26 @@ const ACTION_CALLOUTS = [
 export default function NextStepsGuideModal({ open, onOpenChange, kind, dangerLevel }: NextStepsGuideModalProps) {
   const isNews = kind === "news";
   const isDanger = dangerLevel === "danger";
-  const title = isNews ? "Nghi ngờ tin giả — bạn nên làm gì?" : "Nghi ngờ link lừa đảo — bạn nên làm gì?";
-  const intro = isNews
-    ? "Hệ thống nghi ngờ nội dung này là tin giả hoặc lừa đảo. Hãy bình tĩnh và làm theo các bước dưới đây để bảo vệ bản thân và người thân."
-    : "Hệ thống nghi ngờ đây là link lừa đảo/không an toàn. Đừng hoảng loạn — làm lần lượt theo hướng dẫn."
+  const isSafe = dangerLevel === "safe";
+  const title = isNews
+    ? (isDanger ? "Tin giả/lừa đảo — bạn nên làm gì?" : isSafe ? "Kết quả an toàn — lưu ý" : "Nghi ngờ tin giả — bạn nên làm gì?")
+    : (isDanger ? "Link lừa đảo — bạn nên làm gì?" : isSafe ? "Kết quả an toàn — lưu ý" : "Nghi ngờ link lừa đảo — bạn nên làm gì?");
+  const intro = isSafe
+    ? "Kết quả này an toàn nhưng hãy luôn thận trọng. Dưới đây là các thói quen hay giúp bạn tránh bẫy lừa đảo trong tương lai."
+    : isNews
+      ? "Hệ thống nghi ngờ nội dung này là tin giả hoặc lừa đảo. Hãy bình tĩnh làm theo các bước dưới đây để bảo vệ bản thân và người thân."
+      : "Hệ thống nghi ngờ đây là link lừa đảo/không an toàn. Đừng hoảng loạn — làm lần lượt theo hướng dẫn."
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl bg-white">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${isDanger ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600"}`}>
+            <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${isDanger ? "bg-red-100 text-red-600" : isSafe ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"}`}>
               <ShieldAlert className="h-7 w-7" />
             </div>
             <div>
-              <DialogTitle className="text-lg font-black tracking-tight text-gray-950">{title}</DialogTitle>
+              <DialogTitle className="text-xl font-black tracking-tight text-gray-950">{title}</DialogTitle>
               <DialogDescription className="text-sm text-gray-500">{intro}</DialogDescription>
             </div>
           </div>
@@ -90,7 +95,7 @@ export default function NextStepsGuideModal({ open, onOpenChange, kind, dangerLe
               <ul className="mt-2.5 space-y-1.5">
                 {s.items.map((it, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm leading-relaxed text-gray-700">
-                    <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${isDanger ? "bg-red-400" : "bg-amber-400"}`} />
+                    <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${isDanger ? "bg-red-400" : isSafe ? "bg-emerald-400" : "bg-amber-400"}`} />
                     {it}
                   </li>
                 ))}

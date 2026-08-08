@@ -196,14 +196,18 @@ const PLAIN_REASON_TEXT: Record<string, string> = {
   KG_PHONE_EXTRACTION: "Ép nạn nhân chuyển kênh liên hệ riêng, giữ bí mật để tránh bị phát hiện."
 };
 
-function buildPlainSummary(reasons: any[], safe?: boolean): { items: string[]; verdict: string; } {
+function buildPlainSummary(reasons: any[], input: any): { items: string[]; verdict: string; } {
+  const safe = Boolean(input?.isSafe ?? input);
+  const educational = Boolean(input?.isEducational);
   const danger = reasons.filter((r) => r?.status === "danger");
   const warning = reasons.filter((r) => r?.status === "warning");
   const success = reasons.filter((r) => r?.status === "success");
-  const picked = danger.length > 0 ? danger : safe ? success : warning;
+  const picked = educational ? (success.length > 0 ? success : warning) : danger.length > 0 ? danger : safe ? success : warning;
   const items = picked.slice(0, 4).map((r) => PLAIN_REASON_TEXT[r?.id] ?? (r?.detail ? (r.detail as string).split(".")[0] + "." : r?.name ?? ""));
   let verdict = "Hệ thống chưa đủ dữ kiện để kết luận chắc chắn.";
-  if (danger.length >= 2) {
+  if (educational) {
+    verdict = "Đây là bài viết hướng dẫn/giáo dục về cách nhận biết tin giả và lừa đảo. Nội dung mang tính cảnh báo — KHÔNG phải là tin giả. Bạn có thể yên tâm đọc và áp dụng để bảo vệ bản thân.";
+  } else if (danger.length >= 2) {
     verdict = "Đây rất có khả năng là tin giả hoặc lừa đảo. Không nên tin, chia sẻ hoặc chuyển tiền theo hướng dẫn trong nội dung.";
   } else if (danger.length === 1) {
     verdict = "Có dấu hiệu nguy hiểm rõ rệt. Bạn nên dừng lại và kiểm chứng từ nguồn chính thống trước khi tin.";
@@ -962,7 +966,7 @@ export default function App() {
         const isEducational = (fullScanResult && fullScanResult.isEducational) || false;
         if (isEducational) {
           score = Math.max(score, 84);
-          const eduSuppressIds = new Set(["KG_PANIC", "KG_CLICKBAIT", "KG_URGENCY", "KG_FINANCIAL", "LOGIC_DAO_01", "CORR_01", "L042", "L081", "L082", "L164", "LF_COHERENCE_LOW", "TG_NO_SOURCE", "UNSOURCED_CLAIM", "LIVE_NO_EVIDENCE", "LIVE_PRESS_UNCONFIRMED"]);
+          const eduSuppressIds = new Set(["KG_PANIC", "KG_CLICKBAIT", "KG_URGENCY", "KG_FINANCIAL", "KG_AUTHORITY", "KG_PERSONAL_INFO", "LOGIC_DAO_01", "CORR_01", "L042", "L045", "L046", "L081", "L082", "L083", "L084", "L124", "L165", "L009", "L164", "LF_COHERENCE_LOW", "TG_NO_SOURCE", "UNSOURCED_CLAIM", "LIVE_NO_EVIDENCE", "LIVE_PRESS_UNCONFIRMED"]);
           reasons.forEach((r) => {
             if (eduSuppressIds.has(r.id)) {
               if (r.status === "danger") r.status = "warning";
@@ -1758,10 +1762,10 @@ export default function App() {
                             <HelpCircle className="h-5 w-5" />
                             Giải thích 4 mức
                           </button>
-                          {st === "danger" && <button type="button" onClick={() => setNextStepsOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-red-300 bg-red-50 px-6 py-3.5 text-[15px] font-bold text-red-700 shadow-md transition-colors hover:bg-red-100">
+                          <button type="button" onClick={() => setNextStepsOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-orange-300 bg-orange-50 px-6 py-3.5 text-[15px] font-bold text-orange-700 shadow-md transition-colors hover:bg-orange-100">
                             <LifeBuoy className="h-5 w-5" />
                             Tôi nên làm gì tiếp?
-                          </button>}
+                          </button>
                         </div>
                         <div className="inline-flex w-full items-center justify-center gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
                           <AlertTriangle className="h-5 w-5 shrink-0" />
@@ -1807,7 +1811,7 @@ export default function App() {
                   {resultData.type === "web" && (resultData.thirdParty?.length || resultData.ipInfo?.detail?.ips?.length) ? <ThirdPartyResultsPanel thirdParty={resultData.thirdParty} ipInfo={resultData.ipInfo} /> : null}
 
                   {resultData.type === "news" && (() => {
-                    const plain = buildPlainSummary(resultData.analysisReasons ?? [], resultData.isSafe);
+                    const plain = buildPlainSummary(resultData.analysisReasons ?? [], resultData);
                     return <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className={`overflow-hidden rounded-3xl border p-6 ${resultData.isSafe ? "border-emerald-200 bg-emerald-50/60" : resultData.isWarning ? "border-amber-200 bg-amber-50/60" : "border-red-200 bg-red-50/70"}`}>
                       <div className="flex items-center gap-2 mb-3">
                         {resultData.isSafe ? <ShieldCheck className="h-5 w-5 text-emerald-600" /> : resultData.isWarning ? <AlertTriangle className="h-5 w-5 text-amber-600" /> : <X className="h-5 w-5 text-red-600" />}
@@ -1831,10 +1835,10 @@ export default function App() {
                           <HelpCircle className="h-4 w-4" />
                           Giải thích kết quả
                         </button>
-                        {resultData.isDanger && <button type="button" onClick={() => setNextStepsOpen(true)} className="inline-flex items-center gap-2 rounded-xl border-2 border-red-300 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition-colors hover:bg-red-100">
+                        <button type="button" onClick={() => setNextStepsOpen(true)} className="inline-flex items-center gap-2 rounded-xl border-2 border-orange-300 bg-orange-50 px-4 py-2.5 text-sm font-bold text-orange-700 shadow-sm transition-colors hover:bg-orange-100">
                           <LifeBuoy className="h-4 w-4" />
                           Tôi nên làm gì tiếp?
-                        </button>}
+                        </button>
                       </div>
                     </motion.div>;
                   })()}
