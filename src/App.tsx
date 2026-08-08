@@ -520,6 +520,7 @@ export default function App() {
             blacklistSources: webCheck.blacklistSources,
             thirdParty: webCheck.thirdParty,
             ipInfo: webCheck.ipInfo,
+            aiAnalysis: webCheck.aiAnalysis,
             backendV2: webCheck.backendV2,
             isEducational: false,
             type: "web",
