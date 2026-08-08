@@ -12,9 +12,11 @@ lachansovn.com, www.lachansovn.com {
 
 	encode zstd gzip
 
-	# API → backend ứng dụng
+	# API → backend ứng dụng (header secret được Caddy chèn từ env LCS_BACKEND_SECRET,
+	# tránh lộ bí mật vào git; frontend browser không cần gửi header này)
 	handle /api/* {
 		reverse_proxy 127.0.0.1:3001 {
+			header_up X-LCS-Backend-Secret {env.LCS_BACKEND_SECRET}
 			header_up X-Real-IP {remote_host}
 			header_up X-Forwarded-For {remote_host}
 		}
