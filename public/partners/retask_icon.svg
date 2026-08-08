@@ -1,4 +1,4 @@
-<svg width="32" height="32" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-label="Shuffle">
+<svg width="32" height="32" viewBox="64 64 960 832" xmlns="http://www.w3.org/2000/svg" aria-label="Shuffle">
   <!-- Light blue: DOWN direction (top-left → bottom-right), behind -->
   <g style="mix-blend-mode:multiply">
     <path d="M64 320a64.021333 64.021333 0 0 1 0-128h64c81.92 0 155.904 31.744 212.48 82.432a378.624 378.624 0 0 0-63.488 117.824C241.792 348.544 188.48 320 128 320H64z" fill="#49BEFF"/>
