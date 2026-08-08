@@ -883,7 +883,7 @@ export default function App() {
             score = Math.min(100, score + fbChannelReason.gain);
           }
           if (fbChannelReason.id === "FB_OFFICIAL_CHANNEL") {
-            const fbSuppressedIds = new Set(["UNSOURCED_CLAIM", "LIVE_NO_EVIDENCE"]);
+            const fbSuppressedIds = new Set(["UNSOURCED_CLAIM", "LIVE_NO_EVIDENCE", "AI_MULTI_SOURCE_INCONCLUSIVE", "OPEN_KNOWLEDGE_GENERAL_MATCH", "OPEN_KNOWLEDGE_DDG_MATCH"]);
             for (let i = reasons.length - 1; i >= 0; i -= 1) {
               if (fbSuppressedIds.has(reasons[i].id)) {
                 reasons.splice(i, 1);
