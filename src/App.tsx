@@ -1377,6 +1377,15 @@ export default function App() {
 
             <div className="relative z-10 max-w-[1520px] mx-auto px-6 lg:px-10 pt-14 pb-0">
 
+              <div className="mb-10 flex flex-wrap gap-3 items-start">
+                <a href="https://unikorn.vn/p/lachanso?ref=embed-lachanso" target="_blank" rel="noopener noreferrer">
+                  <img src="https://unikorn.vn/api/widgets/badge/lachanso/rank?theme=light&type=daily" alt="Lá Chắn Số - Hàng ngày" style={{ width: 250, height: 64 }} width="250" height="64" loading="lazy" />
+                </a>
+                <a href="https://unikorn.vn/p/lachanso?ref=embed-lachanso" target="_blank" rel="noopener noreferrer">
+                  <img src="https://unikorn.vn/api/widgets/badge/lachanso?theme=light" alt="Lá Chắn Số trên Unikorn.vn" style={{ width: 256, height: 64 }} width="256" height="64" loading="lazy" />
+                </a>
+              </div>
+
               { }
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="mb-10">
                 <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-black/10 text-sm font-semibold text-[#333] shadow-sm backdrop-blur">
