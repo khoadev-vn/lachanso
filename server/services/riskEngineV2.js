@@ -722,7 +722,7 @@ async function verifyWebsite(input, opts = {}) {
   C = clamp(C, 0, 1);
 
   // R = BlacklistTrigger + penalty c1..c7 (c8 chỉ là context, không phạt)
-  const c6risk = c6.risk || 0;
+  let c6risk = c6.risk || 0;
   const c4riskRaw = c4.risk || 0;
   const c2risk = c2.risk || 0;
   const c3risk = c3.risk || 0;
@@ -741,6 +741,12 @@ async function verifyWebsite(input, opts = {}) {
   let c4risk = c4riskRaw;
   if (blacklistTrigger !== 100 && aiLegitCategory && noMalwareSignals && noImpersonation && formOnly) {
     c4risk = Math.min(c4risk, 10); // form bình thường trên web thật → gần 0
+  }
+
+  // c6: phần phạt do "entropy" (tên miền có chữ số/dài như doanh nghiệp thật hay dùng "24h", "giare", "online"…)
+  // KHÔNG phải mạo danh — bỏ hẳn khi AI xác nhận doanh nghiệp thật và không có matchedBrand (mạo danh thật).
+  if (blacklistTrigger !== 100 && c6.matchedBrand === null && c6.entropy !== null && aiLegitCategory && !c4.govImpersonationDetected) {
+    c6risk = 0;
   }
 
   let R = blacklistTrigger + c1risk + c2risk + c3risk + c4risk + c6risk + c7risk + c9risk;
@@ -771,30 +777,32 @@ async function verifyWebsite(input, opts = {}) {
     R = Math.min(R, 20);
   }
 
-  // Lý do chính
+  // Lý do chính — viết ngắn, dễ hiểu cho người dùng thường
   const reasons = [];
-  if (blacklistTrigger === 100) reasons.push(`Nguy hiểm: domain có mặt trong danh sách đen bên thứ 3 (${c5.sources.join(', ')}).`);
-  if (c4.cloakDetected) reasons.push('Phát hiện cloaking: nội dung trả về khác nhau theo User-Agent (bot thấy sạch, trình duyệt thấy nội dung đầy đủ).');
-  if (isPaaS) reasons.push('Subdomain trên nền tảng PaaS/SaaS, không kế thừa uy tín của root domain.');
-  if (c1.ageDays !== null && c1.ageDays < 7) reasons.push(`Domain mới tạo (<7 ngày), rủi ro lừa đảo rất cao.`);
-  else if (c1.ageDays !== null && c1.ageDays < 30) reasons.push(`Domain mới (${c1.ageDays} ngày), cần thận trọng.`);
-  if (c6.matchedBrand) reasons.push(`Nghi vấn mạo danh thương hiệu "${c6.matchedBrand}" (typosquatting).`);
-  if (c4.govImpersonationDetected) reasons.push('Trang nhái giao diện/nội dung cơ quan nhà nước (cổng dịch vụ công, thuế, BHXH...) nhưng domain KHÔNG thuộc GOV — rất nghi mạo danh, tuyệt đối không đăng nhập hoặc nộp tiền.');
-  if (formOnly && c4risk >= 25) reasons.push(c4.obfuscatedJsDetected || c4.suspiciousIframeDetected ? 'Phát hiện form đăng nhập kèm dấu hiệu mã độc (JS bị mã hoá / iframe ẩn) trên web chưa đủ tin.' : c4.creditCardDetected ? 'Phát hiện form thu thập thẻ tín dụng trên web chưa xác minh thương hiệu.' : 'Phát hiện form nhạy cảm (mật khẩu/OTP) kết hợp với các dấu hiệu đáng nghi, cần thận trọng khi đăng nhập.');
-  if (aiLegitCategory && (c4.obfuscatedJsDetected || c4.cryptoWalletDetected || c4.suspiciousIframeDetected)) reasons.push('AI xác nhận web có vẻ là doanh nghiệp thật nhưng vẫn có script bị mã hoá hoặc dấu hiệu lạ, kiểm tra kỹ trước khi nhập thông tin.');
-  if (c9.category && c9.risk >= 45) reasons.push(`Nội dung AI nhận diện: ${c9.summary || 'đáng ngờ'} (loại: ${c9.category}, rủi ro ${c9.risk}/100).`);
-  else if (c9.summary) reasons.push(`AI tóm tắt nội dung: ${c9.summary}`);
-  if (verifiedEntry) reasons.push(`Domain đã được xác minh chủ sở hữu (${verifiedEntry.note || 'Lá Chắn Số'}) — ngày ${new Date(verifiedEntry.verifiedAt).toLocaleDateString('vi-VN')}.`);
-  if (state === 'verify') reasons.push(`Chưa đủ tiêu chí đánh giá để xác minh (C=${C.toFixed(2)}, domain ${c1.ageDays !== null ? c1.ageDays + ' ngày' : 'không xác định được'}).`);
+  if (blacklistTrigger === 100) reasons.push(`Nguy hiểm: domain có trong danh sách lừa đảo bên thứ 3 (${c5.sources.join(', ')}).`);
+  if (c4.cloakDetected) reasons.push('Website "chơi khác" với máy quét: máy thấy sạch nhưng người dùng thấy nội dung khác — thủ thuật điển hình của trang lừa đảo.');
+  if (isPaaS) reasons.push('Trang đặt trên nền tảng miễn phí/dùng chung (PaaS) — chưa chắc là công ty thật.');
+  if (c1.ageDays !== null && c1.ageDays < 7) reasons.push('Tên miền vừa mới tạo dưới 1 tuần — trang lừa đảo thường vứt bỏ nhanh các tên miền mới.');
+  else if (c1.ageDays !== null && c1.ageDays < 30) reasons.push(`Tên miền chỉ mới ${c1.ageDays} ngày tuổi, cần thận trọng.`);
+  if (c6.matchedBrand) reasons.push(`Cẩn thận: tên miền giống thương hiệu "${c6.matchedBrand}" (cách vài ký tự) — có thể là web giả mạo.`);
+  if (c4.govImpersonationDetected) reasons.push('Trang nhái cơ quan nhà nước (cổng dịch vụ công, thuế, BHXH...) nhưng không phải tên miền chính phủ — tuyệt đối không đăng nhập hoặc nộp tiền!');
+  if (formOnly && c4risk >= 25) reasons.push(c4.obfuscatedJsDetected || c4.suspiciousIframeDetected ? 'Trang có ô đăng nhập kèm dấu hiệu mã độc (mã ẩn / khung ẩn) — cẩn thận khi nhập mật khẩu.' : c4.creditCardDetected ? 'Trang có biểu mẫu thu thẻ tín dụng nhưng chưa xác minh được công ty — cẩn thận khi thanh toán.' : 'Trang có ô nhập mật khẩu/OTP kèm dấu hiệu lạ — cẩn thận khi đăng nhập.');
+  if (c9.category && c9.risk >= 45) reasons.push(`Nội dung đáng ngờ theo phân tích: ${c9.summary || ''}`);
+  if (verifiedEntry) reasons.push(`Đã xác minh chủ sở hữu (${verifiedEntry.note || 'Lá Chắn Số'}) — ngày ${new Date(verifiedEntry.verifiedAt).toLocaleDateString('vi-VN')}.`);
+  if (state === 'verify') reasons.push('Chưa đủ dữ liệu để khẳng định an toàn (không xác minh được tuổi tên miền) — hãy tự kiểm tra thêm trước khi tin.');
 
   return {
     state,
     R: Math.round(R),
     C: +C.toFixed(2),
     collectedCriteria: collectedCount,
-    criteria: Object.fromEntries(Object.entries(criteria).map(([k, v]) => [
-      k, { collected: v.collected, risk: v.risk || 0 }
-    ])),
+    criteria: Object.fromEntries(Object.entries(criteria).map(([k, v]) => {
+      // Phản ánh điểm thực dùng khi tính R (c4/c6 đã được giảm theo bối cảnh AI legit)
+      let risk = v.risk || 0;
+      if (k === 'c4') risk = c4risk;
+      if (k === 'c6') risk = c6risk;
+      return [k, { collected: v.collected, risk }];
+    })),
     reasons,
     isPaaS,
     paasToken,

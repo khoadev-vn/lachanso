@@ -868,10 +868,18 @@ export async function analyzeWebsite(input: string): Promise<WebVerificationResu
       });
     }
     for (const c of criteria) {
+      let detail: string;
+      if (!c.collected) {
+        detail = "Chưa đủ dữ liệu để kiểm tra mục này — không phạt nhưng cũng chưa thể kết luận.";
+      } else if (c.risk <= 0) {
+        detail = "Không phát hiện vấn đề.";
+      } else {
+        detail = c.risk >= 45 ? "Có dấu hiệu rủi ro rõ ràng." : c.risk >= 20 ? "Có vài dấu hiệu cần lưu ý." : "Có dấu hiệu nhỏ cần kiểm tra thêm.";
+      }
       v2reasons.push({
         id: `C_${c.key}`,
         name: c.name,
-        detail: c.collected ? `Đã thu thập (độ phủ ${Math.round(c.weight * 100)}%).${c.risk > 0 ? ` Điểm rủi ro tiêu chí: ${c.risk}.` : ""}` : `Chưa đủ dữ liệu thu thập (trọng số ${Math.round(c.weight * 100)}%) — không tính phạt nhưng cũng không thể xác nhận an toàn.`,
+        detail,
         status: c.collected ? (c.risk >= 45 ? "danger" : c.risk >= 20 ? "warning" : "success") : "warning",
         icon: c.icon,
         category: c.category,
@@ -881,7 +889,7 @@ export async function analyzeWebsite(input: string): Promise<WebVerificationResu
     for (const r of backendV2.reasons || []) {
       v2reasons.push({
         id: "WEB_BACKEND_NOTE",
-        name: "Ghi chú engine",
+        name: "Ghi chú của Lá Chắn Số",
         detail: r,
         status: "warning",
         icon: Info,
