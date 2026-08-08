@@ -1733,25 +1733,6 @@ export default function App() {
                     })()}
                   </motion.div>
 
-                  {resultData.type === "news" && (() => {
-                    const plain = buildPlainSummary(resultData.analysisReasons ?? [], resultData.isSafe);
-                    return <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className={`overflow-hidden rounded-3xl border p-6 ${resultData.isSafe ? "border-emerald-200 bg-emerald-50/60" : resultData.isWarning ? "border-amber-200 bg-amber-50/60" : "border-red-200 bg-red-50/70"}`}>
-                      <div className="flex items-center gap-2 mb-3">
-                        {resultData.isSafe ? <ShieldCheck className="h-5 w-5 text-emerald-600" /> : resultData.isWarning ? <AlertTriangle className="h-5 w-5 text-amber-600" /> : <X className="h-5 w-5 text-red-600" />}
-                          <h3 className="text-base font-black tracking-tight text-gray-950">Kết luận bằng lời đơn giản</h3>
-                      </div>
-                      <p className={`text-[15px] leading-relaxed font-medium ${resultData.isSafe ? "text-emerald-900" : resultData.isWarning ? "text-amber-900" : "text-red-900"}`}>
-                        {plain.verdict}
-                      </p>
-                      {plain.items.length > 0 && <ul className="mt-4 space-y-2">
-                        {plain.items.map((item, i) => <li key={i} className="flex items-start gap-2.5 text-sm leading-relaxed text-gray-800">
-                          <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${resultData.isSafe ? "bg-emerald-400" : resultData.isWarning ? "bg-amber-400" : "bg-red-400"}`} />
-                          <span>{item}</span>
-                        </li>)}
-                      </ul>}
-                    </motion.div>;
-                  })()}
-
                   {resultData.type === "web" && resultData.aiAnalysis?.available && resultData.aiAnalysis.summary ? <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }} className="relative overflow-hidden rounded-3xl border-2 border-violet-200 bg-gradient-to-br from-violet-600 via-indigo-600 to-fuchsia-600 p-6 shadow-xl shadow-violet-200/50 sm:p-8">
                     <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
                     <div className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-fuchsia-300/20 blur-2xl" />
@@ -1793,6 +1774,25 @@ export default function App() {
                       </div> : null}
                     </div>
                   </motion.div> : null}
+
+                  {resultData.type === "news" && (() => {
+                    const plain = buildPlainSummary(resultData.analysisReasons ?? [], resultData.isSafe);
+                    return <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className={`overflow-hidden rounded-3xl border p-6 ${resultData.isSafe ? "border-emerald-200 bg-emerald-50/60" : resultData.isWarning ? "border-amber-200 bg-amber-50/60" : "border-red-200 bg-red-50/70"}`}>
+                      <div className="flex items-center gap-2 mb-3">
+                        {resultData.isSafe ? <ShieldCheck className="h-5 w-5 text-emerald-600" /> : resultData.isWarning ? <AlertTriangle className="h-5 w-5 text-amber-600" /> : <X className="h-5 w-5 text-red-600" />}
+                          <h3 className="text-base font-black tracking-tight text-gray-950">Kết luận bằng lời đơn giản</h3>
+                      </div>
+                      <p className={`text-[15px] leading-relaxed font-medium ${resultData.isSafe ? "text-emerald-900" : resultData.isWarning ? "text-amber-900" : "text-red-900"}`}>
+                        {plain.verdict}
+                      </p>
+                      {plain.items.length > 0 && <ul className="mt-4 space-y-2">
+                        {plain.items.map((item, i) => <li key={i} className="flex items-start gap-2.5 text-sm leading-relaxed text-gray-800">
+                          <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${resultData.isSafe ? "bg-emerald-400" : resultData.isWarning ? "bg-amber-400" : "bg-red-400"}`} />
+                          <span>{item}</span>
+                        </li>)}
+                      </ul>}
+                    </motion.div>;
+                  })()}
 
                   <div className="grid grid-cols-1 gap-6">
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
