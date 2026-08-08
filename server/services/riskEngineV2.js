@@ -256,21 +256,36 @@ async function collectC4(url, hostname, isPaaS) {
     // Form "thẻ tín dụng / thanh toán" — nhạy cảm hơn form đăng nhập thông thường
     const hasCreditCard = $('input[name*="card"], input[name*="cc"], input[type="number"][maxlength="16"]').length > 0;
 
-    // Mã độc: script inline bị encode/xáo trộn (atob/eval/\\x/\\u)
-    const inlineJs = $('script:not([src])').text() || '';
-    if (/atob\s*\(|eval\s*\(|\bfromCharCode\b|\\x[0-9a-fA-F]{2}\\x[0-9a-fA-F]{2}|\\u00[0-9a-fA-F]{2}\\u00[0-9a-fA-F]{2}/i.test(inlineJs)) {
+// Mã độc: script inline bị encode/xáo trộn — CHỈ báo khi THỰC THI động mã ĐƯỢC MÃ HOÁ.
+    // Lưu ý: "Function(\"return this\")" là pattern phổ biến trong polyfill hợp pháp để lấy globalThis —
+    // KHÔNG phải mã độc. Chỉ flag khi (a) eval/Function nạp chuỗi từ atob/btoa/decode, hi (b) param chứa
+    // escape hex/unicode dày đặc, hoặc (c) base64 dài — tức mã đang bị giải ngược trước khi chạy.
+    // (hex \x, unicode \u, fromCharCode ĐƠN LẺ trong bundle/analytics hợp pháp — momo inline có 3451 escape, GA tag dùng atob.)
+const inlineJs = $('script:not([src])').text() || '';
+    // 1) eval/Function nạp chuỗi từ atob/btoa/decode (giải ngược ngay khi chạy)
+    const inlineDecodedExec = /\beval\s*\(\s*(?:atob|btoa|decodeURIComponent|unescape)\s*\(/i.test(inlineJs) ||
+      /\bnew Function\s*\(\s*(?:atob|btoa|decodeURIComponent|unescape)\s*\(/i.test(inlineJs);
+    // 2) chuỗi literal sau eval(" mở đầu chứa escape hex/unicode (\x.. \u....)
+    const inlineCipherArg = /\beval\s*\(\s*["'`][^"'`\n]*\\[xXuU][0-9a-fA-F]{2,4}/i.test(inlineJs) ||
+      /\bnew Function\s*\(\s*["'`][^"'`\n]*\\[xXuU][0-9a-fA-F]{2,4}/i.test(inlineJs);
+    // 3) param là chuỗi base64/string dài được tạo động cho eval
+    const inlineLongArgEval = /\beval\s*\(\s*["'`][A-Za-z0-9+/=]{40,}["'`]/i.test(inlineJs) ||
+      /\bnew Function\s*\(\s*["'`][^"'`]{60,}["'`]/i.test(inlineJs);
+    // Loại trừ pattern vô hại: Function("return this") dùng lấy globalThis trong polyfill
+    const harmlessGlobalThis = /Function\s*\(\s*["'`](?:return\s+(?:this|globalThis)|[^"'`]{0,20}return\s+this)/i.test(inlineJs);
+    if ((inlineDecodedExec || inlineCipherArg || inlineLongArgEval) && !harmlessGlobalThis) {
       obfuscatedJsDetected = true;
     }
 
-    // Ví crypto: MUỐN TRÁNH false positive — HTML dài có thể chứa chuỗi base58/base64 ngẫu nhiên.
-    // Chỉ coi là ví thật khi (a) có từ 2 địa chỉ khác loại, hoặc (b) 1 địa chỉ kèm ngữ cảnh nạp/ví/thanh toán.
-    const ethAddr = pageText.match(/0x[a-fA-F0-9]{40}\b/g) || [];
-    const btcAddr = pageText.match(/bc1[a-zA-HJ-NP-Z0-9]{25,39}\b/g) || [];
-    const legacyBtc = pageText.match(/\b[13][a-km-zA-HJ-NP-Z1-9]{26,34}\b/g) || [];
-    const tronAddr = pageText.match(/\bT[A-Za-z0-9]{33}\b/g) || [];
-    const cryptoCount = ethAddr.length + btcAddr.length + legacyBtc.length + tronAddr.length;
-    const cryptoContext = /(?:nạp\s+(?:ví|tiền)|địa chỉ ví|ví điện tử|crypto (?:wallet|payment)|wallet|usdt|bitcoin|loại tiền kỹ thuật số|mã QR ví)/i;
-    if (cryptoCount >= 2 || (cryptoCount >= 1 && cryptoContext.test(pageText))) {
+    // Ví crypto: CUỘC CHIẾN false positive — HTML dài chứa nhiều chuỗi base58/hex vô nghĩa và từ "wallet/bitcoin".
+    // Chỉ báo khi một ĐỊA CHỈ VÍ THẬT (độ dài chuẩn: ETH 0x…40, BTC bc1…, TRON T…) xuất hiện trong trang
+    // VÀ ngữ cảnh "ví/nạp/gửi/chuyển tiền mã hóa" nằm ở vùng gần đó (không phải mục khác trong trang).
+    const ethAddresses = pageText.match(/0x[a-fA-F0-9]{40}\b/g) || [];
+    const btcAddresses = pageText.match(/bc1[a-zA-HJ-NP-Z0-9]{25,39}\b/g) || [];
+    const tronAddresses = pageText.match(/\bT[a-zA-HJ-NP-Z0-9]{33}\b/g) || [];
+    const addrCount = ethAddresses.length + btcAddresses.length + tronAddresses.length;
+    const payIndicators = /(?:nạp|gửi|chuyển|nộp)\s*(?:tiền|vào|tới)?\s*(?:ví|wallet|crypto|tiền mã hóa|coin|token)|(?:ví|wallet)\s*(?:điện tử|mã hóa|crypto)?\s*(?:nạp|gửi|nhận|address|địa chỉ)|\b(?:usdt|btc|eth|usdc|trc20|erc20|bep20)\b/i;
+    if (addrCount > 0 && payIndicators.test(pageText)) {
       cryptoWalletDetected = true;
     }
 
@@ -307,9 +322,14 @@ async function collectC4(url, hostname, isPaaS) {
         if (/createElement\s*\(\s*['"]form|type\s*=\s*['"]password|input_otp|login_submit|otp_input|password\s*field/i.test(js)) {
           jsLoginDetected = true;
         }
-        if (/atob\s*\(|eval\s*\(|\bfromCharCode\b|\\x[0-9a-fA-F]{2}\\x[0-9a-fA-F]{2}|\\u00[0-9a-fA-F]{2}\\u00[0-9a-fA-F]{2}/i.test(js)) {
-          obfuscatedJsDetected = true;
-        }
+        // Bundle: chỉ báo khi THỰC THI động mã được mã hoá — bỏ các đơn lẻ eval/atob/Function("return this")
+        const bundleDecodedExec = /\beval\s*\(\s*(?:atob|btoa|decodeURIComponent|unescape)\s*\(/i.test(js) ||
+          /\bnew Function\s*\(\s*(?:atob|btoa|decodeURIComponent|unescape)\s*\(/i.test(js) ||
+          /\beval\s*\(\s*["'`][^"'`\n]*\\[xXuU][0-9a-fA-F]{2,4}/i.test(js);
+        const bundleLongEval = /\beval\s*\(\s*["'`][A-Za-z0-9+/=]{40,}["'`]/i.test(js) ||
+          /\bnew Function\s*\(\s*["'`][^"'`]{60,}["'`]/i.test(js);
+        const bundleHarmless = /Function\s*\(\s*["'`](?:return\s+(?:this|globalThis)|[^"'`]{0,20}return\s+this)/i.test(js);
+        if ((bundleDecodedExec || bundleLongEval) && !bundleHarmless) obfuscatedJsDetected = true;
       } catch (e) {}
     }));
   }
