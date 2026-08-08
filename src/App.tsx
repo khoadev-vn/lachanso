@@ -1,9 +1,10 @@
 import { motion, AnimatePresence, animate, useMotionValue, useSpring, useTransform } from "motion/react";
 import { Analytics } from "@vercel/analytics/react";
 import GlobeViz from "./components/GlobeViz";
-import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users, Landmark, Scale, HeartPulse, Info, HelpCircle, Flag } from "lucide-react";
+import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users, Landmark, Scale, HeartPulse, Info, HelpCircle, Flag, LifeBuoy, ShieldAlert } from "lucide-react";
 import OwnerVerifyModal from "./components/OwnerVerifyModal";
 import ReportIssueModal from "./components/ReportIssueModal";
+import NextStepsGuideModal from "./components/NextStepsGuideModal";
 import ColorLegendModal from "./components/ColorLegendModal";
 import ThirdPartyModal from "./components/ThirdPartyModal";
 import ThirdPartyResultsPanel from "./components/ThirdPartyResultsPanel";
@@ -258,6 +259,7 @@ export default function App() {
   const [reportIssueOpen, setReportIssueOpen] = useState(false);
   const [colorLegendOpen, setColorLegendOpen] = useState(false);
   const [thirdPartyOpen, setThirdPartyOpen] = useState(false);
+  const [nextStepsOpen, setNextStepsOpen] = useState(false);
   const [selectedInfoItem, setSelectedInfoItem] = useState<{ title: string; description: string; link: string; category: string; } | null>(null);
   const [selectedBlogSlug, setSelectedBlogSlug] = useState<string | null>(() => {
     const path = window.location.pathname;
@@ -957,6 +959,21 @@ export default function App() {
           score = Math.min(score, 42);
         }
 
+        const isEducational = (fullScanResult && fullScanResult.isEducational) || false;
+        if (isEducational) {
+          score = Math.max(score, 84);
+          const eduSuppressIds = new Set(["KG_PANIC", "KG_CLICKBAIT", "KG_URGENCY", "KG_FINANCIAL", "LOGIC_DAO_01", "CORR_01", "L042", "L081", "L082", "L164", "LF_COHERENCE_LOW", "TG_NO_SOURCE", "UNSOURCED_CLAIM", "LIVE_NO_EVIDENCE", "LIVE_PRESS_UNCONFIRMED"]);
+          reasons.forEach((r) => {
+            if (eduSuppressIds.has(r.id)) {
+              if (r.status === "danger") r.status = "warning";
+              r.detail = `(Bối cảnh hướng dẫn/giáo dục) ${r.detail}`;
+            }
+          });
+          for (let i = reasons.length - 1; i >= 0; i -= 1) {
+            if (blockingMismatchIds.has(reasons[i].id) && reasons[i].id.startsWith("LIVE_")) reasons.splice(i, 1);
+          }
+        }
+
         score = Math.max(0, Math.min(100, score));
 
         const isGossip = reasons.some((r) => r.id === "KG_GOSSIP");
@@ -973,9 +990,9 @@ export default function App() {
         }
 
         const successReasonCount = reasons.filter((r) => r.status === "success").length;
-        const isEducational = fullScanResult?.isEducational || false;
-        
+
         if (isEducational) {
+          score = Math.max(score, 84);
           analysisDetails.internal_verdict = `Hệ thống nhận định: NỘI DUNG GIÁO DỤC. Bài viết được xác định là hướng dẫn/cảnh báo về tin giả. Từ khóa cảnh báo xuất hiện trong bối cảnh ví dụ/hướng dẫn — KHÔNG phải tin giả. Điểm tin cậy: ${score}%.`;
         } else {
           analysisDetails.internal_verdict = score >= 75 ?
@@ -1741,6 +1758,10 @@ export default function App() {
                             <HelpCircle className="h-5 w-5" />
                             Giải thích 4 mức
                           </button>
+                          {st === "danger" && <button type="button" onClick={() => setNextStepsOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-red-300 bg-red-50 px-6 py-3.5 text-[15px] font-bold text-red-700 shadow-md transition-colors hover:bg-red-100">
+                            <LifeBuoy className="h-5 w-5" />
+                            Tôi nên làm gì tiếp?
+                          </button>}
                         </div>
                         <div className="inline-flex w-full items-center justify-center gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
                           <AlertTriangle className="h-5 w-5 shrink-0" />
@@ -1810,6 +1831,10 @@ export default function App() {
                           <HelpCircle className="h-4 w-4" />
                           Giải thích kết quả
                         </button>
+                        {resultData.isDanger && <button type="button" onClick={() => setNextStepsOpen(true)} className="inline-flex items-center gap-2 rounded-xl border-2 border-red-300 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition-colors hover:bg-red-100">
+                          <LifeBuoy className="h-4 w-4" />
+                          Tôi nên làm gì tiếp?
+                        </button>}
                       </div>
                     </motion.div>;
                   })()}
@@ -2649,6 +2674,15 @@ export default function App() {
         defaultType={resultData?.type === "news" ? (resultData.isSafe ? "false_negative" : "false_positive") : "false_positive"}
       />
       <ColorLegendModal open={colorLegendOpen} onOpenChange={setColorLegendOpen} />
+      <NextStepsGuideModal
+        open={nextStepsOpen}
+        onOpenChange={setNextStepsOpen}
+        kind={resultData?.type === "news" ? "news" : "web"}
+        dangerLevel={resultData?.type === "news" ? (resultData.isDanger ? "danger" : resultData.isWarning ? "warning" : "safe") : (() => {
+          const st = resultData ? resolveWebState(resultData) : "safe";
+          return st === "danger" ? "danger" : st === "warning" ? "warning" : "safe";
+        })()}
+      />
       <ThirdPartyModal open={thirdPartyOpen} onOpenChange={setThirdPartyOpen} thirdParty={resultData?.thirdParty} ipInfo={resultData?.ipInfo} />
     </div>);
 
