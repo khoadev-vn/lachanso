@@ -416,16 +416,19 @@ export default function App() {
           name: "Vietnix",
           description: "Vietnix là nhà cung cấp hạ tầng và dịch vụ hosting, VPS, máy chủ riêng, giúp doanh nghiệp và người dùng vận hành nền tảng số ổn định và bảo mật.",
           link: "https://vietnix.vn/",
+          logo: "/partners/vietnix.svg",
         },
         {
           name: "Unikorn.vn",
           description: "Nền tảng xếp hạng và là đối tác tài trợ hạ tầng công nghệ cho Lá Chắn Số.",
           link: "https://unikorn.vn/",
+          logo: "/partners/unikorn-apple.png",
         },
 {
           name: "Retask.Work",
           description: "Đối tác tài trợ hạ tầng công nghệ, đồng hành vận hành hệ thống kiểm chứng.",
           link: "https://retask.work/",
+          logo: "/partners/retask_icon.svg",
         }
       ]
     }];
@@ -2594,13 +2597,19 @@ export default function App() {
                 <section key={group.title}>
                   <h3 className="text-2xl font-black tracking-tight text-[#0f343d]">{group.title}</h3>
                   <div className="my-5 h-px w-full bg-gray-200" />
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {group.items.map((item) =>
-                      <button key={item.name} type="button" onClick={() => setSelectedInfoItem({ title: item.name, description: item.description, link: item.link, category: "Thương hiệu & đối tác" })} className="group flex h-28 flex-col items-center justify-center gap-2.5 rounded-2xl border border-gray-100 bg-white p-4 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg cursor-pointer">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500/90 to-amber-500 text-xl font-black text-white">
-                          {item.name.charAt(0)}
+                      <button key={item.name} type="button" onClick={() => setSelectedInfoItem({ title: item.name, description: item.description, link: item.link, category: "Thương hiệu & đối tác" })} className="group flex h-44 flex-col items-center justify-center gap-4 rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg cursor-pointer">
+                        <div className="flex h-24 w-full items-center justify-center">
+                          {item.logo ? (
+                            <img src={item.logo} alt={item.name} loading="lazy" className="max-h-24 max-w-[220px] object-contain" />
+                          ) : (
+                            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500/90 to-amber-500 text-xl font-black text-white">
+                              {item.name.charAt(0)}
+                            </div>
+                          )}
                         </div>
-                        <span className="text-sm font-bold tracking-wide text-[#111] leading-tight">{item.name}</span>
+                        <span className="text-base font-bold tracking-wide text-[#111] leading-tight">{item.name}</span>
                       </button>
                     )}
                   </div>
