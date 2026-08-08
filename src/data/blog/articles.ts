@@ -742,7 +742,7 @@ Con người không thể nhớ và kiểm tra mọi thông tin. Công cụ AI g
 
 ## Top 5 Công Cụ Miễn Phí
 
-### 1. Lá Chạn Số (lachansovn.vercel.app)
+### 1. Lá Chắn Số (lachansovn.com)
 **Điểm mạnh:**
 - Phân tích AI đa tầng: ngôn ngữ, tin cậy, hành vi
 - Đồ thị tin cậy với 1,000+ nguồn uy tín
@@ -750,7 +750,7 @@ Con người không thể nhớ và kiểm tra mọi thông tin. Công cụ AI g
 - Miễn phí, không cần đăng ký
 
 **Cách sử dụng:**
-1. Truy cập lachansovn.vercel.app
+1. Truy cập lachansovn.com
 2. Dán link hoặc văn bản cần kiểm tra
 3. Nhấn "Kiểm tra"
 4. Xem kết quả phân tích

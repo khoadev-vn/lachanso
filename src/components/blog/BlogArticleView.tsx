@@ -7,7 +7,7 @@ interface BlogArticleViewProps {
 }
 
 export default function BlogArticleView({ article, onBack }: BlogArticleViewProps) {
-  const shareUrl = `https://lachansovn.vercel.app/blog/${article.slug}`;
+  const shareUrl = `https://lachansovn.com/blog/${article.slug}`;
   const shareText = `${article.title} - ${article.description}`;
 
   const renderContent = (content: string) => {
