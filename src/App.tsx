@@ -1,12 +1,13 @@
 import { motion, AnimatePresence, animate, useMotionValue, useSpring, useTransform } from "motion/react";
 import { Analytics } from "@vercel/analytics/react";
 import GlobeViz from "./components/GlobeViz";
-import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users, Landmark, Scale, HeartPulse, Info, HelpCircle, Flag, LifeBuoy, ShieldAlert, Download } from "lucide-react";
+import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users, Landmark, Scale, HeartPulse, Info, HelpCircle, Flag, LifeBuoy, ShieldAlert, Download, ListOrdered } from "lucide-react";
 import OwnerVerifyModal from "./components/OwnerVerifyModal";
 import ReportIssueModal from "./components/ReportIssueModal";
 import NextStepsGuideModal from "./components/NextStepsGuideModal";
 import { buildFbChannelReason } from "./constants/facebookChannelReputation";
 import ColorLegendModal from "./components/ColorLegendModal";
+import WhyScoreModal from "./components/WhyScoreModal";
 import ThirdPartyModal from "./components/ThirdPartyModal";
 import ThirdPartyResultsPanel from "./components/ThirdPartyResultsPanel";
 import { useState, useEffect, FormEvent, useRef } from "react";
@@ -341,6 +342,7 @@ export default function App() {
   const [colorLegendOpen, setColorLegendOpen] = useState(false);
   const [thirdPartyOpen, setThirdPartyOpen] = useState(false);
   const [nextStepsOpen, setNextStepsOpen] = useState(false);
+  const [whyScoreOpen, setWhyScoreOpen] = useState(false);
   const [installPromptEvt, setInstallPromptEvt] = useState<any>(null);
   const [installBannerOpen, setInstallBannerOpen] = useState(false);
   const [selectedInfoItem, setSelectedInfoItem] = useState<{ title: string; description: string; link: string; category: string; } | null>(null);
@@ -414,6 +416,16 @@ export default function App() {
           name: "Vietnix",
           description: "Vietnix là nhà cung cấp hạ tầng và dịch vụ hosting, VPS, máy chủ riêng, giúp doanh nghiệp và người dùng vận hành nền tảng số ổn định và bảo mật.",
           link: "https://vietnix.vn/",
+        },
+        {
+          name: "Unikorn.vn",
+          description: "Nền tảng xếp hạng và là đối tác tài trợ hạ tầng công nghệ cho Lá Chắn Số.",
+          link: "https://unikorn.vn/",
+        },
+        {
+          name: "Retask.Work",
+          description: "Đối tác tài trợ hạ tầng công nghệ, đồng hành vận hành hệ thống kiểm chứng.",
+          link: "https://retask.work/",
         }
       ]
     },
@@ -1935,6 +1947,9 @@ export default function App() {
                             </span>
                           </div>
                         </div>
+                        <button type="button" onClick={() => setWhyScoreOpen(true)} className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3.5 py-1.5 text-xs font-bold text-orange-700 transition-colors hover:border-orange-400 hover:bg-orange-100">
+                          <ListOrdered className="h-3.5 w-3.5" /> Vì sao điểm này?
+                        </button>
                       </div>
 
                       <div className="min-w-0">
@@ -1986,6 +2001,10 @@ export default function App() {
                           <button type="button" onClick={() => setReportIssueOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-gray-300 bg-white px-6 py-3.5 text-[15px] font-bold text-gray-800 shadow-md transition-colors hover:border-orange-400 hover:bg-orange-50 hover:text-orange-700">
                             <Flag className="h-5 w-5" />
                             Báo kết quả sai (khiếu nại)
+                          </button>
+                          <button type="button" onClick={() => setWhyScoreOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-orange-300 bg-orange-50 px-6 py-3.5 text-[15px] font-bold text-orange-700 shadow-md transition-colors hover:bg-orange-100">
+                            <ListOrdered className="h-5 w-5" />
+                            Vì sao điểm này?
                           </button>
                           <button type="button" onClick={() => setColorLegendOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-gray-300 bg-white px-6 py-3.5 text-[15px] font-bold text-gray-800 shadow-md transition-colors hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700">
                             <HelpCircle className="h-5 w-5" />
@@ -2915,6 +2934,13 @@ export default function App() {
           const st = resultData ? resolveWebState(resultData) : "safe";
           return st === "danger" ? "danger" : st === "warning" ? "warning" : "safe";
         })()}
+      />
+      <WhyScoreModal
+        open={whyScoreOpen}
+        onOpenChange={setWhyScoreOpen}
+        title={resultData?.title ?? ""}
+        score={resultData?.score}
+        reasons={resultData?.analysisReasons ?? []}
       />
       <ThirdPartyModal open={thirdPartyOpen} onOpenChange={setThirdPartyOpen} thirdParty={resultData?.thirdParty} ipInfo={resultData?.ipInfo} />
 
