@@ -256,7 +256,7 @@ export default function App() {
         .catch(err => console.error("Error fetching cached news:", err));
     }
   }, [currentPage]);
-  const [checkType, setCheckType] = useState<"web" | "news">("web");
+  const [checkType, setCheckType] = useState<"web" | "news" | "message">("web");
   const [previewCandidateIndex, setPreviewCandidateIndex] = useState(0);
   const [analysisExpanded, setAnalysisExpanded] = useState(false);
   const [newsAiSummary, setNewsAiSummary] = useState<{ summary: string | null; key_points: string[]; credibility_note: string; detection_note: string; loading: boolean; loaded: boolean }>({ summary: null, key_points: [], credibility_note: "", detection_note: "", loading: false, loaded: false });
@@ -463,7 +463,7 @@ export default function App() {
       confidence: "Đang phân tích nhiều lớp",
       title: "Đang phân tích nội dung",
       description: "Kết quả sẽ được đổ dần theo từng lớp kiểm tra nội bộ và đối chiếu ngoài.",
-      checkTypeLabel: checkType === "web" ? "Website / URL" : "Đang phân loại nội dung...",
+      checkTypeLabel: checkType === "web" ? "Website / URL" : checkType === "message" ? "Tin nhắn / SMS lừa đảo" : "Đang phân loại nội dung...",
       analysisReasons: [
         {
           id: "PIPELINE_LOADING",
@@ -573,7 +573,22 @@ export default function App() {
         const inputLinks = extractLinksFromText(searchQuery);
         const articleExtraction = inputLinks.length > 0 ? await extractArticleForAnalysis(inputLinks[0]) : null;
         const text = articleExtraction?.contentForAnalysis ?? searchQuery;
-        const liveNewsCheckPromise = runLiveNewsCheck(text);
+                const isMessage = checkType === "message";
+        const emptyLiveNewsCheck: any = {
+          enabled: false,
+          scoreDelta: 0,
+          reasons: [],
+          summary: {
+            live_fact_check: "Chế độ Tin nhắn — không chạy đối chiếu fact-check nguồn ngoài.",
+            live_press_scan: "Chế độ Tin nhắn — không dò bài báo liên quan.",
+            open_knowledge_check: "Chế độ Tin nhắn — không đối chiếu tri thức mở.",
+            headline_verification: undefined
+          },
+          verifiedExternally: false,
+          pressArticles: [],
+          pressSourceLabel: "Không áp dụng"
+        };
+        const liveNewsCheckPromise = isMessage ? Promise.resolve(emptyLiveNewsCheck) : runLiveNewsCheck(text);
         const reasons: any[] = [];
         const violatedRules: string[] = [];
         const reasonIds = new Set<string>();
@@ -611,40 +626,41 @@ export default function App() {
 
         
         let fullScanResult: any = null;
-        try {
-          const scanRes = await fetch("/api/full-scan", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text })
-          });
-          if (scanRes.ok) {
-            fullScanResult = await scanRes.json();
-          }
-        } catch (err) {
-          console.error("Full scan failed", err);
-        }
-
-        // ============ COMPREHENSIVE VERIFICATION ============
         let comprehensiveResult: any = null;
-        try {
-          const compRes = await fetch("/api/verify-comprehensive", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text })
-          });
-          if (compRes.ok) {
-            comprehensiveResult = await compRes.json();
+        if (!isMessage) {
+          try {
+            const scanRes = await fetch("/api/full-scan", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text })
+            });
+            if (scanRes.ok) {
+              fullScanResult = await scanRes.json();
+            }
+          } catch (err) {
+            console.error("Full scan failed", err);
           }
-        } catch (err) {
-          console.error("Comprehensive verification failed", err);
+
+          try {
+            const compRes = await fetch("/api/verify-comprehensive", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text })
+            });
+            if (compRes.ok) {
+              comprehensiveResult = await compRes.json();
+            }
+          } catch (err) {
+            console.error("Comprehensive verification failed", err);
+          }
         }
 
         const lcsResult = await runLCSEngine(text);
 
-        let typeLabel = "Tin tức / Sự kiện";
-        if (inputLinks.length > 0) typeLabel = "Bài báo / Liên kết Web"; else
-          if (lcsResult.narrativeProfile.id === "BIO_HOAX") typeLabel = "Tin đồn về Nhân vật"; else
-            if (lcsResult.narrativeProfile.label) typeLabel = lcsResult.narrativeProfile.label;
+        let typeLabel = isMessage ? "Tin nhắn / SMS lừa đảo" : "Tin tức / Sự kiện";
+        if (lcsResult.narrativeProfile.id === "BIO_HOAX") typeLabel = "Tin đồn về Nhân vật"; else
+          if (lcsResult.narrativeProfile.label && !isMessage) typeLabel = lcsResult.narrativeProfile.label;
+        if (inputLinks.length > 0 && !isMessage) typeLabel = "Bài báo / Liên kết Web";
 
 
         setResultData((prev: any) => ({ ...prev, checkTypeLabel: typeLabel }));
@@ -1327,12 +1343,15 @@ export default function App() {
                       <button onClick={() => setCheckType("news")} className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${checkType === "news" ? "bg-orange-500 text-white" : "bg-white/10 text-gray-500 hover:bg-white/20"}`}>
                         Tin giả
                       </button>
+                      <button onClick={() => setCheckType("message")} className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${checkType === "message" ? "bg-orange-500 text-white" : "bg-white/10 text-gray-500 hover:bg-white/20"}`}>
+                        Tin nhắn
+                      </button>
                     </div>
 
                     <form onSubmit={handleCheck} className="space-y-3">
                       <input
                         type="text"
-                        placeholder={checkType === "web" ? "Nhập URL cần kiểm tra..." : "Nhập tiêu đề hoặc đoạn văn..."}
+                        placeholder={checkType === "web" ? "Nhập URL cần kiểm tra..." : checkType === "message" ? "Dán nội dung tin nhắn cần kiểm tra..." : "Nhập tiêu đề hoặc đoạn văn..."}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full px-5 py-4 rounded-2xl bg-white/8 border border-white/10 text-white placeholder-gray-500 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/10 transition-colors text-sm" />
@@ -1581,12 +1600,14 @@ export default function App() {
               <button onClick={() => setCheckType("news")} className={`px-6 py-2 rounded-full text-sm font-bold transition-all border border-[#ff8904] ${checkType === "news" ? "bg-[#ff8904] text-white" : "bg-white text-[#ff8904] hover:bg-orange-50"}`}>
                 Kiểm tra Tin giả
               </button>
+              <button onClick={() => setCheckType("message")} className={`px-6 py-2 rounded-full text-sm font-bold transition-all border border-[#ff8904] ${checkType === "message" ? "bg-[#ff8904] text-white" : "bg-white text-[#ff8904] hover:bg-orange-50"}`}>
+                Kiểm tra Tin nhắn
+              </button>
             </div>
-
 
             <form onSubmit={handleCheck} className="relative max-w-3xl mx-auto mb-16">
               <div className="relative flex items-center w-full h-16 px-8 bg-[#ff8904] rounded-full shadow-lg">
-                <input type="text" placeholder="Nhập đường dẫn, văn bản cần kiểm tra" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-transparent border-none outline-none text-white placeholder-white/60 text-lg" />
+                <input type="text" placeholder={checkType === "web" ? "Nhập đường dẫn cần kiểm tra" : checkType === "message" ? "Dán nội dung tin nhắn cần kiểm tra" : "Nhập đường dẫn, văn bản cần kiểm tra"} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-transparent border-none outline-none text-white placeholder-white/60 text-lg" />
                 <button type="submit" disabled={isChecking}>
                   {isChecking ? <Loader2 className="w-6 h-6 text-white animate-spin ml-3" /> : <Search className="w-6 h-6 text-white ml-3 cursor-pointer hover:scale-110 transition-transform" />}
                 </button>
@@ -2186,7 +2207,7 @@ export default function App() {
                   </div>
                 </motion.div>}
 
-                {resultData.type === "news" && resultData.pressArticles && <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
+                {resultData.type === "news" && resultData.pressArticles && resultData.pressArticles.length > 0 && <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
                   <div className="flex flex-col gap-4 border-b border-gray-100 p-5 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h3 className="text-lg font-black tracking-tight text-gray-950">LCS Press Matrix — Đối Chiếu Báo Chí</h3>
