@@ -7,6 +7,7 @@ export interface TrustedDomain {
 }
 export type TrustedDomainCategory = "gov_vn" | "media_vn" | "bank_vn" | "gov_global" | "media_global" | "tech_global" | "edu_vn" | "health_vn" | "fintech_vn" | "ecom_vn" | "factcheck" | "security" | "telecom_vn";
 export const TRUSTED_DOMAINS: TrustedDomain[] = [
+{ domain: "lachansovn.com", category: "security", country: "VN", trustScore: 95, note: "Lá Chắn Số — cổng kiểm tra an toàn nội bộ" },
 { domain: "chinhphu.vn", category: "gov_vn", country: "VN", trustScore: 100, note: "Cổng thông tin điện tử Chính phủ" },
 { domain: "mps.gov.vn", category: "gov_vn", country: "VN", trustScore: 100, note: "Bộ Công an" },
 { domain: "mic.gov.vn", category: "gov_vn", country: "VN", trustScore: 100, note: "Bộ Thông tin & Truyền thông" },
