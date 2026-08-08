@@ -6,6 +6,7 @@ import OwnerVerifyModal from "./components/OwnerVerifyModal";
 import ReportIssueModal from "./components/ReportIssueModal";
 import ColorLegendModal from "./components/ColorLegendModal";
 import ThirdPartyModal from "./components/ThirdPartyModal";
+import ThirdPartyResultsPanel from "./components/ThirdPartyResultsPanel";
 import { useState, useEffect, FormEvent, useRef } from "react";
 import type { PointerEvent } from "react";
 import { extractArticleForAnalysis } from "./constants/articleExtraction";
@@ -1734,12 +1735,8 @@ export default function App() {
                     })()}
                   </motion.div>
 
-                  {resultData.type === "web" && resultData.aiAnalysis?.available && resultData.aiAnalysis.summary ? <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }} className="relative overflow-hidden rounded-3xl border-2 border-violet-200 bg-gradient-to-br from-violet-600 via-indigo-600 to-fuchsia-600 p-6 shadow-xl shadow-violet-200/50 sm:p-8">
-                    <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
-                    <div className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-fuchsia-300/20 blur-2xl" />
-
+                  {resultData.type === "web" && resultData.aiAnalysis?.available && resultData.aiAnalysis.summary ? <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }} className="relative overflow-hidden rounded-3xl border-2 border-orange-200 bg-gradient-to-br from-orange-500 via-orange-400 to-amber-400 p-6 shadow-xl shadow-orange-200/50 sm:p-8">
                     {resultData.aiAnalysis.risk >= 45 || ["gambling", "scam", "phishing", "adult", "parked", "redirect"].includes((resultData.aiAnalysis.category || "").toLowerCase()) ? <div className="relative mb-5 flex items-start gap-3 rounded-2xl border border-red-300/40 bg-red-500/20 px-4 py-3 backdrop-blur-sm">
-                      <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-100" />
                       <div>
                         <p className="text-sm font-black uppercase tracking-wide text-white">Cảnh báo AI: nội dung có dấu hiệu nguy hiểm</p>
                         <p className="mt-0.5 text-xs font-medium text-red-50">Hệ thống phân loại web này là "{resultData.aiAnalysis.category}" (rủi ro {resultData.aiAnalysis.risk}/100). Cân nhắc rất kỹ trước khi tin tưởng.</p>
@@ -1747,20 +1744,15 @@ export default function App() {
                     </div> : null}
 
                     <div className="relative flex items-start justify-between gap-4">
-                      <div className="flex items-center gap-3.5">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20 text-white backdrop-blur-sm">
-                          <Sparkles className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <p className="text-xl font-black tracking-tight text-white sm:text-2xl">AI Tóm Tắt Nội Dung Web</p>
-                          <p className="mt-0.5 text-xs font-semibold text-violet-100">{WEB_AI_CATEGORY_LABEL[resultData.aiAnalysis.category || "unknown"]?.label || "Đọc trang qua GPT · phân loại bản chất"}</p>
-                        </div>
+                      <div>
+                        <p className="text-xl font-black tracking-tight text-white sm:text-2xl">AI Tóm Tắt Nội Dung Web</p>
+                        <p className="mt-0.5 text-xs font-semibold text-orange-100">{WEB_AI_CATEGORY_LABEL[resultData.aiAnalysis.category || "unknown"]?.label || "Đọc trang qua GPT · phân loại bản chất"}</p>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
-                        <span className={`rounded-full px-3 py-1 text-xs font-black uppercase ${resultData.aiAnalysis.risk >= 45 ? "bg-white text-red-700" : resultData.aiAnalysis.risk >= 20 ? "bg-amber-300 text-amber-900" : "bg-white text-emerald-700"}`}>
+                        <span className={`rounded-full px-3 py-1 text-xs font-black uppercase ${resultData.aiAnalysis.risk >= 45 ? "bg-white text-red-700" : resultData.aiAnalysis.risk >= 20 ? "bg-orange-200 text-orange-900" : "bg-white text-emerald-700"}`}>
                           {resultData.aiAnalysis.category || "unknown"}
                         </span>
-                        <span className="rounded-full bg-black/20 px-3 py-1 text-xs font-black text-white ring-1 ring-white/40">
+                        <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-black text-white ring-1 ring-white/40">
                           Rủi ro {resultData.aiAnalysis.risk}/100
                         </span>
                       </div>
@@ -1769,12 +1761,14 @@ export default function App() {
                     <div className="relative mt-5 rounded-2xl bg-white/95 p-5 shadow-lg sm:p-6">
                       <p className="text-[15px] font-medium leading-7 text-gray-900 sm:text-base">{resultData.aiAnalysis.summary}</p>
                       {resultData.aiAnalysis.keywords?.length ? <div className="mt-4 flex flex-wrap gap-2">
-                        {resultData.aiAnalysis.keywords.map((kw: string, idx: number) => <span key={idx} className="rounded-full bg-violet-600/10 px-3 py-1 text-xs font-bold text-violet-700 ring-1 ring-violet-200">
+                        {resultData.aiAnalysis.keywords.map((kw: string, idx: number) => <span key={idx} className="rounded-full bg-orange-500/10 px-3 py-1 text-xs font-bold text-orange-700 ring-1 ring-orange-200">
                           #{kw}
                         </span>)}
                       </div> : null}
                     </div>
                   </motion.div> : null}
+
+                  {resultData.type === "web" && (resultData.thirdParty?.length || resultData.ipInfo?.detail?.ips?.length) ? <ThirdPartyResultsPanel thirdParty={resultData.thirdParty} ipInfo={resultData.ipInfo} /> : null}
 
                   {resultData.type === "news" && (() => {
                     const plain = buildPlainSummary(resultData.analysisReasons ?? [], resultData.isSafe);
