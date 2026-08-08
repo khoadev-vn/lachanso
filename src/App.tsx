@@ -2576,34 +2576,35 @@ export default function App() {
           </div>
         </motion.div>}
 
-        {currentPage === "partners" && <motion.div key="partners" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="pt-32 pb-20 px-6 min-h-screen bg-white">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-20">
-              <motion.span initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="font-mono text-sm tracking-[0.3em] uppercase mb-4 block text-[#ff8904]">
-                Mạng lưới hợp tác
-              </motion.span>
-              <h2 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 text-[#ff8904]">Đồng hành cùng Lá Chắn Số</h2>
-              <p className="text-black max-w-2xl mx-auto text-lg">
-                Chúng tôi tự hào được đồng hành cùng các tổ chức bảo mật toàn cầu, cơ quan báo chí và đơn vị xác thực uy tín để kiến tạo một không gian mạng an toàn.
+{currentPage === "partners" && <motion.div key="partners" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="pt-32 pb-20 px-6 min-h-screen bg-white">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-[#111111] text-orange-600">Đối tác đồng hành</h1>
+              <p className="mx-auto mt-6 max-w-3xl text-center text-[15px] leading-7 text-gray-600">
+                Lá Chắn Số là nền tảng phi lợi nhuận chuyên kiểm tra tin giả, lừa đảo và bảo vệ người dùng trên không gian mạng.
+                Chúng tôi xin gửi lời tri ân sâu sắc đến tất cả đối tác đồng hành. Sự hỗ trợ quý báu của các bạn là nền tảng
+                vững chắc giúp chúng tôi phát triển giải pháp sáng tạo, nâng cao nhận thức về an toàn thông tin và trang bị
+                cho người dùng khả năng tự bảo vệ trước các thủ đoạn lừa đảo tinh vi. Chúng tôi mong muốn tiếp tục đồng hành
+                cùng các bạn trong tương lai!
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-12">
+            <div className={`grid gap-10 ${partnerGroups.length > 1 ? "md:grid-cols-2" : ""}`}>
               {partnerGroups.map((group) =>
-                <div key={group.title} className="bg-[#F9F9FB] rounded-[40px] p-12 flex flex-col md:flex-row gap-12 border border-gray-100">
-                  <div className="md:w-1/3">
-                    <h3 className="text-2xl font-bold text-black mb-4">{group.title}</h3>
-                    <p className="text-black font-medium">{group.subtitle}</p>
-                  </div>
-                  <div className="md:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <section key={group.title}>
+                  <h3 className="text-2xl font-black tracking-tight text-[#0f343d]">{group.title}</h3>
+                  <div className="my-5 h-px w-full bg-gray-200" />
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                     {group.items.map((item) =>
-                      <button key={item.name} type="button" onClick={() => setSelectedInfoItem({ title: item.name, description: item.description, link: item.link, category: "Thương hiệu & đối tác" })} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-50 flex items-center gap-4 group hover:border-orange-200 transition-all text-left cursor-pointer">
-                        <div className="w-2 h-2 rounded-full group-hover:scale-150 transition-transform bg-[#ff8904]" />
-                        <span className="font-bold text-black tracking-wide">{item.name}</span>
+                      <button key={item.name} type="button" onClick={() => setSelectedInfoItem({ title: item.name, description: item.description, link: item.link, category: "Thương hiệu & đối tác" })} className="group flex h-28 flex-col items-center justify-center gap-2.5 rounded-2xl border border-gray-100 bg-white p-4 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg cursor-pointer">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500/90 to-amber-500 text-xl font-black text-white">
+                          {item.name.charAt(0)}
+                        </div>
+                        <span className="text-sm font-bold tracking-wide text-[#111] leading-tight">{item.name}</span>
                       </button>
                     )}
                   </div>
-                </div>
+                </section>
               )}
             </div>
           </div>
