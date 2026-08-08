@@ -422,45 +422,12 @@ export default function App() {
           description: "Nền tảng xếp hạng và là đối tác tài trợ hạ tầng công nghệ cho Lá Chắn Số.",
           link: "https://unikorn.vn/",
         },
-        {
+{
           name: "Retask.Work",
           description: "Đối tác tài trợ hạ tầng công nghệ, đồng hành vận hành hệ thống kiểm chứng.",
           link: "https://retask.work/",
         }
       ]
-    },
-    {
-      title: "Nhóm 2: Global Security Intelligence",
-      subtitle: "(Dữ liệu bảo mật)",
-      items: [
-        { name: "DNS-BLOCKLISTS", description: "Dịch vụ theo dõi và chặn danh sách miền độc hại theo chuẩn DNSBL.", link: "https://www.dnsbl.info/" },
-        { name: "MALWARE-FILTER", description: "Cơ sở dữ liệu và bộ lọc cảnh báo phần mềm độc hại phổ biến.", link: "https://www.malwaredomains.com/" },
-        { name: "PhishTank", description: "Cộng đồng báo cáo và chia sẻ các trang phishing để bảo vệ người dùng.", link: "https://phishtank.org/" },
-        { name: "OpenPhish", description: "Nền tảng phát hiện và đăng ký các trang lừa đảo đang hoạt động.", link: "https://openphish.com/" },
-        { name: "GITHUB COMMUNITY", description: "Cộng đồng mã nguồn mở và dữ liệu bảo mật chia sẻ chung trên GitHub.", link: "https://github.com/" }]
-
-    },
-    {
-      title: "Nhóm 3: Fact-Check & Global Media",
-      subtitle: "(Xác thực & Báo chí quốc tế)",
-      items: [
-        { name: "Google News", description: "Nguồn tin tức và cập nhật thời sự từ Google News.", link: "https://news.google.com/" },
-        { name: "AP News", description: "Thông tin thời sự từ Associated Press.", link: "https://apnews.com/" },
-        { name: "AFP", description: "Đài tin tức quốc tế AFP cung cấp dữ liệu báo chí toàn cầu.", link: "https://www.afp.com/" },
-        { name: "CNN", description: "Kênh tin tức quốc tế CNN với nhiều bản tin được xác minh.", link: "https://edition.cnn.com/" },
-        { name: "The New York Times", description: "Tạp chí và bản tin quốc tế uy tín của The New York Times.", link: "https://www.nytimes.com/" }]
-
-    },
-    {
-      title: "Nhóm 4: Vietnam Verification Hub",
-      subtitle: "(Tin tức & Xác thực Việt Nam)",
-      items: [
-        { name: "TINGIA.GOV", description: "Cổng thông tin chính thống và nguồn xác thực từ các cơ quan nhà nước Việt Nam.", link: "https://tingia.gov.vn/" },
-        { name: "VNEXPRESS", description: "Trang tin tức uy tín và nhanh chóng của Việt Nam.", link: "https://vnexpress.net/" },
-        { name: "TUỔI TRẺ", description: "Báo điện tử nổi tiếng với các tin tức và phân tích phong phú.", link: "https://tuoitre.vn/" },
-        { name: "BÁO THANH NIÊN", description: "Nguồn tin tức cập nhật từ Thanh Niên Việt Nam.", link: "https://thanhnien.vn/" },
-        { name: "DANTRI", description: "Báo điện tử dân trí cung cấp tin tức đời sống và xã hội.", link: "https://dantri.com.vn/" }]
-
     }];
 
   const suspiciousSiteItems = [
