@@ -235,7 +235,14 @@ async function collectC4(url, hostname, isPaaS) {
 
   // Phân tích DOM
   let sensitiveForm = false;
+  let creditCardDetected = false;
+  let jsLoginDetected = false;
+  let obfuscatedJsDetected = false;
+  let cryptoWalletDetected = false;
+  let suspiciousIframeDetected = false;
   let contactOnly = false;
+  let govImpersonationDetected = false;
+  let govContentMatched = false;
   if (content && !blockedByWaf) {
     const $ = cheerio.load(content);
     const pageText = content.toLowerCase();
@@ -243,13 +250,45 @@ async function collectC4(url, hostname, isPaaS) {
     const hasSensitive = SENSITIVE_FORM_MARKERS.some(m => pageText.includes(m));
     const hasContact = CONTACT_FORM_MARKERS.some(m => pageText.includes(m));
     const hasLoginForm = $('input[type="password"], input[name*="pass"], input[name*="otp"], input[type="tel"][name*="otp"]').length > 0;
+
+    // Form "thẻ tín dụng / thanh toán" — nhạy cảm hơn form đăng nhập thông thường
     const hasCreditCard = $('input[name*="card"], input[name*="cc"], input[type="number"][maxlength="16"]').length > 0;
+
+    // Mã độc: script inline bị encode/xáo trộn (atob/eval/\\x/\\u)
+    const inlineJs = $('script:not([src])').text() || '';
+    if (/atob\s*\(|eval\s*\(|\bfromCharCode\b|\\x[0-9a-fA-F]{2}\\x[0-9a-fA-F]{2}|\\u00[0-9a-fA-F]{2}\\u00[0-9a-fA-F]{2}/i.test(inlineJs)) {
+      obfuscatedJsDetected = true;
+    }
+
+    // Ví crypto: MUỐN TRÁNH false positive — HTML dài có thể chứa chuỗi base58/base64 ngẫu nhiên.
+    // Chỉ coi là ví thật khi (a) có từ 2 địa chỉ khác loại, hoặc (b) 1 địa chỉ kèm ngữ cảnh nạp/ví/thanh toán.
+    const ethAddr = pageText.match(/0x[a-fA-F0-9]{40}\b/g) || [];
+    const btcAddr = pageText.match(/bc1[a-zA-HJ-NP-Z0-9]{25,39}\b/g) || [];
+    const legacyBtc = pageText.match(/\b[13][a-km-zA-HJ-NP-Z1-9]{26,34}\b/g) || [];
+    const tronAddr = pageText.match(/\bT[A-Za-z0-9]{33}\b/g) || [];
+    const cryptoCount = ethAddr.length + btcAddr.length + legacyBtc.length + tronAddr.length;
+    const cryptoContext = /(?:nạp\s+(?:ví|tiền)|địa chỉ ví|ví điện tử|crypto (?:wallet|payment)|wallet|usdt|bitcoin|loại tiền kỹ thuật số|mã QR ví)/i;
+    if (cryptoCount >= 2 || (cryptoCount >= 1 && cryptoContext.test(pageText))) {
+      cryptoWalletDetected = true;
+    }
+
+    // Iframe ẩn (ẩn theo style/zero-size) — nghi tải trang bên thứ 3 lén lút
+    const hiddenIframes = $('iframe').filter(function () {
+      const st = ($(this).attr('style') || '') + ' ' + ($(this).attr('width') || '') + ' ' + ($(this).attr('height') || '');
+      return /display\s*:\s*none|visibility\s*:\s*hidden|width:\s*0|height:\s*0/i.test(st);
+    }).length;
+    if (hiddenIframes > 0) suspiciousIframeDetected = true;
+
+    // Nội dung nhái cơ quan nhà nước (chỉ đánh dấu — quyết định phạt ở cuối hàm)
+    govContentMatched = /(?:cổng dịch vụ công|cổng thông tin|dịch vụ công quốc gia|chính phủ điện tử|bảo hiểm xã hội|nộp phạt|tra cứu thủ tục|(?:hải quan|thuế|kho bạc|công an|cán bộ|ủy ban nhân dân|bộ gtvt|bộ tài chính) (?:điện tử|online|trực tuyến)?)/i.test(pageText);
 
     if (hasLoginForm || hasCreditCard) {
       sensitiveForm = true;
-      risk += 50;
+      // Không cộng điểm cứng 50 — chỉ đánh dấu. Điểm thật sẽ được cộng theo bối cảnh
+      // (mã độc / cloaking / mạo danh / AI xác nhận dạng web) ở phần rủi ro cuối hàm.
+      if (hasCreditCard) creditCardDetected = true;
     } else if (hasSensitive && !hasContact) {
-      risk += 40;
+      risk += 15; // từ khoá nhạy cảm nhưng không phải hàm đăng nhập thật
     } else if (hasContact) {
       risk += 5; // form email/SĐT thông thường → điểm nhẹ
     }
@@ -264,15 +303,40 @@ async function collectC4(url, hostname, isPaaS) {
         const jr = await axios.get(abs, { timeout: 3000, headers: { 'User-Agent': MOBILE_UA }, validateStatus: () => true });
         const js = String(jr.data || '');
         if (/createElement\s*\(\s*['"]form|type\s*=\s*['"]password|input_otp|login_submit|otp_input|password\s*field/i.test(js)) {
-          risk += 50;
+          jsLoginDetected = true;
+        }
+        if (/atob\s*\(|eval\s*\(|\bfromCharCode\b|\\x[0-9a-fA-F]{2}\\x[0-9a-fA-F]{2}|\\u00[0-9a-fA-F]{2}\\u00[0-9a-fA-F]{2}/i.test(js)) {
+          obfuscatedJsDetected = true;
         }
       } catch (e) {}
     }));
   }
 
+  // ===== Mạo danh form GOV / cơ quan nhà nước =====
+  // Trang có form đăng nhập + nội dung nhái "cổng dịch vụ công / thuế / BHXH / hải quan..."
+  // nhưng domain không thuộc nhà nước (.gov.vn, chinhphu.vn...) → phạt nặng kể cả khi AI xếp sai loại.
+  const govHost =
+    /(?:\.gov\.vn|\.gov|\.edu\.vn)$/i.test(hostname) ||
+    /^(?:chinhphu|dichvucong|baochinhphu|thuvienphapluat)\.vn$/i.test(hostname);
+  const hasFormAny = sensitiveForm || jsLoginDetected;
+  if (hasFormAny && govContentMatched && !govHost && !blockedByWaf) {
+    risk = Math.max(risk, 65);
+    govImpersonationDetected = true;
+  }
+
+  // Bối cảnh phạt: chỉ cộng mạnh khi có bằng chứng nguy hiểm chứ không chỉ riêng form
+  if (hasFormAny) {
+    if (cryptoWalletDetected) risk += 45;           // form + ví crypto
+    else if (suspiciousIframeDetected) risk += 40;  // form + iframe ẩn
+    else if (creditCardDetected) risk += 35;         // form thu tiền / thẻ
+    else if (obfuscatedJsDetected) risk += 20;       // form + JS bị nén/mã hoá (bundle hiện đại khó phân biệt)
+    else risk += 12;                                 // form đăng nhập/đăng ký SPA thông thường
+  }
+
   return {
     collected: true, risk: clamp(risk, 0, 90), blockedByWaf,
-    cloakDetected, sensitiveForm, contactOnly,
+    cloakDetected, sensitiveForm, creditCardDetected, jsLoginDetected, obfuscatedJsDetected,
+    cryptoWalletDetected, suspiciousIframeDetected, contactOnly, govImpersonationDetected,
     htmlLength: content.length, botHtmlLength: botHtml.length
   };
 }
@@ -516,27 +580,54 @@ async function collectC9(url) {
       // Bước 1: OpenRouter free (Nemotron Ultra) — tóm tắt + phân loại + chấm điểm trong 1 call
       if (isOpenRouterConfigured()) {
         const ultraPrompt = 'Bạn là chuyên gia an toàn thông tin Việt Nam. Phân tích nội dung website được cho rồi trả về JSON tuyệt đối không thêm bất kỳ text nào khác. Schema: {"summary":"<tóm tắt 1-2 câu bằng tiếng Việt: web này làm gì>","category":"<một trong: legit_business|ecommerce|news|blog|gov_edu|gambling|scam|phishing|parked|redirect|adult|unknown>","risk":<số nguyên 0-100: 0=hoàn toàn bình thường (doanh nghiệp thật/tin tức), 30=đáng ngờ, 60=lừa đảo/cờ bạc rõ ràng, 90=phishing nguy hiểm>","keywords":["<5 từ khóa chính>"]}. Phải MỞ ĐẦU câu trả lời bằng ký tự { một cách trực tiếp.';
-        try {
-          const safetyRaw = await openrouterChat([
-            { role: 'system', content: ultraPrompt },
-            { role: 'user', content: `Nội dung website:\n"""\n${textSample}\n"""` }
-          ], { temperature: 0.1, maxTokens: 450, jsonMode: true, timeout: 45000 });
-
-          const rawStr = String((safetyRaw && typeof safetyRaw === 'object') ? JSON.stringify(safetyRaw) : safetyRaw || '');
+        const parseAware = (raw) => {
+          const rawStr = String((raw && typeof raw === 'object') ? JSON.stringify(raw) : raw || '');
           const start = rawStr.indexOf('{');
           const end = rawStr.lastIndexOf('}');
-          if (start !== -1 && end > start) {
+          if (start === -1 || end <= start) return null;
+          try {
             const parsed = JSON.parse(rawStr.slice(start, end + 1));
-            analysis = {
+            return {
               summary: String(parsed.summary || '').substring(0, 300),
               category: String(parsed.category || 'unknown'),
               risk: clamp(Number(parsed.risk) || 0, 0, 100),
               keywords: Array.isArray(parsed.keywords) ? parsed.keywords.slice(0, 5) : []
             };
+          } catch (e) {
+            return null;
+          }
+        };
+        try {
+          const safetyRaw = await openrouterChat([
+            { role: 'system', content: ultraPrompt },
+            { role: 'user', content: `Nội dung website:\n"""\n${textSample}\n"""` }
+          ], { temperature: 0.1, maxTokens: 450, jsonMode: true, timeout: 25000 });
+          const maybe = safetyRaw ? parseAware(safetyRaw) : null;
+          if (maybe && maybe.summary) {
+            analysis = maybe;
             console.log(`[riskEngineV2] c9 OpenRouter: category=${analysis.category} risk=${analysis.risk} summary=${String(analysis.summary).substring(0, 60)}`);
           }
         } catch (e) {
           console.warn(`[riskEngineV2] c9 OpenRouter error: ${e.message}`);
+        }
+        // Nếu OpenRouter trả rỗng / thiếu summary → thử lại ngay bằng chuỗi fallback nhẹ
+        // (Groq/Gemini/DeepSeek/Ollama) thay vì bỏ cuộc, tránh lỗi fail kéo dài luôn làm mất AI summary.
+        if (!analysis) {
+          try {
+            const raw2 = await llmChat(
+              [
+                { role: 'system', content: ultraPrompt },
+                { role: 'user', content: `Nội dung website:\n"""\n${textSample}\n"""` }
+              ],
+              { temperature: 0.1, maxTokens: 400, jsonMode: true, preferFastProvider: true, timeout: 30000 }
+            );
+            const maybe2 = raw2 ? parseAware(raw2) : null;
+            if (maybe2 && maybe2.summary) {
+              analysis = maybe2;
+              console.log(`[riskEngineV2] c9 fallback: category=${analysis.category} risk=${analysis.risk} summary=${String(analysis.summary).substring(0, 60)}`);
+            }
+          } catch (e) {
+          }
         }
       }
 
@@ -630,13 +721,26 @@ async function verifyWebsite(input, opts = {}) {
 
   // R = BlacklistTrigger + penalty c1..c7 (c8 chỉ là context, không phạt)
   const c6risk = c6.risk || 0;
-  const c4risk = c4.risk || 0;
+  const c4riskRaw = c4.risk || 0;
   const c2risk = c2.risk || 0;
   const c3risk = c3.risk || 0;
   const c1risk = c1.risk || 0;
   const c7risk = c7.risk || 0;
   const c9risk = c9.risk || 0;
   const blacklistTrigger = c5.blacklisted ? 100 : 0;
+
+  // ===== Bối cảnh form: nếu AI xác nhận đây là web doanh nghiệp/SaaS/tin tức thật
+  // và KHÔNG có mã độc nghiêm trọng / cloaking / mạo danh / blacklist → không phạt vì có form đăng ký/đăng nhập.
+  const aiLegitCategory = ['legit_business', 'ecommerce', 'news', 'blog', 'gov_edu'].includes(c9.category);
+  // Mã độc "nặng": ví crypto / iframe ẩn / cloaking (JS nén nhẹ trong bundle hiện đại không tính — quá phổ biến)
+  const noMalwareSignals = !c4.cryptoWalletDetected && !c4.suspiciousIframeDetected && !c4.cloakDetected;
+  const noImpersonation = !c6.matchedBrand && !c4.govImpersonationDetected;
+  const formOnly = c4.creditCardDetected ? false : (c4.sensitiveForm || c4.jsLoginDetected);
+  let c4risk = c4riskRaw;
+  if (blacklistTrigger !== 100 && aiLegitCategory && noMalwareSignals && noImpersonation && formOnly) {
+    c4risk = Math.min(c4risk, 10); // form bình thường trên web thật → gần 0
+  }
+
   let R = blacklistTrigger + c1risk + c2risk + c3risk + c4risk + c6risk + c7risk + c9risk;
   R = clamp(R, 0, 100);
 
@@ -669,7 +773,9 @@ async function verifyWebsite(input, opts = {}) {
   else if (c1.ageDays !== null && c1.ageDays < 30) reasons.push(`Domain mới (${c1.ageDays} ngày), cần thận trọng.`);
   if (c1.hijack) reasons.push('Domain tuổi cao nhưng vừa được đăng ký/cập nhật lại gần đây (nghi tái sử dụng domain hết hạn).');
   if (c6.matchedBrand) reasons.push(`Nghi vấn mạo danh thương hiệu "${c6.matchedBrand}" (typosquatting).`);
-  if (c4.sensitiveForm) reasons.push('Phát hiện form nhạy cảm (mật khẩu/OTP/thẻ tín dụng) trên domain chưa xác minh thương hiệu.');
+  if (c4.govImpersonationDetected) reasons.push('Trang nhái giao diện/nội dung cơ quan nhà nước (cổng dịch vụ công, thuế, BHXH...) nhưng domain KHÔNG thuộc GOV — rất nghi mạo danh, tuyệt đối không đăng nhập hoặc nộp tiền.');
+  if (formOnly && c4risk >= 25) reasons.push(c4.obfuscatedJsDetected || c4.suspiciousIframeDetected ? 'Phát hiện form đăng nhập kèm dấu hiệu mã độc (JS bị mã hoá / iframe ẩn) trên web chưa đủ tin.' : c4.creditCardDetected ? 'Phát hiện form thu thập thẻ tín dụng trên web chưa xác minh thương hiệu.' : 'Phát hiện form nhạy cảm (mật khẩu/OTP) kết hợp với các dấu hiệu đáng nghi, cần thận trọng khi đăng nhập.');
+  if (aiLegitCategory && (c4.obfuscatedJsDetected || c4.cryptoWalletDetected || c4.suspiciousIframeDetected)) reasons.push('AI xác nhận web có vẻ là doanh nghiệp thật nhưng vẫn có script bị mã hoá hoặc dấu hiệu lạ, kiểm tra kỹ trước khi nhập thông tin.');
   if (c9.category && c9.risk >= 45) reasons.push(`Nội dung AI nhận diện: ${c9.summary || 'đáng ngờ'} (loại: ${c9.category}, rủi ro ${c9.risk}/100).`);
   else if (c9.summary) reasons.push(`AI tóm tắt nội dung: ${c9.summary}`);
   if (verifiedEntry) reasons.push(`Domain đã được xác minh chủ sở hữu (${verifiedEntry.note || 'Lá Chắn Số'}) — ngày ${new Date(verifiedEntry.verifiedAt).toLocaleDateString('vi-VN')}.`);
