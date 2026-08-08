@@ -188,9 +188,17 @@ async function verifyMessage(text) {
     }));
     reasons = [...llmReasons, ...heuristic.reasons.filter((r) => r.status !== 'success')].slice(0, 8);
 
-    if (llm.verdict === 'scam' && llm.confidence >= 70) {
-      verdict = 'scam';
-      trustScore = clamp(100 - llm.confidence * 0.35 - heuristic.riskPct * 0.15, 10, 45);
+    if (llm.verdict === 'scam') {
+      // ĐỎ chỉ khi: LLM rất chắc chắn (>=85) HOẶC LLM chắc (>=70) + heuristic có dấu hiệu scam
+      const llmCertain = llm.confidence >= 85;
+      const llmConfident = llm.confidence >= 70;
+      if ((llmConfident || llmCertain) && (llmCertain || hasStrongHeuristic)) {
+        verdict = 'scam';
+        trustScore = clamp(100 - llm.confidence * 0.35 - heuristic.riskPct * 0.15, 10, 45);
+      } else {
+        verdict = 'suspicious';
+        trustScore = clamp(50 - heuristic.riskPct * 0.2, 30, 68);
+      }
     } else if (llm.verdict === 'verified' && llm.confidence >= 60 && !hasStrongHeuristic) {
       verdict = 'verified';
       trustScore = clamp(90 - heuristic.riskPct * 0.2, 72, 95);
