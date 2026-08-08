@@ -303,6 +303,79 @@ app.post('/api/verify-news/ai', async (req, res) => {
   }
 });
 
+// ============ NEWS AI SUMMARY ============
+// Tóm tắt nội dung tin tức bằng LLM (OpenRouter/Groq/Gemini/DeepSeek/Ollama), trả về:
+// { summary, keywords[], credibility_note, detection_note }
+// Chỉ tổng hợp lại văn bản người dùng dán vào — không tự khẳng định đúng/sai
+// (kết luận độ tin cậy vẫn do pipeline LCS đảm nhận).
+const newsSummaryCache = new Map();
+const NEWS_SUMMARY_CACHE_TTL = 3 * 60 * 60 * 1000;
+
+app.post('/api/news/summarize', async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) {
+      return res.status(400).json({ error: 'Missing text input' });
+    }
+    const content = String(text).slice(0, 8000);
+
+    const cacheKey = crypto.createHash('sha1').update('news-summary:' + content).digest('hex');
+    const cached = newsSummaryCache.get(cacheKey);
+    if (cached && cached.expires > Date.now()) {
+      return res.json({ success: true, cached: true, ...cached.data });
+    }
+
+    const llmClient = require('./services/llmClient');
+    if (!(await llmClient.isLLMConfigured())) {
+      return res.json({ success: false, summary: null, error: 'LLM not configured' });
+    }
+
+    const systemPrompt = 'Bạn là biên tập viên tiếng Việt trung lập. Đọc nội dung người dùng đưa rồi trả về JSON Tuyệt đối không thêm text nào khác, mở đầu bằng {. Schema: {"summary":"<tóm tắt trung lập 2-4 câu bằng tiếng Việt: nội dung đang nói về điều gì, nhân vật/chủ thể liên quan, không thêm nhận định cá nhân>","key_points":["<tóm tắt 3-5 điểm chính, mỗi điểm 1 câu>"],"credibility_note":"<1 câu ghi chú khách quan về cấu trúc thông tin: nội dung nhận định, con số, thời điểm, nhân vật, nguồn...>","detection_note":"<1 câu nhận xét khách quan về dấu hiệu nghi vấn hoặc mạch lạc của văn bản, ví dụ: tự xưng cơ quan NN, thúc ép thời gian, thiếu nguồn, ngôn ngữ cảnh báo phổ biến — chỉ mô tả hiện tượng, không chốt kết luận>"}].';
+    const prompt = `NỘI DUNG CẦN TÓM TẮT:\n"""\n${content}\n"""\n\nTrả về đúng JSON schema.`;
+
+    const parsed = await llmClient.llmChat(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+      ],
+      { temperature: 0.2, maxTokens: 600, jsonMode: true, timeout: 30000 }
+    );
+
+    let data = null;
+    if (parsed && typeof parsed === 'object') {
+      data = parsed;
+    } else {
+      const raw = String(parsed || '');
+      const start = raw.indexOf('{');
+      const end = raw.lastIndexOf('}');
+      if (start !== -1 && end > start) {
+        try {
+          data = JSON.parse(raw.slice(start, end + 1));
+        } catch (e) {
+          data = null;
+        }
+      }
+    }
+
+    if (!data || !data.summary) {
+      return res.json({ success: true, summary: null });
+    }
+
+    const result = {
+      summary: String(data.summary || '').substring(0, 800),
+      key_points: Array.isArray(data.key_points) ? data.key_points.slice(0, 6).map((k) => String(k).substring(0, 200)) : [],
+      credibility_note: String(data.credibility_note || '').substring(0, 300),
+      detection_note: String(data.detection_note || '').substring(0, 300)
+    };
+    newsSummaryCache.set(cacheKey, { data: result, expires: Date.now() + NEWS_SUMMARY_CACHE_TTL });
+    console.log(`[NEWS SUMMARY] ${result.summary.substring(0, 50)}... (${result.key_points.length} điểm)`);
+    return res.json({ success: true, cached: false, ...result });
+  } catch (error) {
+    console.error('[API] Lỗi news summarize:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.post('/api/verify-nli', async (req, res) => {
   try {
     const { premise, hypothesis } = req.body;

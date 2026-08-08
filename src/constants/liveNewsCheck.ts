@@ -610,6 +610,32 @@ export async function enrichLiveNewsWithAI(text: string): Promise<LiveNewsAIEnri
   }
 }
 
+export async function summarizeNewsWithAI(text: string): Promise<{
+  summary: string | null;
+  key_points: string[];
+  credibility_note: string;
+  detection_note: string;
+} | null> {
+  try {
+    const response = await fetch("/api/news/summarize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: String(text).slice(0, 8000) })
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (!data.success || !data.summary) return null;
+    return {
+      summary: data.summary,
+      key_points: Array.isArray(data.key_points) ? data.key_points : [],
+      credibility_note: data.credibility_note ?? "",
+      detection_note: data.detection_note ?? ""
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function fetchTextWithCorsFallback(url: string, headers?: Record<string, string>): Promise<string | null> {
   try {
     const response = await fetch(url, { headers });

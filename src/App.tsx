@@ -12,7 +12,7 @@ import type { PointerEvent } from "react";
 import { extractArticleForAnalysis } from "./constants/articleExtraction";
 import { FAKE_NEWS_LAWS } from "./constants/fakeNewsLaws";
 import { analyzeTextByKeywords } from "./constants/fakeNewsKeywords";
-import { runLiveNewsCheck, enrichLiveNewsWithAI } from "./constants/liveNewsCheck";
+import { runLiveNewsCheck, enrichLiveNewsWithAI, summarizeNewsWithAI } from "./constants/liveNewsCheck";
 import { runNewsVerificationLayers } from "./constants/newsVerification";
 import { isDomainTrusted, isGovVnDomain, isSuspiciousTLD, extractLinksFromText } from "./constants/trustedDomains";
 import { runLCSEngine, lcsEngineToAnalysisDetails } from "./constants/lcsScoreEngine";
@@ -253,6 +253,7 @@ export default function App() {
   const [checkType, setCheckType] = useState<"web" | "news">("web");
   const [previewCandidateIndex, setPreviewCandidateIndex] = useState(0);
   const [analysisExpanded, setAnalysisExpanded] = useState(false);
+  const [newsAiSummary, setNewsAiSummary] = useState<{ summary: string | null; key_points: string[]; credibility_note: string; detection_note: string; loading: boolean; loaded: boolean }>({ summary: null, key_points: [], credibility_note: "", detection_note: "", loading: false, loaded: false });
   const [ownerVerifyOpen, setOwnerVerifyOpen] = useState(false);
   const [reportIssueOpen, setReportIssueOpen] = useState(false);
   const [colorLegendOpen, setColorLegendOpen] = useState(false);
@@ -441,6 +442,7 @@ export default function App() {
     setIsChecking(true);
     setShowResults(false);
     setResultData(null);
+    setNewsAiSummary({ summary: null, key_points: [], credibility_note: "", detection_note: "", loading: false, loaded: false });
     navigateToPage("check");
     setLoadingStep(0);
     setResultData({
@@ -1017,6 +1019,19 @@ export default function App() {
         });
         setShowResults(true);
         setIsChecking(false);
+        if ((window as any).__LCS_JOB_ID__ === jobId) {
+          setNewsAiSummary((prev) => ({ ...prev, loading: true, loaded: false }));
+          summarizeNewsWithAI(text).then((summary) => {
+            if ((window as any).__LCS_JOB_ID__ !== jobId) return;
+            if (summary && summary.summary) {
+              setNewsAiSummary({ ...summary, loading: false, loaded: true });
+            } else {
+              setNewsAiSummary((prev) => ({ ...prev, loading: false, loaded: true }));
+            }
+          }).catch(() => {
+            setNewsAiSummary((prev) => ({ ...prev, loading: false, loaded: true }));
+          });
+        }
       }
       catch (error) {
         console.error("[LCS] Analysis failed", error);
@@ -1788,6 +1803,52 @@ export default function App() {
                       </ul>}
                     </motion.div>;
                   })()}
+
+                  {resultData.type === "news" && <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="relative overflow-hidden rounded-3xl border-2 border-orange-200 bg-gradient-to-br from-orange-500 via-orange-400 to-amber-400 p-6 shadow-xl shadow-orange-200/50 sm:p-8">
+                    <div className="relative flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-xl font-black tracking-tight text-white sm:text-2xl">AI Tóm Tắt Nội Dung Tin</p>
+                        <p className="mt-0.5 text-xs font-semibold text-orange-100">Đọc nội dung qua LLM · tổng hợp khách quan, không thay thế kết luận điểm số</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-black text-white ring-1 ring-white/40">
+                          {newsAiSummary.loading ? "Đang tóm tắt..." : newsAiSummary.loaded ? "Hoàn tất" : "Chưa có"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="relative mt-5 rounded-2xl bg-white/95 p-5 shadow-lg sm:p-6">
+                      {newsAiSummary.loading ? <div className="flex items-center gap-3 text-gray-500">
+                        <Loader2 className="h-5 w-5 animate-spin text-orange-500" />
+                        <p className="text-sm font-medium">AI đang đọc và tóm tắt nội dung tin tức...</p>
+                      </div> : newsAiSummary.summary ? <>
+                        <p className="text-[15px] font-medium leading-7 text-gray-900 sm:text-base">{newsAiSummary.summary}</p>
+
+                        {newsAiSummary.key_points.length > 0 && <div className="mt-5">
+                          <p className="mb-2.5 text-xs font-black uppercase tracking-[0.18em] text-orange-600">Điểm chính</p>
+                          <ul className="space-y-2">
+                            {newsAiSummary.key_points.map((point, idx) => <li key={idx} className="flex items-start gap-2.5 text-sm leading-relaxed text-gray-800">
+                              <span className="mt-1.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-orange-100 text-[10px] font-black text-orange-700">{idx + 1}</span>
+                              <span>{point}</span>
+                            </li>)}
+                          </ul>
+                        </div>}
+
+                        <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
+                          {(newsAiSummary.credibility_note || newsAiSummary.detection_note) && <>
+                            {newsAiSummary.credibility_note ? <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-4">
+                              <p className="mb-1 text-[11px] font-black uppercase tracking-[0.15em] text-gray-500">Ghi chú thông tin</p>
+                              <p className="text-sm leading-6 text-gray-800">{newsAiSummary.credibility_note}</p>
+                            </div> : null}
+                            {newsAiSummary.detection_note ? <div className="rounded-xl border border-amber-100 bg-amber-50/70 p-4">
+                              <p className="mb-1 text-[11px] font-black uppercase tracking-[0.15em] text-amber-700">Ghi chú dấu hiệu</p>
+                              <p className="text-sm leading-6 text-amber-900">{newsAiSummary.detection_note}</p>
+                            </div> : null}
+                          </>}
+                        </div>
+                      </> : <p className="text-sm font-medium text-gray-500">{newsAiSummary.loaded ? "AI không tạo được bản tóm tắt cho nội dung này." : "Tóm tắt sẽ hiển thị sau khi kiểm tra hoàn tất."}</p>}
+                    </div>
+                  </motion.div>}
 
                   <div className="grid grid-cols-1 gap-6">
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
