@@ -286,12 +286,12 @@ export default function App() {
     const handleInstallPrompt = (e: Event) => {
       e.preventDefault();
       setInstallPromptEvt(e);
-      setInstallBannerOpen(true);
     };
     window.addEventListener("beforeinstallprompt", handleInstallPrompt);
     return () => window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
   }, []);
 
+  const [waitingInstall, setWaitingInstall] = useState(false);
   const handleInstallClick = () => {
     if (installPromptEvt) {
       installPromptEvt.prompt();
@@ -302,9 +302,34 @@ export default function App() {
         }
       });
       setInstallBannerOpen(false);
-    } else {
-      setInstallBannerOpen(true);
+      return;
     }
+    const isIOS = typeof navigator !== "undefined" && /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isIOS) {
+      setInstallBannerOpen(true);
+      return;
+    }
+    setWaitingInstall(true);
+    const cleanup: any = () => setWaitingInstall(false);
+    const oneShot = (e: Event) => {
+      cleanup();
+      try {
+        (e as any).prompt();
+        (e as any).userChoice?.then((choice: any) => {
+          if (choice && choice.outcome === "accepted") setInstallPromptEvt(null);
+        });
+      } catch (_) {
+        setInstallBannerOpen(true);
+      }
+    };
+    window.addEventListener("beforeinstallprompt", oneShot, { once: true });
+    setTimeout(() => {
+      window.removeEventListener("beforeinstallprompt", oneShot);
+      if (!installPromptEvt) {
+        setWaitingInstall(false);
+        setInstallBannerOpen(true);
+      }
+    }, 3000);
   };
   const isMobileDevice = typeof window !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   const [checkType, setCheckType] = useState<"web" | "news" | "message">("web");
@@ -1398,8 +1423,8 @@ export default function App() {
                     <button onClick={() => navigateToPage("resources")} className="px-8 py-4 border-2 border-black/20 text-[#111] text-[15px] font-bold rounded-full hover:border-black/40 hover:bg-black/5 transition-all active:scale-95">
                       Xem tài nguyên
                     </button>
-                    <button type="button" onClick={handleInstallClick} title="Thêm vào màn hình chính" className="inline-flex items-center gap-2 px-6 py-4 border-2 border-orange-200 bg-orange-50 text-orange-600 text-[15px] font-bold rounded-full hover:border-orange-400 hover:bg-orange-100 transition-all active:scale-95">
-                      <Download className="h-5 w-5" /> Cài ứng dụng
+                    <button type="button" onClick={handleInstallClick} disabled={waitingInstall} title="Thêm vào màn hình chính" className="inline-flex items-center gap-2 px-6 py-4 border-2 border-orange-200 bg-orange-50 text-orange-600 text-[15px] font-bold rounded-full hover:border-orange-400 hover:bg-orange-100 transition-all active:scale-95 disabled:opacity-60">
+                      <Download className="h-5 w-5" /> {waitingInstall ? "Đang chuẩn bị…" : "Cài ứng dụng"}
                     </button>
                   </motion.div>
 
