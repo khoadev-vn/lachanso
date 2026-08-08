@@ -1398,6 +1398,9 @@ export default function App() {
                     <button onClick={() => navigateToPage("resources")} className="px-8 py-4 border-2 border-black/20 text-[#111] text-[15px] font-bold rounded-full hover:border-black/40 hover:bg-black/5 transition-all active:scale-95">
                       Xem tài nguyên
                     </button>
+                    <button type="button" onClick={handleInstallClick} title="Thêm vào màn hình chính" className="inline-flex items-center gap-2 px-6 py-4 border-2 border-orange-200 bg-orange-50 text-orange-600 text-[15px] font-bold rounded-full hover:border-orange-400 hover:bg-orange-100 transition-all active:scale-95">
+                      <Download className="h-5 w-5" /> Cài ứng dụng
+                    </button>
                   </motion.div>
 
                   { }
