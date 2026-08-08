@@ -50,7 +50,7 @@ function buildCaption(report) {
   } else {
     lines.push(`⚠️ <b>KHIẾU NẠI KẾT QUẢ SAI — Lá Chắn Số</b>`);
     lines.push(``);
-    lines.push(`🔗 URL: ${report.targetUrl}`);
+    lines.push(`🔗 ${report.kind === 'news' ? 'Nội dung tin' : 'URL'}: ${report.kind === 'news' ? (report.displayTarget || report.targetUrl) : report.targetUrl}`);
     lines.push(`📌 Loại: ${report.reportType}`);
     lines.push(`📧 Email: ${report.email}`);
     lines.push(``);
@@ -118,7 +118,7 @@ router.post('/report-issue', async (req, res) => {
     return res.status(429).json({ success: false, message: 'Bạn đã gửi quá nhiều báo cáo. Vui lòng thử lại sau 15 phút.' });
   }
 
-  const { email, targetUrl, reportType, evidence, agreeTerms, screenshotData } = req.body || {};
+  const { email, targetUrl, reportType, evidence, agreeTerms, screenshotData, kind, displayTarget } = req.body || {};
 
   if (!email || !targetUrl || !evidence || !agreeTerms) {
     return res.status(400).json({ success: false, message: 'Vui lòng điền đầy đủ thông tin bắt buộc.' });
@@ -128,7 +128,12 @@ router.post('/report-issue', async (req, res) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ success: false, message: 'Email không hợp lệ.' });
   }
-  if (!/^https?:\/\//i.test(targetUrl)) {
+  if (kind === 'news') {
+    // Nội dung tin có thể là snippet text (không phải URL) — chỉ cần không rỗng
+    if (String(targetUrl).trim().length === 0) {
+      return res.status(400).json({ success: false, message: 'Nội dung tin không hợp lệ.' });
+    }
+  } else if (!/^https?:\/\//i.test(targetUrl)) {
     return res.status(400).json({ success: false, message: 'Đường dẫn không hợp lệ.' });
   }
   if (!['false_positive', 'false_negative'].includes(reportType)) {
@@ -140,7 +145,9 @@ router.post('/report-issue', async (req, res) => {
 
   const report = {
     email,
-    targetUrl,
+    targetUrl: String(targetUrl).slice(0, 2000),
+    displayTarget: displayTarget ? String(displayTarget).slice(0, 2000) : undefined,
+    kind: kind === 'news' ? 'news' : 'web',
     reportType,
     evidence: String(evidence).slice(0, 5000),
     agreeTerms: true,

@@ -1801,6 +1801,16 @@ export default function App() {
                           <span>{item}</span>
                         </li>)}
                       </ul>}
+                      <div className="mt-4 flex flex-wrap items-center gap-3">
+                        <button type="button" onClick={() => setReportIssueOpen(true)} className="inline-flex items-center gap-2 rounded-xl border-2 border-gray-300 bg-white px-4 py-2.5 text-sm font-bold text-gray-800 shadow-sm transition-colors hover:border-orange-400 hover:bg-orange-50 hover:text-orange-700">
+                          <Flag className="h-4 w-4" />
+                          Báo kết quả sai (khiếu nại)
+                        </button>
+                        <button type="button" onClick={() => setColorLegendOpen(true)} className="inline-flex items-center gap-2 rounded-xl border-2 border-gray-300 bg-white px-4 py-2.5 text-sm font-bold text-gray-800 shadow-sm transition-colors hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700">
+                          <HelpCircle className="h-4 w-4" />
+                          Giải thích kết quả
+                        </button>
+                      </div>
                     </motion.div>;
                   })()}
 
@@ -2631,7 +2641,13 @@ export default function App() {
         `
       }} />
       <OwnerVerifyModal open={ownerVerifyOpen} onOpenChange={setOwnerVerifyOpen} domain={resultData?.displayUrl ?? ""} verifyEmail={resultData?.ownerVerifyEmail} />
-      <ReportIssueModal open={reportIssueOpen} onOpenChange={setReportIssueOpen} targetUrl={resultData?.url ?? resultData?.displayUrl ?? ""} />
+      <ReportIssueModal
+        open={reportIssueOpen}
+        onOpenChange={setReportIssueOpen}
+        targetUrl={resultData?.url ?? resultData?.displayUrl ?? ""}
+        kind={resultData?.type === "news" ? "news" : "web"}
+        defaultType={resultData?.type === "news" ? (resultData.isSafe ? "false_negative" : "false_positive") : "false_positive"}
+      />
       <ColorLegendModal open={colorLegendOpen} onOpenChange={setColorLegendOpen} />
       <ThirdPartyModal open={thirdPartyOpen} onOpenChange={setThirdPartyOpen} thirdParty={resultData?.thirdParty} ipInfo={resultData?.ipInfo} />
     </div>);

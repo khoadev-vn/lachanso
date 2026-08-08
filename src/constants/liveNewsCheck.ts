@@ -548,7 +548,7 @@ function buildAIComparisonReasons(aiSummary: any): { scoreDelta: number; reasons
     reasons.push({
       id: "AI_MULTI_SOURCE_CONTRADICTED",
       name: "AI Đối chiếu đa nguồn: Tin mâu thuẫn",
-      detail: `Ollama so sánh ${aiSummary.totalCompared} bài báo từ nhiều nguồn. ${contradictingCount} bài bác bỏ, ${supportingCount} bài ủng hộ. Các nguồn bác bỏ: ${(aiSummary.contradictingSources || []).slice(0, 4).join(", ") || "không xác định"}.`,
+      detail: `AI đối chiếu lần lượt ${aiSummary.totalCompared} bài báo từ nhiều nguồn. ${contradictingCount} bài bác bỏ, ${supportingCount} bài ủng hộ. Các nguồn bác bỏ: ${(aiSummary.contradictingSources || []).slice(0, 4).join(", ") || "không xác định"}.`,
       status: "danger",
       icon: AlertTriangle
     });
@@ -558,7 +558,7 @@ function buildAIComparisonReasons(aiSummary: any): { scoreDelta: number; reasons
     reasons.push({
       id: "AI_MULTI_SOURCE_SUPPORTED",
       name: "AI Đối chiếu đa nguồn: Tin được xác nhận",
-      detail: `Ollama so sánh ${aiSummary.totalCompared} bài báo từ nhiều nguồn. ${supportingCount} bài ủng hộ nội dung. Các nguồn: ${(aiSummary.supportingSources || []).slice(0, 4).join(", ") || "không xác định"}.`,
+      detail: `AI đối chiếu lần lượt ${aiSummary.totalCompared} bài báo từ nhiều nguồn. ${supportingCount} bài ủng hộ nội dung. Các nguồn: ${(aiSummary.supportingSources || []).slice(0, 4).join(", ") || "không xác định"}.`,
       status: "success",
       icon: ShieldCheck
     });
@@ -567,7 +567,7 @@ function buildAIComparisonReasons(aiSummary: any): { scoreDelta: number; reasons
     reasons.push({
       id: "AI_MULTI_SOURCE_INCONCLUSIVE",
       name: "AI Đối chiếu đa nguồn: Chưa rõ ràng",
-      detail: `Ollama so sánh ${aiSummary.totalCompared} bài báo nhưng số nguồn ủng hộ (${supportingCount}) và bác bỏ (${contradictingCount}) chưa đủ mạnh để kết luận. Cần đối chiếu thêm.`,
+      detail: `AI đối chiếu lần lượt ${aiSummary.totalCompared} bài báo nhưng số nguồn ủng hộ (${supportingCount}) và bác bỏ (${contradictingCount}) chưa đủ mạnh để kết luận. Cần đối chiếu thêm.`,
       status: "warning",
       icon: Globe
     });
@@ -966,7 +966,7 @@ export async function runLiveNewsCheck(text: string): Promise<LiveNewsCheckResul
     claims = filteredClaims;
   }
 
-  const pressSourceLabel = "Bộ máy tìm kiếm cục bộ (Backend)";
+  const pressSourceLabel = "Đối chiếu báo chí đa nguồn";
   const strongGoogleNewsMatch = pressArticles.length > 0 && pressArticles.some((article) => isStrongGoogleNewsMatch(text, article.title));
   
   const contradictingPressArticles = pressArticles.filter((article) => article.stance === "contradicting");
@@ -991,13 +991,13 @@ export async function runLiveNewsCheck(text: string): Promise<LiveNewsCheckResul
       reasons: [],
       summary: {
         live_fact_check: "Google Fact Check API chưa bật do thiếu API key.",
-        live_press_scan: "Chưa lấy được dữ liệu đối chiếu từ Backend cục bộ.",
+        live_press_scan: "Chưa lấy được dữ liệu đối chiếu từ hệ thống tìm kiếm báo chí.",
         open_knowledge_check: "Open Knowledge Check đang chờ đối chiếu.",
         headline_verification: "Headline verification chưa được kích hoạt."
       },
       verifiedExternally: false,
       pressArticles: [],
-      pressSourceLabel: "Backend Search"
+      pressSourceLabel: "Đối chiếu báo chí đa nguồn"
     };
   }
   const reasons: NewsAnalysisReason[] = [];

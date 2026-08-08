@@ -4,20 +4,22 @@ import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
 import { Checkbox } from "./ui/checkbox";
-import { Loader2, Flag, AlertCircle, CheckCircle2, ImagePlus, X } from "lucide-react";
+import { Loader2, Flag, AlertCircle, CheckCircle2, ImagePlus, X, Globe, FileText } from "lucide-react";
 
 interface ReportIssueModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   targetUrl: string;
+  kind?: "web" | "news";
+  defaultType?: "false_positive" | "false_negative";
 }
 
 const IMG_MAX_BYTES = 1 * 1024 * 1024;
 const IMG_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
-export default function ReportIssueModal({ open, onOpenChange, targetUrl }: ReportIssueModalProps) {
+export default function ReportIssueModal({ open, onOpenChange, targetUrl, kind = "web", defaultType = "false_positive" }: ReportIssueModalProps) {
   const [email, setEmail] = useState("");
-  const [reportType, setReportType] = useState<"false_positive" | "false_negative">("false_positive");
+  const [reportType, setReportType] = useState<"false_positive" | "false_negative">(defaultType);
   const [evidence, setEvidence] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -27,7 +29,8 @@ export default function ReportIssueModal({ open, onOpenChange, targetUrl }: Repo
   const [imageError, setImageError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const canSubmit = email.trim().length > 3 && evidence.trim().length >= 10 && agreeTerms && !submitting;
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const canSubmit = emailValid && evidence.trim().length >= 10 && agreeTerms && !submitting;
 
   const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -67,6 +70,7 @@ export default function ReportIssueModal({ open, onOpenChange, targetUrl }: Repo
         body: JSON.stringify({
           email: email.trim(),
           targetUrl,
+          kind,
           reportType,
           evidence: evidence.trim(),
           agreeTerms: true,
@@ -90,6 +94,8 @@ export default function ReportIssueModal({ open, onOpenChange, targetUrl }: Repo
     }
   };
 
+  const isNews = kind === "news";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl bg-white">
@@ -111,11 +117,17 @@ export default function ReportIssueModal({ open, onOpenChange, targetUrl }: Repo
           <div className="space-y-1.5">
             <Label htmlFor="report-email">Email liên hệ của bạn *</Label>
             <Input id="report-email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+            {email.trim().length > 0 && !emailValid && (
+              <p className="text-xs text-red-600">Vui lòng nhập email hợp lệ.</p>
+            )}
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="report-url">Website bị đánh giá</Label>
-            <Input id="report-url" value={targetUrl} readOnly className="bg-gray-50 font-mono text-xs" />
+            <Label htmlFor="report-url">{isNews ? "Nội dung tin bị đánh giá" : "Website bị đánh giá"}</Label>
+            <div className="flex items-start gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
+              {isNews ? <FileText className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" /> : <Globe className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />}
+              <p className="line-clamp-3 break-all text-xs font-medium text-gray-600">{targetUrl || "—"}</p>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -130,8 +142,8 @@ export default function ReportIssueModal({ open, onOpenChange, targetUrl }: Repo
                   className="mt-1 h-4 w-4 accent-orange-500"
                 />
                 <span className="text-sm">
-                  <span className="font-bold text-gray-900">Web an toàn nhưng bị báo vi phạm</span>
-                  <span className="block text-xs text-gray-500">Website của tôi/cơ quan hợp pháp nhưng bị đánh giá là nguy hiểm hoặc đáng ngờ.</span>
+                  <span className="font-bold text-gray-900">{isNews ? "Tin chính xác nhưng bị báo sai" : "Web an toàn nhưng bị báo vi phạm"}</span>
+                  <span className="block text-xs text-gray-500">{isNews ? "Nội dung tin này là sự thật/đúng nhưng bị đánh giá là đáng ngờ hoặc sai lệch." : "Website của tôi/cơ quan hợp pháp nhưng bị đánh giá là nguy hiểm hoặc đáng ngờ."}</span>
                 </span>
               </label>
               <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors ${reportType === "false_negative" ? "border-red-300 bg-red-50/60" : "border-gray-200 bg-white hover:bg-gray-50"}`}>
@@ -143,22 +155,26 @@ export default function ReportIssueModal({ open, onOpenChange, targetUrl }: Repo
                   className="mt-1 h-4 w-4 accent-red-500"
                 />
                 <span className="text-sm">
-                  <span className="font-bold text-gray-900">Web lừa đảo/độc hại nhưng bị bỏ sót</span>
-                  <span className="block text-xs text-gray-500">Tôi phát hiện website lừa đảo nhưng hệ thống không cảnh báo.</span>
+                  <span className="font-bold text-gray-900">{isNews ? "Tin giả/lừa đảo nhưng bị bỏ sót" : "Web lừa đảo/độc hại nhưng bị bỏ sót"}</span>
+                  <span className="block text-xs text-gray-500">{isNews ? "Tôi phát hiện nội dung này là tin giả hoặc lừa đảo nhưng hệ thống không cảnh báo." : "Tôi phát hiện website lừa đảo nhưng hệ thống không cảnh báo."}</span>
                 </span>
               </label>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="report-evidence">Bằng chứng / mô tả chi tiết *</Label>
+            <Label htmlFor="report-evidence">Bằng chứng / lý do chi tiết *</Label>
             <Textarea
               id="report-evidence"
               rows={4}
-              placeholder="Ví dụ: tên miền chính thức là ..., giấy phép đăng ký ..., hoặc website này yêu cầu nhập mật khẩu/OTP và gửi tin nhắn lừa đảo."
+              placeholder={isNews ? "Ví dụ: tôi đã đối chiếu với nguồn chính thức (công bố của Bộ/Ban ngành), nội dung đúng nhưng hệ thống xếp hạng thấp vì..." : "Ví dụ: tên miền chính thức là ..., giấy phép đăng ký ..., hoặc website này yêu cầu nhập mật khẩu/OTP và gửi tin nhắn lừa đảo."}
               value={evidence}
               onChange={(e) => setEvidence(e.target.value)}
             />
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-gray-400">Tối thiểu 10 ký tự{evidence.trim().length >= 10 ? "" : ` (còn ${10 - evidence.trim().length})`}</p>
+              <span className={`text-xs font-bold ${evidence.trim().length >= 10 ? "text-emerald-600" : "text-gray-400"}`}>{evidence.trim().length}/10</span>
+            </div>
           </div>
 
           <div className="space-y-1.5">
@@ -189,7 +205,7 @@ export default function ReportIssueModal({ open, onOpenChange, targetUrl }: Repo
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-500 transition-colors hover:border-gray-400 hover:bg-gray-100"
               >
                 <ImagePlus className="h-5 w-5" />
-                Chọn file ảnh (GPKD, Mã số thuế, ảnh chụp trang lừa đảo,...)
+                {isNews ? "Chọn file ảnh minh chứng (ảnh chụp màn hình, tài liệu...)" : "Chọn file ảnh (GPKD, Mã số thuế, ảnh chụp trang lừa đảo,...)"}
               </button>
             )}
             {imageName && !imageError && (
