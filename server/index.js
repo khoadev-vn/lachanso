@@ -899,25 +899,44 @@ app.post('/api/crawl/trigger', async (req, res) => {
   }
 });
 
-// Get scam domains list
+// Get scam domains list (live-scraped; trả tối đa limit bản mới nhất, ưu tiên nguồn trong nước)
 app.get('/api/scam-domains', (req, res) => {
   try {
     const fs = require('fs');
     const dataPath = require('path').join(__dirname, 'data/scamDomains.json');
     const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-    res.json(data.scamDomains || []);
+    let domains = data.scamDomains || data.SCAM_DOMAINS || [];
+    const limit = Math.min(parseInt(req.query.limit, 10) || 20, 200);
+
+    const curated = domains.filter(d => ['tinnhiemmang', 'community', 'manual'].includes(d.source));
+    const feeds = domains.filter(d => !['tinnhiemmang', 'community', 'manual'].includes(d.source));
+    const scored = (d) => ({
+      d,
+      t: d.discoveredAt ? new Date(d.discoveredAt).getTime() : (d.detectedDate ? new Date(d.detectedDate.split('/').reverse().join('-')).getTime() : -Infinity),
+      key: typeof d === 'string' ? d : (d.domain || '')
+    });
+    curated.sort((a, b) => scored(b).t - scored(a).t);
+    feeds.sort((a, b) => scored(b).t - scored(a).t);
+    domains = [...curated, ...feeds].slice(0, limit);
+    res.json(domains);
   } catch (error) {
     res.json([]);
   }
 });
 
-// Get fake news list
+// Get fake news list (live; mới nhất trước)
 app.get('/api/fake-news', (req, res) => {
   try {
     const fs = require('fs');
     const dataPath = require('path').join(__dirname, 'data/fakeNews.json');
     const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-    res.json(data.fakeNews || []);
+    let news = data.fakeNews || [];
+    const limit = Math.min(parseInt(req.query.limit, 10) || 20, 200);
+    news = news
+      .map(a => ({ ...a, t: a.discoveredAt ? new Date(a.discoveredAt).getTime() : -Infinity }))
+      .sort((x, y) => y.t - x.t)
+      .slice(0, limit);
+    res.json(news);
   } catch (error) {
     res.json([]);
   }

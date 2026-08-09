@@ -262,13 +262,29 @@ export default function App() {
   const RATE_LIMIT_WINDOW = 60000;
 
   const [cachedNewsItems, setCachedNewsItems] = useState<any[]>([]);
+  const [liveScamSites, setLiveScamSites] = useState<any[]>([]);
+  const [liveFakeNews, setLiveFakeNews] = useState<any[]>([]);
 
   useEffect(() => {
-    if (currentPage === "resources") {
-      fetch('/api/cached-news')
-        .then(res => res.json())
-        .then(data => {
-          if (data.status === 'OK') {
+    if (currentPage !== "resources") return;
+
+    let disposed = false;
+    const loadEverything = async () => {
+      try {
+        const [scamRes, fakeRes, cachedRes] = await Promise.all([
+          fetch('/api/scam-domains?limit=30'),
+          fetch('/api/fake-news?limit=30'),
+          fetch('/api/cached-news')
+        ]);
+        const scam = await scamRes.json();
+        const fake = await fakeRes.json();
+        if (!disposed) {
+          setLiveScamSites(Array.isArray(scam) ? scam : []);
+          setLiveFakeNews(Array.isArray(fake) ? fake : []);
+        }
+        if (cachedRes.status === 200) {
+          const data = await cachedRes.json();
+          if (data.status === 'OK' && !disposed) {
             const mapped = data.data.map((item: any, index: number) => ({
               id: index + 1,
               title: item.text,
@@ -278,9 +294,15 @@ export default function App() {
             }));
             setCachedNewsItems(mapped);
           }
-        })
-        .catch(err => console.error("Error fetching cached news:", err));
-    }
+        }
+      } catch (err) {
+        console.error("Error fetching resource data:", err);
+      }
+    };
+
+    loadEverything();
+    const timer = setInterval(loadEverything, 30000);
+    return () => { disposed = true; clearInterval(timer); };
   }, [currentPage]);
 
   useEffect(() => {
@@ -2694,7 +2716,13 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-red-50/30">
-                      {suspiciousSiteItems.map((item) => <tr key={item.id} onClick={() => setSelectedInfoItem({ title: item.link, description: item.description, link: item.linkUrl, category: "Trang web lừa đảo" })} className="group hover:bg-red-50/30 transition-colors cursor-pointer">
+                      {(liveScamSites.length > 0 ? liveScamSites.map((item, i) => ({
+                        id: i + 1,
+                        link: typeof item === 'string' ? item : (item.domain || item.url || ''),
+                        date: item.discoveredAt ? new Date(item.discoveredAt).toLocaleDateString('vi-VN') : (item.detectedDate || ''),
+                        description: item.description || `Phát hiện bởi nguồn ${item.source || 'cảnh báo lừa đảo'}. Hãy cẩn trọng, không đăng nhập hoặc thanh toán.`,
+                        linkUrl: item.domain ? `https://${item.domain}` : '#'
+                      })) : suspiciousSiteItems).map((item) => <tr key={item.id} onClick={() => setSelectedInfoItem({ title: item.link, description: item.description, link: item.linkUrl, category: "Trang web lừa đảo" })} className="group hover:bg-red-50/30 transition-colors cursor-pointer">
                         <td className="py-4 font-medium text-black text-sm">{item.id}</td>
                         <td className="py-4 text-black font-medium hover:underline cursor-pointer text-sm truncate max-w-[150px]">{item.link}</td>
                         <td className="py-4 text-black/70 text-sm">{item.date}</td>
@@ -2722,7 +2750,13 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-red-50/30">
-                      {(cachedNewsItems.length > 0 ? cachedNewsItems : fakeNewsItems).map((item) => <tr key={item.id} onClick={() => setSelectedInfoItem({ title: item.title, description: item.description, link: item.linkUrl, category: "Tin giả cảnh báo" })} className="group hover:bg-red-50/30 transition-colors cursor-pointer">
+                      {(liveFakeNews.length > 0 ? liveFakeNews.map((item, i) => ({
+                        id: i + 1,
+                        title: item.title || item.text || '',
+                        date: item.discoveredAt ? new Date(item.discoveredAt).toLocaleDateString('vi-VN') : (item.date || ''),
+                        description: item.description || `Tin giả được ghi nhận bởi nguồn ${item.source || 'cảnh báo'}. Hãy kiểm chứng thông tin trước khi chia sẻ.`,
+                        linkUrl: item.link || '#'
+                      })) : (cachedNewsItems.length > 0 ? cachedNewsItems : fakeNewsItems)).map((item) => <tr key={item.id} onClick={() => setSelectedInfoItem({ title: item.title, description: item.description, link: item.linkUrl, category: "Tin giả cảnh báo" })} className="group hover:bg-red-50/30 transition-colors cursor-pointer">
                         <td className="py-4 font-medium text-black text-sm">{item.id}</td>
                         <td className="py-4 text-black font-medium text-sm line-clamp-1">{item.title}</td>
                         <td className="py-4 text-black/70 text-sm">{item.date}</td>
