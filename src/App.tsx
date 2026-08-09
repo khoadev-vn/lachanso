@@ -429,7 +429,6 @@ export default function App() {
           description: "Retask.Work là nền tảng quản lý công việc AI-native, nơi con người và AI Agent cùng làm việc trên một bảng điều khiển trong môi trường sandbox bảo mật, giúp doanh nghiệp và đội ngũ vận hành nền tảng số nhanh chóng, an toàn, đồng thời đồng hành vận hành hệ thống kiểm chứng.",
           link: "https://retask.work/",
           logo: "/partners/retask_icon.svg",
-          logoClass: "max-h-56 max-w-[480px]",
         }
       ]
     }];
@@ -2600,10 +2599,10 @@ export default function App() {
                   <div className="my-5 h-px w-full bg-gray-200" />
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {group.items.map((item) =>
-<button key={item.name} type="button" onClick={() => setSelectedInfoItem({ title: item.name, description: item.description, link: item.link, category: "Thương hiệu & đối tác" })} className={`group flex flex-col items-center justify-center gap-4 rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg cursor-pointer ${item.logoClass ? "h-72" : "h-60"}`}>
-                        <div className={`flex w-full items-center justify-center ${item.logoClass ? "h-56" : "h-40"}`}>
+<button key={item.name} type="button" onClick={() => setSelectedInfoItem({ title: item.name, description: item.description, link: item.link, category: "Thương hiệu & đối tác" })} className="group flex h-60 flex-col items-center justify-center gap-4 rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg cursor-pointer">
+                        <div className="flex h-40 w-full items-center justify-center">
                           {item.logo ? (
-                            <img src={item.logo} alt={item.name} loading="lazy" className={`${item.logoClass ?? "max-h-40 max-w-[360px]"} w-auto object-contain`} />
+                            <img src={item.logo} alt={item.name} loading="lazy" className="max-h-40 max-w-[360px] w-auto object-contain" />
                           ) : (
                             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500/90 to-amber-500 text-xl font-black text-white">
                               {item.name.charAt(0)}
