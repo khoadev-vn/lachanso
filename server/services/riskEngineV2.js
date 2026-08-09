@@ -800,10 +800,18 @@ async function verifyWebsite(input, opts = {}) {
     R = 0;
   }
 
-  // Domain chính phủ / giáo dục (.gov.vn, .gov, .edu.vn) → mặc định tin tưởng, an toàn trừ khi trong blacklist.
-  const govTrusted =
-    /(?:\.gov\.vn|\.gov|\.edu\.vn)$/i.test(hostname) ||
+  // Domain chính phủ / giáo dục (.gov.vn, .gov, .edu.vn) → tin tưởng cao.
+  // NHƯNG chỉ khi tín hiệu sạch: không typosquat thương hiệu, không giả mạo nhà nước,
+  // không cloaking, không blacklist và HTTPS hợp lệ. Nếu không → giã phạt phút như web thường
+  // (ví dụ dichvucon.gov.vn giả dichvucong.gov.vn KHÔNG được 100 điểm).
+  const govTld = /(?:\.gov\.vn|\.gov|\.edu\.vn)$/i.test(hostname) ||
     /^(?:chinhphu|dichvucong|baochinhphu|thuvienphapluat|daihoc)\.vn$/i.test(hostname);
+  const govTrusted = govTld &&
+    !c6.matchedBrand &&
+    !c4.govImpersonationDetected &&
+    !c4.cloakDetected &&
+    c2.risk === 0 &&
+    blacklistTrigger !== 100;
   if (govTrusted) {
     state = 'safe';
     R = 0;
@@ -832,9 +840,11 @@ async function verifyWebsite(input, opts = {}) {
     collectedCriteria: collectedCount,
     criteria: Object.fromEntries(Object.entries(criteria).map(([k, v]) => {
       // Phản ánh điểm thực dùng khi tính R (c4/c6 đã được giảm theo bối cảnh AI legit)
+      // Domain verified/gov tin tưởng tuyệt đối → tất cả tiêu chí = 0, kết quả sạch sẽ.
       let risk = v.risk || 0;
       if (k === 'c4') risk = c4risk;
       if (k === 'c6') risk = c6risk;
+      if (forcedTrusted) risk = 0;
       return [k, { collected: v.collected, risk }];
     })),
     reasons,
