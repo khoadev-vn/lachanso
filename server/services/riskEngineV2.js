@@ -371,7 +371,9 @@ async function collectC5(hostname) {
     collected: true,
     risk: 0,
     blacklisted: blacklists.length > 0,
-    sources: blacklists,
+    sources: blacklists, // mảng object đầy đủ (giữ để frontend hiển thị chi tiết)
+    sourceNames: blacklists.map((b) => b.source || 'feed'),
+    blacklistSources: blacklists.map((b) => b.source || 'feed'),
     thirdParty: all.sources,
     ipInfo: all.ipInfo
   };
@@ -790,17 +792,27 @@ async function verifyWebsite(input, opts = {}) {
   else if (R < 35 && (C < 0.65 || !ageOk)) state = 'verify';           // 🟡 CẦN XÁC MINH THÊM
   else state = 'safe';                                                 // 🟢 AN TOÀN
 
-  // Domain đã được xác minh chủ web (admin duyệt) → ép safe, trừ khi đang nằm trong blacklist
+  // Domain đã được xác minh chủ web (admin duyệt) → ép safe MẠNH, kể cả khi blacklist feed
+  // bắt nhầm qua subdomain root (vd sites.google.com → root google.com). Admin tự chủ nó là trusted.
   const verifiedEntry = verifiedDomains.isTrusted(hostname);
-  if (verifiedEntry && blacklistTrigger !== 100) {
+  if (verifiedEntry) {
     state = 'safe';
     R = Math.min(R, 20);
   }
 
+  // Domain chính phủ / giáo dục (.gov.vn, .gov, .edu.vn) → mặc định tin tưởng, an toàn trừ khi trong blacklist.
+  const govTrusted =
+    /(?:\.gov\.vn|\.gov|\.edu\.vn)$/i.test(hostname) ||
+    /^(?:chinhphu|dichvucong|baochinhphu|thuvienphapluat|daihoc)\.vn$/i.test(hostname);
+  if (govTrusted && blacklistTrigger !== 100) {
+    state = 'safe';
+    R = Math.min(R, 15);
+  }
+
   // Lý do chính — viết ngắn, dễ hiểu cho người dùng thường
   const reasons = [];
-  if (blacklistTrigger === 100) reasons.push(`Nguy hiểm: domain có trong danh sách lừa đảo bên thứ 3 (${c5.sources.join(', ')}).`);
-  if (c4.cloakDetected) reasons.push('Website "chơi khác" với máy quét: máy thấy sạch nhưng người dùng thấy nội dung khác — thủ thuật điển hình của trang lừa đảo.');
+  if (blacklistTrigger === 100 && state === 'danger') reasons.push(`Nguy hiểm: domain có trong danh sách lừa đảo bên thứ 3 (${(c5.sourceNames?.length ? c5.sourceNames : c5.sources).join(', ')}).`);
+  if (c4.cloakDetected && state !== 'safe') reasons.push('Website "chơi khác" với máy quét: máy thấy sạch nhưng người dùng thấy nội dung khác — thủ thuật điển hình của trang lừa đảo.');
   if (isPaaS) reasons.push('Trang đặt trên nền tảng miễn phí/dùng chung (PaaS) — chưa chắc là công ty thật.');
   if (c1.ageDays !== null && c1.ageDays < 7) reasons.push('Tên miền vừa mới tạo dưới 1 tuần — trang lừa đảo thường vứt bỏ nhanh các tên miền mới.');
   else if (c1.ageDays !== null && c1.ageDays < 30) reasons.push(`Tên miền chỉ mới ${c1.ageDays} ngày tuổi, cần thận trọng.`);
@@ -827,7 +839,7 @@ async function verifyWebsite(input, opts = {}) {
     isPaaS,
     paasToken,
     cloakDetected: !!c4.cloakDetected,
-    blacklistSources: c5.sources || [],
+    blacklistSources: c5.sourceNames?.length ? c5.sourceNames : (c5.sources || []).map((b) => b?.source || 'feed'),
     thirdParty: c5.thirdParty || [],
     ipInfo: c5.ipInfo || { collected: false, detail: {} },
     aiAnalysis: {

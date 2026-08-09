@@ -90,7 +90,12 @@ async function searchTinnhiemmang(hostname) {
       validateStatus: (s) => s < 400
     });
     const items = parseItems(r.data);
-    const item = items.find((i) => i.domain === key) || items.find((i) => key.includes(i.domain)) || items[0] || null;
+    // GIỮ NGHIÊM NGẶT: chỉ khớp domain thật (bỏ mục type 'social' vì đó là scam fanpage,
+    // không phải domain tsanni). Không dùng items[0] fallback — tránh tác động lớn
+    // khi người khác bị flag.
+    const exact = items.find((i) => i.domain === key && i.type !== 'social');
+    const sub = items.find((i) => key.endsWith('.' + i.domain) && i.type !== 'social');
+    const item = exact || sub || null;
     result = { available: true, listed: !!item, item };
   } catch (e) {
     result = { available: false, listed: false, item: null, error: e.message || 'network-error' };
