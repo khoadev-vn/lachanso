@@ -261,9 +261,7 @@ export default function App() {
   const RATE_LIMIT_MAX = 5;
   const RATE_LIMIT_WINDOW = 60000;
 
-  const [cachedNewsItems, setCachedNewsItems] = useState<any[]>([]);
   const [liveScamSites, setLiveScamSites] = useState<any[]>([]);
-  const [liveFakeNews, setLiveFakeNews] = useState<any[]>([]);
 
   useEffect(() => {
     if (currentPage !== "resources") return;
@@ -271,29 +269,10 @@ export default function App() {
     let disposed = false;
     const loadEverything = async () => {
       try {
-        const [scamRes, fakeRes, cachedRes] = await Promise.all([
-          fetch('/api/scam-domains?limit=30'),
-          fetch('/api/fake-news?limit=30'),
-          fetch('/api/cached-news')
-        ]);
+        const scamRes = await fetch('/api/scam-domains?limit=30');
         const scam = await scamRes.json();
-        const fake = await fakeRes.json();
         if (!disposed) {
           setLiveScamSites(Array.isArray(scam) ? scam : []);
-          setLiveFakeNews(Array.isArray(fake) ? fake : []);
-        }
-        if (cachedRes.status === 200) {
-          const data = await cachedRes.json();
-          if (data.status === 'OK' && !disposed) {
-            const mapped = data.data.map((item: any, index: number) => ({
-              id: index + 1,
-              title: item.text,
-              date: new Date(item.timestamp).toLocaleDateString('vi-VN'),
-              description: `Điểm rủi ro: ${item.result.finalScore}% - Lý do: ${item.result.keywordMatches.map((k: any) => k.groupName).join(', ')}`,
-              linkUrl: "#"
-            }));
-            setCachedNewsItems(mapped);
-          }
         }
       } catch (err) {
         console.error("Error fetching resource data:", err);
@@ -488,13 +467,6 @@ export default function App() {
     { id: 3, link: "nhan-qua-mien-phi.org", date: "31/03", description: "Trang quảng bá chương trình tặng quà giả tạo để dụ người dùng click vào liên kết lừa đảo.", linkUrl: "https://www.facebook.com/" },
     { id: 4, link: "facebook-verify-account.com", date: "30/03", description: "Tên miền giả mạo xác minh tài khoản Facebook để đánh cắp dữ liệu người dùng.", linkUrl: "https://www.facebook.com/" },
     { id: 5, link: "crypto-invest-bonus.io", date: "29/03", description: "Cảnh báo về trang đầu tư tiền ảo lừa đảo dùng hình thức bonus hấp dẫn.", linkUrl: "https://www.binance.com/" }];
-
-  const fakeNewsItems = [
-    { id: 1, title: "Phong tỏa tài khoản ngân hàng hàng loạt", date: "02/04", description: "Tin giả về việc phong tỏa tài khoản ngân hàng để tạo cảm giác khẩn cấp.", linkUrl: "https://www.nganhang.gov.vn/" },
-    { id: 2, title: "Thông tin sai về chính sách hỗ trợ mới", date: "01/04", description: "Bài viết sai lệch về chính sách hỗ trợ để kích hoạt hành vi chia sẻ không kiểm chứng.", linkUrl: "https://www.moit.gov.vn/" },
-    { id: 3, title: "Tin đồn thất thiệt về dịch bệnh", date: "31/03", description: "Thông tin không có căn cứ về dịch bệnh gây hoang mang trên mạng.", linkUrl: "https://moh.gov.vn/" },
-    { id: 4, title: "Giả mạo văn bản xử phạt giao thông", date: "30/03", description: "Tài liệu giả mạo đang được lan truyền như văn bản chính thức.", linkUrl: "https://www.gtvt.gov.vn/" },
-    { id: 5, title: "Tin giả về chương trình tặng quà tri ân", date: "29/03", description: "Thông tin khuyến mãi không xác thực nhằm thu hút người dùng click vào đường link lừa đảo.", linkUrl: "https://www.viettel.vn/" }];
 
   const handleCheck = async (e?: FormEvent) => {
     if (e)
@@ -2693,77 +2665,43 @@ export default function App() {
               </motion.span>
               <h2 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 text-black">Dữ liệu cảnh báo</h2>
               <p className="text-black max-w-2xl mx-auto text-lg">
-                Danh sách các trang web lừa đảo và tin giả được hệ thống Lá Chắn Số cập nhật liên tục để bảo vệ người dùng.
+                Danh sách các trang web lừa đảo được hệ thống Lá Chắn Số cập nhật liên tục để bảo vệ người dùng.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-              <div className="bg-white rounded-[32px] border border-red-100 p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="p-2 bg-red-50 rounded-xl">
-                    <AlertTriangle className="w-6 h-6 text-red-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-black">Trang web lừa đảo</h3>
+            <div className="bg-white rounded-[32px] border border-red-100 p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 bg-red-50 rounded-xl">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
                 </div>
-                <div className="overflow-x-auto custom-scrollbar">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="border-b border-red-50">
-                        <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">STT</th>
-                        <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">Link trang</th>
-                        <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">Ngày</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-red-50/30">
-                      {(liveScamSites.length > 0 ? liveScamSites.map((item, i) => ({
-                        id: i + 1,
-                        link: typeof item === 'string' ? item : (item.domain || item.url || ''),
-                        date: item.discoveredAt ? new Date(item.discoveredAt).toLocaleDateString('vi-VN') : (item.detectedDate || ''),
-                        description: item.description || `Phát hiện bởi nguồn ${item.source || 'cảnh báo lừa đảo'}. Hãy cẩn trọng, không đăng nhập hoặc thanh toán.`,
-                        linkUrl: item.domain ? `https://${item.domain}` : '#'
-                      })) : suspiciousSiteItems).map((item) => <tr key={item.id} onClick={() => setSelectedInfoItem({ title: item.link, description: item.description, link: item.linkUrl, category: "Trang web lừa đảo" })} className="group hover:bg-red-50/30 transition-colors cursor-pointer">
-                        <td className="py-4 font-medium text-black text-sm">{item.id}</td>
-                        <td className="py-4 text-black font-medium hover:underline cursor-pointer text-sm truncate max-w-[150px]">{item.link}</td>
-                        <td className="py-4 text-black/70 text-sm">{item.date}</td>
-                      </tr>)}
-                    </tbody>
-                  </table>
-                </div>
+                <h3 className="text-xl font-bold text-black">Trang web lừa đảo</h3>
+                <span className="ml-auto text-xs text-black/50">Cập nhật tự động 30 giây</span>
               </div>
-
-
-              <div className="bg-white rounded-[32px] border border-red-100 p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="p-2 bg-red-50 rounded-xl">
-                    <Sparkles className="w-6 h-6 text-red-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-black">Tin giả cảnh báo</h3>
-                </div>
-                <div className="overflow-x-auto custom-scrollbar">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="border-b border-red-50">
-                        <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">STT</th>
-                        <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">Tiêu đề tin</th>
-                        <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">Ngày</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-red-50/30">
-                      {(liveFakeNews.length > 0 ? liveFakeNews.map((item, i) => ({
-                        id: i + 1,
-                        title: item.title || item.text || '',
-                        date: item.discoveredAt ? new Date(item.discoveredAt).toLocaleDateString('vi-VN') : (item.date || ''),
-                        description: item.description || `Tin giả được ghi nhận bởi nguồn ${item.source || 'cảnh báo'}. Hãy kiểm chứng thông tin trước khi chia sẻ.`,
-                        linkUrl: item.link || '#'
-                      })) : (cachedNewsItems.length > 0 ? cachedNewsItems : fakeNewsItems)).map((item) => <tr key={item.id} onClick={() => setSelectedInfoItem({ title: item.title, description: item.description, link: item.linkUrl, category: "Tin giả cảnh báo" })} className="group hover:bg-red-50/30 transition-colors cursor-pointer">
-                        <td className="py-4 font-medium text-black text-sm">{item.id}</td>
-                        <td className="py-4 text-black font-medium text-sm line-clamp-1">{item.title}</td>
-                        <td className="py-4 text-black/70 text-sm">{item.date}</td>
-                      </tr>)}
-                    </tbody>
-                  </table>
-                </div>
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-red-50">
+                      <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest w-12">STT</th>
+                      <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">Link trang</th>
+                      <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">Nguồn</th>
+                      <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">Ngày</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-red-50/30">
+                    {(liveScamSites.length > 0 ? liveScamSites.map((item, i) => ({
+                      id: i + 1,
+                      link: typeof item === 'string' ? item : (item.domain || item.url || ''),
+                      date: item.discoveredAt ? new Date(item.discoveredAt).toLocaleDateString('vi-VN') : (item.detectedDate || ''),
+                      description: item.description || `Phát hiện bởi nguồn ${item.source || 'cảnh báo lừa đảo'}. Hãy cẩn trọng, không đăng nhập hoặc thanh toán.`,
+                      linkUrl: item.domain ? `https://${item.domain}` : '#'
+                    })) : suspiciousSiteItems).map((item: any) => <tr key={item.id} onClick={() => setSelectedInfoItem({ title: item.link, description: item.description, link: item.linkUrl, category: "Trang web lừa đảo" })} className="group hover:bg-red-50/30 transition-colors cursor-pointer">
+                      <td className="py-4 font-medium text-black text-sm">{item.id}</td>
+                      <td className="py-4 text-black font-mono font-medium hover:underline cursor-pointer text-sm break-all">{item.link}</td>
+                      <td className="py-4 text-black/60 text-sm">{item.source || (liveScamSites.length > 0 ? 'feed' : '—')}</td>
+                      <td className="py-4 text-black/70 text-sm whitespace-nowrap">{item.date}</td>
+                    </tr>)}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
