@@ -10,6 +10,7 @@
 //   - Startup form email/SĐT (phân biệt form nhạy cảm vs form thông tin)
 
 const axios = require('axios');
+const https = require('https');
 const dns = require('dns').promises;
 const tls = require('tls');
 const cheerio = require('cheerio');
@@ -198,6 +199,7 @@ async function fetchOnce(url, ua) {
   try {
     const r = await axios.get(url, {
       timeout: 6000,
+      httpsAgent: new https.Agent({ rejectUnauthorized: false }),
       headers: { 'User-Agent': ua, 'Accept-Language': 'vi,en', 'Accept': 'text/html,application/xhtml+xml' },
       maxRedirects: 5, validateStatus: () => true
     });
@@ -355,10 +357,38 @@ const inlineJs = $('script:not([src])').text() || '';
     else risk += 12;                                 // form đăng nhập/đăng ký SPA thông thường
   }
 
+  // ===== Trang chưa có nội dung / placeholder của hosting =====
+  // Domain trỏ đúng IP hosting nhưng chưa cài website (cPanel default page, Apache/nginx default,
+  // "This domain is parked"...) → chưa thể coi là an toàn tuyệt đối.
+  const parkedPageDetected = !!(content && !blockedByWaf &&
+    /defaultwebpage\.cgi|domain\s+is\s+(?:pointed\s+to\s+.{0,40}IP|currently\s+parked)|hosting\s+has\s+not\s+been\s+(?:set\s+up|configured)|web\s+site\s+has\s+not\s+(?:been\s+)?(?:set\s+up|uploaded|configured)|this\s+domain\s+is\s+(?:a\s+)?placehold|parked\s+domain|apache2?\s+ubuntu\s+default\s+page|nginx\s+default\s+page|this\s+is\s+the\s+default\s+(?:web\s+page|public\s+html)|site\s+not\s+configured|getting\s+started\s+with\s+web\s+hosting/i.test(content.toLowerCase()));
+  if (parkedPageDetected) {
+    risk = Math.max(risk, 30);
+  }
+
+  // Trang trả nội dung cực ngắn (placeholder SSH/Lỗi/ưq, <200 ký tự) — tên miền chưa thực sự có
+  // nội dung → không coi là "an toàn tuyệt đối", chuyển về verify.
+  // Lưu ý: KHÔNG loại trừ blockedByWaf ở đây, vì nhiều host trả 403/trang lỗi cực ngắn
+  // (vd "SSL not found" — cert lệch hostname). Nội dung càng minh bạch thì càng dễ lọc.
+  const trimmedContent = content ? content.trim() : '';
+  const placeholderPageDetected = !parkedPageDetected &&
+    trimmedContent.length > 0 && trimmedContent.length < 200 &&
+    !/cf_chl|challenge-platform|turnstile|under.?attack|cf-browser/i.test(trimmedContent);
+  if (placeholderPageDetected) {
+    risk = Math.max(risk, 30);
+  }
+
+  // Không đọc được nội dung gì cả (TLS lệch cert, reset connection, ...) — KHÔNG có quyền kết luận an toàn.
+  const fetchFailedDetected = botRes.status === 0 && mobileRes.status === 0;
+  if (fetchFailedDetected) {
+    risk = Math.max(risk, 30);
+  }
+
   return {
     collected: true, risk: clamp(risk, 0, 90), blockedByWaf,
     cloakDetected, sensitiveForm, creditCardDetected, jsLoginDetected, obfuscatedJsDetected,
     cryptoWalletDetected, suspiciousIframeDetected, contactOnly, govImpersonationDetected,
+    parkedPageDetected, placeholderPageDetected, fetchFailedDetected,
     htmlLength: content.length, botHtmlLength: botHtml.length
   };
 }
@@ -817,6 +847,18 @@ async function verifyWebsite(input, opts = {}) {
     R = 0;
   }
 
+  // Trang placeholder của hosting (domain trỏ IP nhưng chưa cài website) → KHÔNG coi là an toàn.
+  // Tuy không nguy hiểm nhưng chưa có nội dung thật → ép về 'verify' để người dùng tự kiểm tra,
+  // và không gán nhầm 100 điểm (trừ khi đã được admin xác minh).
+  const parkedPageDetected = !!c4.parkedPageDetected;
+  const placeholderPageDetected = !!c4.placeholderPageDetected;
+  const fetchFailedDetected = !!c4.fetchFailedDetected;
+  const noContentYet = parkedPageDetected || placeholderPageDetected || fetchFailedDetected;
+  if (noContentYet && !verifiedEntry && !govTrusted && blacklistTrigger !== 100) {
+    R = Math.max(R, 30);
+    if (state === 'safe') state = 'verify';
+  }
+
   // Lý do chính — viết ngắn, dễ hiểu cho người dùng thường
   // Nếu được admin xác minh / thuộc gov → 100 điểm, không hiện các cảnh báo âm tích làm người dùng hoang mang.
   const forcedTrusted = !!verifiedEntry || !!govTrusted;
@@ -831,6 +873,9 @@ async function verifyWebsite(input, opts = {}) {
   if (formOnly && c4risk >= 25 && !forcedTrusted) reasons.push(c4.obfuscatedJsDetected || c4.suspiciousIframeDetected ? 'Trang có ô đăng nhập kèm dấu hiệu mã độc (mã ẩn / khung ẩn) — cẩn thận khi nhập mật khẩu.' : c4.creditCardDetected ? 'Trang có biểu mẫu thu thẻ tín dụng nhưng chưa xác minh được công ty — cẩn thận khi thanh toán.' : 'Trang có ô nhập mật khẩu/OTP kèm dấu hiệu lạ — cẩn thận khi đăng nhập.');
   if (c9.category && c9.risk >= 45 && !forcedTrusted) reasons.push(`Nội dung đáng ngờ theo phân tích: ${c9.summary || ''}`);
   if (verifiedEntry) reasons.push(`Đã xác minh chủ sở hữu (${verifiedEntry.note || 'Lá Chắn Số'}) — ngày ${new Date(verifiedEntry.verifiedAt).toLocaleDateString('vi-VN')}.`);
+  if (parkedPageDetected && !verifiedEntry && !govTrusted) reasons.push('Website đang hiển thị trang mặc định của hosting — tên miền trỏ đến máy chủ nhưng chưa cài nội dung. Có thể là web chưa hoàn thiện hoặc tên miền giữ lại chưa dùng; hãy kiểm tra thêm.');
+  if (placeholderPageDetected && !verifiedEntry && !govTrusted) reasons.push('Tên miền trỏ đến máy chủ nhưng chưa trả về nội dung thực (trang báo lỗi/giữ chỗ của hosting). Có thể là web chưa hoàn thiện — hãy tự kiểm tra thêm.');
+  if (fetchFailedDetected && !verifiedEntry && !govTrusted) reasons.push('Không đọc được nội dung trang (kết nối/lỗi cấu hình HTTPS). Chưa đủ dữ liệu để khẳng định an toàn — hãy tự kiểm tra thêm.');
   if (state === 'verify') reasons.push('Chưa đủ dữ liệu để khẳng định an toàn (không xác minh được tuổi tên miền) — hãy tự kiểm tra thêm trước khi tin.');
 
   return {
