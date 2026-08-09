@@ -1,7 +1,7 @@
 import { motion, AnimatePresence, animate, useMotionValue, useSpring, useTransform } from "motion/react";
 import { Analytics } from "@vercel/analytics/react";
 import GlobeViz from "./components/GlobeViz";
-import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users, Landmark, Scale, HeartPulse, Info, HelpCircle, Flag, LifeBuoy, ShieldAlert, Download, ListOrdered } from "lucide-react";
+import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users, Landmark, Scale, HeartPulse, Info, HelpCircle, Flag, LifeBuoy, ShieldAlert, Download, ListOrdered, MessageSquare, Newspaper } from "lucide-react";
 import OwnerVerifyModal from "./components/OwnerVerifyModal";
 import ReportIssueModal from "./components/ReportIssueModal";
 import NextStepsGuideModal from "./components/NextStepsGuideModal";
@@ -334,6 +334,33 @@ export default function App() {
   };
   const isMobileDevice = typeof window !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   const [checkType, setCheckType] = useState<"web" | "news" | "message">("web");
+  const CHECK_TYPE_META: Record<string, { label: string; placeholder: string; example: string; badge: string; ring: string; input: string }> = {
+    web: {
+      label: "Website / URL",
+      placeholder: "Nhập đường dẫn website cần kiểm tra...",
+      example: "Ví dụ: https://shopee.vn hoặc vietcombank.com.vn",
+      badge: "bg-orange-500/20 text-orange-300",
+      ring: "focus:border-orange-400 focus:ring-orange-400/10 focus:ring-4",
+      input: "border-white/10 bg-white/8"
+    },
+    news: {
+      label: "Tin giả / Bài báo",
+      placeholder: "Nhập tiêu đề hoặc dán đoạn tin cần kiểm tra...",
+      example: "Ví dụ: “Ăn nhiều trứng gây ung thư”",
+      badge: "bg-sky-500/20 text-sky-300",
+      ring: "focus:border-sky-400 focus:ring-sky-400/10 focus:ring-4",
+      input: "border-white/10 bg-white/8"
+    },
+    message: {
+      label: "Tin nhắn / SMS",
+      placeholder: "Dán nguyên văn nội dung tin nhắn cần kiểm tra...",
+      example: "Ví dụ: “Tài khoản của bạn sắp hết hạn, bấm vào đây…”",
+      badge: "bg-purple-500/20 text-purple-300",
+      ring: "focus:border-purple-400 focus:ring-purple-400/10 focus:ring-4",
+      input: "border-white/10 bg-white/8"
+    }
+  };
+  const checkMeta = CHECK_TYPE_META[checkType];
   const [previewCandidateIndex, setPreviewCandidateIndex] = useState(0);
   const [analysisExpanded, setAnalysisExpanded] = useState(false);
   const [newsAiSummary, setNewsAiSummary] = useState<{ summary: string | null; key_points: string[]; credibility_note: string; detection_note: string; loading: boolean; loaded: boolean }>({ summary: null, key_points: [], credibility_note: "", detection_note: "", loading: false, loaded: false });
@@ -1515,24 +1542,28 @@ export default function App() {
                     <form onSubmit={handleCheck} className="space-y-3">
                       <input
                         type="text"
-                        placeholder={checkType === "web" ? "Nhập URL cần kiểm tra..." : checkType === "message" ? "Dán nội dung tin nhắn cần kiểm tra..." : "Nhập tiêu đề hoặc đoạn văn..."}
+                        placeholder={checkMeta.placeholder}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full px-5 py-4 rounded-2xl bg-white/8 border border-white/10 text-white placeholder-gray-500 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/10 transition-colors text-sm" />
+                        className={`w-full px-5 py-4 rounded-2xl border ${checkMeta.input} ${checkMeta.ring} text-white placeholder-gray-500 outline-none transition-colors text-sm`} />
 
                       <button
                         type="submit"
                         disabled={isChecking}
-                        className="w-full py-4 rounded-2xl bg-orange-500 text-white font-bold hover:bg-orange-400 transition-all active:scale-[0.98] text-[15px] shadow-lg shadow-orange-500/20">
+                        className={`w-full py-4 rounded-2xl font-bold transition-all active:scale-[0.98] text-[15px] shadow-lg ${checkType === "news" ? "bg-sky-500 shadow-sky-500/20 hover:bg-sky-400" : checkType === "message" ? "bg-purple-500 shadow-purple-500/20 hover:bg-purple-400" : "bg-orange-500 shadow-orange-500/20 hover:bg-orange-400"} text-white`}>
 
                         {isChecking ? "Đang kiểm tra..." : "Bắt đầu kiểm tra →"}
                       </button>
+
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${checkMeta.badge}`}>{checkMeta.label}</span>
+                        <p className={`text-[11px] flex-1 truncate`} style={{ color: "#ffffff99" }}>{checkMeta.example}</p>
+                      </div>
                     </form>
 
                     <p className="mt-4 text-[12px] text-white/30 leading-relaxed">
                       Nhập đường dẫn hoặc văn bản để xem kết quả ngay lập tức.
-                    </p>
-                  </motion.div>
+                    </p>                  </motion.div>
                 </div>
               </div>
             </div>
@@ -1770,11 +1801,15 @@ export default function App() {
             </div>
 
             <form onSubmit={handleCheck} className="relative max-w-3xl mx-auto mb-16">
-              <div className="relative flex items-center w-full h-16 px-8 bg-[#ff8904] rounded-full shadow-lg">
-                <input type="text" placeholder={checkType === "web" ? "Nhập đường dẫn cần kiểm tra" : checkType === "message" ? "Dán nội dung tin nhắn cần kiểm tra" : "Nhập đường dẫn, văn bản cần kiểm tra"} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-transparent border-none outline-none text-white placeholder-white/60 text-lg" />
+              <div className={`relative flex items-center w-full h-16 px-8 ${checkType === 'news' ? 'bg-sky-500' : checkType === 'message' ? 'bg-purple-500' : 'bg-[#ff8904]'} rounded-full shadow-lg`}>
+                <input type="text" placeholder={checkMeta.placeholder} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-transparent border-none outline-none text-white placeholder-white/60 text-lg" />
                 <button type="submit" disabled={isChecking}>
                   {isChecking ? <Loader2 className="w-6 h-6 text-white animate-spin ml-3" /> : <Search className="w-6 h-6 text-white ml-3 cursor-pointer hover:scale-110 transition-transform" />}
                 </button>
+              </div>
+              <div className="mt-2 flex items-center gap-2 px-2">
+                <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${checkMeta.badge.replace("text-orange-300","text-orange-600").replace("text-sky-300","text-sky-600").replace("text-purple-300","text-purple-600")}`}>{checkMeta.label}</span>
+                <p className={`text-[11px] flex-1 truncate`} style={{ color: "#999" }}>{checkMeta.example}</p>
               </div>
             </form>
 

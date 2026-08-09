@@ -797,29 +797,31 @@ async function verifyWebsite(input, opts = {}) {
   const verifiedEntry = verifiedDomains.isTrusted(hostname);
   if (verifiedEntry) {
     state = 'safe';
-    R = Math.min(R, 20);
+    R = 0;
   }
 
   // Domain chính phủ / giáo dục (.gov.vn, .gov, .edu.vn) → mặc định tin tưởng, an toàn trừ khi trong blacklist.
   const govTrusted =
     /(?:\.gov\.vn|\.gov|\.edu\.vn)$/i.test(hostname) ||
     /^(?:chinhphu|dichvucong|baochinhphu|thuvienphapluat|daihoc)\.vn$/i.test(hostname);
-  if (govTrusted && blacklistTrigger !== 100) {
+  if (govTrusted) {
     state = 'safe';
-    R = Math.min(R, 15);
+    R = 0;
   }
 
   // Lý do chính — viết ngắn, dễ hiểu cho người dùng thường
+  // Nếu được admin xác minh / thuộc gov → 100 điểm, không hiện các cảnh báo âm tích làm người dùng hoang mang.
+  const forcedTrusted = !!verifiedEntry || !!govTrusted;
   const reasons = [];
-  if (blacklistTrigger === 100 && state === 'danger') reasons.push(`Nguy hiểm: domain có trong danh sách lừa đảo bên thứ 3 (${(c5.sourceNames?.length ? c5.sourceNames : c5.sources).join(', ')}).`);
-  if (c4.cloakDetected && state !== 'safe') reasons.push('Website "chơi khác" với máy quét: máy thấy sạch nhưng người dùng thấy nội dung khác — thủ thuật điển hình của trang lừa đảo.');
-  if (isPaaS) reasons.push('Trang đặt trên nền tảng miễn phí/dùng chung (PaaS) — chưa chắc là công ty thật.');
-  if (c1.ageDays !== null && c1.ageDays < 7) reasons.push('Tên miền vừa mới tạo dưới 1 tuần — trang lừa đảo thường vứt bỏ nhanh các tên miền mới.');
-  else if (c1.ageDays !== null && c1.ageDays < 30) reasons.push(`Tên miền chỉ mới ${c1.ageDays} ngày tuổi, cần thận trọng.`);
-  if (c6.matchedBrand) reasons.push(`Cẩn thận: tên miền giống thương hiệu "${c6.matchedBrand}" (cách vài ký tự) — có thể là web giả mạo.`);
-  if (c4.govImpersonationDetected) reasons.push('Trang nhái cơ quan nhà nước (cổng dịch vụ công, thuế, BHXH...) nhưng không phải tên miền chính phủ — tuyệt đối không đăng nhập hoặc nộp tiền!');
-  if (formOnly && c4risk >= 25) reasons.push(c4.obfuscatedJsDetected || c4.suspiciousIframeDetected ? 'Trang có ô đăng nhập kèm dấu hiệu mã độc (mã ẩn / khung ẩn) — cẩn thận khi nhập mật khẩu.' : c4.creditCardDetected ? 'Trang có biểu mẫu thu thẻ tín dụng nhưng chưa xác minh được công ty — cẩn thận khi thanh toán.' : 'Trang có ô nhập mật khẩu/OTP kèm dấu hiệu lạ — cẩn thận khi đăng nhập.');
-  if (c9.category && c9.risk >= 45) reasons.push(`Nội dung đáng ngờ theo phân tích: ${c9.summary || ''}`);
+  if (blacklistTrigger === 100 && state === 'danger' && !forcedTrusted) reasons.push(`Nguy hiểm: domain có trong danh sách lừa đảo bên thứ 3 (${(c5.sourceNames?.length ? c5.sourceNames : c5.sources).join(', ')}).`);
+  if (c4.cloakDetected && state !== 'safe' && !forcedTrusted) reasons.push('Website "chơi khác" với máy quét: máy thấy sạch nhưng người dùng thấy nội dung khác — thủ thuật điển hình của trang lừa đảo.');
+  if (isPaaS && !forcedTrusted) reasons.push('Trang đặt trên nền tảng miễn phí/dùng chung (PaaS) — chưa chắc là công ty thật.');
+  if (!forcedTrusted && c1.ageDays !== null && c1.ageDays < 7) reasons.push('Tên miền vừa mới tạo dưới 1 tuần — trang lừa đảo thường vứt bỏ nhanh các tên miền mới.');
+  else if (!forcedTrusted && c1.ageDays !== null && c1.ageDays < 30) reasons.push(`Tên miền chỉ mới ${c1.ageDays} ngày tuổi, cần thận trọng.`);
+  if (c6.matchedBrand && !forcedTrusted) reasons.push(`Cẩn thận: tên miền giống thương hiệu "${c6.matchedBrand}" (cách vài ký tự) — có thể là web giả mạo.`);
+  if (c4.govImpersonationDetected && !forcedTrusted) reasons.push('Trang nhái cơ quan nhà nước (cổng dịch vụ công, thuế, BHXH...) nhưng không phải tên miền chính phủ — tuyệt đối không đăng nhập hoặc nộp tiền!');
+  if (formOnly && c4risk >= 25 && !forcedTrusted) reasons.push(c4.obfuscatedJsDetected || c4.suspiciousIframeDetected ? 'Trang có ô đăng nhập kèm dấu hiệu mã độc (mã ẩn / khung ẩn) — cẩn thận khi nhập mật khẩu.' : c4.creditCardDetected ? 'Trang có biểu mẫu thu thẻ tín dụng nhưng chưa xác minh được công ty — cẩn thận khi thanh toán.' : 'Trang có ô nhập mật khẩu/OTP kèm dấu hiệu lạ — cẩn thận khi đăng nhập.');
+  if (c9.category && c9.risk >= 45 && !forcedTrusted) reasons.push(`Nội dung đáng ngờ theo phân tích: ${c9.summary || ''}`);
   if (verifiedEntry) reasons.push(`Đã xác minh chủ sở hữu (${verifiedEntry.note || 'Lá Chắn Số'}) — ngày ${new Date(verifiedEntry.verifiedAt).toLocaleDateString('vi-VN')}.`);
   if (state === 'verify') reasons.push('Chưa đủ dữ liệu để khẳng định an toàn (không xác minh được tuổi tên miền) — hãy tự kiểm tra thêm trước khi tin.');
 
