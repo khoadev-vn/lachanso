@@ -260,7 +260,7 @@ export default function App() {
   const [resultData, setResultData] = useState<any>(null);
 
   const checkTimestamps = useRef<number[]>([]);
-  const RATE_LIMIT_MAX = 5;
+  const RATE_LIMIT_MAX = 15;
   const RATE_LIMIT_WINDOW = 60000;
 
   const [liveScamSites, setLiveScamSites] = useState<any[]>([]);

@@ -104,8 +104,8 @@ function rateLimiter(maxRequests, windowMs) {
     next();
   };
 }
-const throttleAnalysis = rateLimiter(20, 60 * 1000);
-const throttleGeneral = rateLimiter(60, 60 * 1000);
+const throttleAnalysis = rateLimiter(60, 60 * 1000);
+const throttleGeneral = rateLimiter(180, 60 * 1000);
 
 // ---- Admin gate: endpoint vận hành (cache/crawl) chỉ chấp nhận header x-lcs-admin-secret ----
 // Không lộ qua frontend public; dùng riêng cho thao tác vận hành từ VPS.

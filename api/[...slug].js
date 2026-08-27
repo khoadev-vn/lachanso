@@ -32,8 +32,8 @@ function rateLimiter(maxRequests, windowMs) {
     next();
   };
 }
-const throttleAnalysis = rateLimiter(10, 60 * 1000);
-const throttleGeneral = rateLimiter(30, 60 * 1000);
+const throttleAnalysis = rateLimiter(30, 60 * 1000);
+const throttleGeneral = rateLimiter(90, 60 * 1000);
 
 // Cleanup old buckets every 5 minutes
 setInterval(() => {
