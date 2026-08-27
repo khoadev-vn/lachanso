@@ -40,7 +40,6 @@ export interface LCSEngineResult {
 }
 
 import { aiEngine } from "../utils/transformerEngine";
-import { detectTypos } from "../utils/spellChecker";
 
 // Educational content detection — distinguish articles ABOUT fake news FROM fake news
 const EDUCATIONAL_INDICATORS = [
@@ -380,20 +379,6 @@ async function runLinguisticLayer(text: string): Promise<LCSLayerResult> {
         severity: "warning"
       });
     }
-  }
-
-  // Typo / misspelling detection — catches "Potugal" → "Nepal" etc.
-  const typos = detectTypos(text);
-  if (typos.length > 0) {
-    const typoList = typos.map(t => `"${t.input}" → "${t.suggestion}"`).join(", ");
-    signals.push({
-      id: "LF_TYPO_DETECTED",
-      layer: "linguistic",
-      name: "Phát hiện từ viết sai chính tả",
-      detail: `Hệ thống phát hiện ${typos.length} từ có khả năng viết sai: ${typoList}. Từ viết sai có thể là dấu hiệu cố tình thay đổi tên để né bộ lọc hoặc lẫn lộn thông tin.`,
-      impact: -8,
-      severity: "warning"
-    });
   }
 
   const hasByline = /phóng viên|biên tập|tác giả:|ghi nhận của/i.test(text);
