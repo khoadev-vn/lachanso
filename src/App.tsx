@@ -1127,7 +1127,7 @@ export default function App() {
           addReason({
             id: "ENTITY_MISMATCH",
             name: "Sai thông tin thực tế",
-            detail: em.detail || `User nói "${em.inputEntities?.[0]}" nhưng nguồn tin nói "${em.articleEntities?.[0]}"`,
+            detail: em.detail || `Bạn nói "${em.inputKeywords?.[0]}" nhưng nguồn tin nói "${em.articleKeywords?.[0]}"`,
             status: "warning",
             icon: AlertTriangle
           });

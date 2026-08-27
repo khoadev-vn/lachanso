@@ -80,11 +80,9 @@ async function verifyNewsComprehensive(text, options = {}) {
   results.cross_references = crossRefs;
   results.tools_used.push('newsAggregator');
 
-  // 3.5 Entity mismatch detection — compare input entities vs article entities
+  // 3.5 Entity mismatch detection — compare input keywords vs article keywords
   console.log('[Verify] Step 3.5: Entity mismatch check');
-  const inputEntities = extractKeyEntities(text);
-  const articleEntities = crossRefs.flatMap(r => extractKeyEntities(r.title));
-  const mismatch = detectEntityMismatch(inputEntities, articleEntities);
+  const mismatch = detectKeywordMismatch(text, crossRefs);
   if (mismatch.detected) {
     results.entity_mismatch = mismatch;
     results.signals.push({
@@ -420,61 +418,56 @@ function calculateComprehensiveScore(results, blogVerification = null) {
 
 // ============ ENTITY EXTRACTION & MISMATCH DETECTION ============
 
-const KNOWN_ENTITIES = [
-  // Countries — these are what matter for mismatch detection
-  'Nepal', 'Portugal', 'Pakistan', 'Ukraine', 'Vietnam', 'Thailand', 'Cambodia',
-  'Myanmar', 'Malaysia', 'Indonesia', 'Philippines', 'Singapore', 'Australia',
-  'India', 'China', 'Japan', 'Korea', 'Russia', 'Germany', 'France', 'Spain',
-  'Italy', 'Brazil', 'Mexico', 'Canada', 'Egypt', 'Turkey', 'Iran', 'Iraq',
-  'Israel', 'Syria', 'Afghanistan', 'Bangladesh', 'Sri Lanka', 'Taiwan',
-  'Nepal', 'Tibet', 'Bangladesh',
-  // Major cities
-  'Kathmandu', 'Lisbon', 'Hanoi', 'Bangkok', 'Jakarta', 'Manila', 'Singapore',
-  'Delhi', 'Beijing', 'Tokyo', 'Seoul', 'Moscow', 'Berlin', 'Paris', 'Madrid',
-  'Rome', 'Brasilia', 'London', 'Washington', 'New York',
-];
+// ============ KEYWORD MISMATCH DETECTION ============
 
-function extractKeyEntities(text) {
+const STOP_WORDS = new Set([
+  'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+  'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been',
+  'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
+  'could', 'should', 'may', 'might', 'can', 'shall', 'not', 'no',
+  'more', 'than', 'still', 'missing', 'after', 'deadly',
+  'flash', 'flood', 'floods', 'rescue', 'rescuers', 'helicopters',
+  'survivors', 'victims', 'killed', 'dead', 'disaster', 'crisis',
+  'search', 'seek', 'widespread', 'destruction', 'villages', 'area',
+]);
+
+function extractKeywords(text) {
   if (!text) return [];
-  const entities = new Set();
-
-  // Only check against known entity list (case-insensitive)
-  // Don't extract random capitalized words — too many false positives
-  const lowerText = text.toLowerCase();
-  for (const entity of KNOWN_ENTITIES) {
-    if (lowerText.includes(entity.toLowerCase())) {
-      entities.add(entity);
-    }
-  }
-
-  return Array.from(entities);
+  return text
+    .toLowerCase()
+    .replace(/[^a-záàảãạăằẳẵặâấầẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưứừửữựỳýỷỹđ\s]/g, '')
+    .split(/\s+/)
+    .filter(w => w.length >= 3 && !STOP_WORDS.has(w));
 }
 
-function detectEntityMismatch(inputEntities, articleEntities) {
-  if (inputEntities.length === 0 || articleEntities.length === 0) {
-    return { detected: false };
-  }
+function detectKeywordMismatch(inputText, articles) {
+  if (!articles || articles.length === 0) return { detected: false };
 
-  const inputSet = new Set(inputEntities.map(e => e.toLowerCase()));
-  const articleSet = new Set(articleEntities.map(e => e.toLowerCase()));
+  const inputKeywords = extractKeywords(inputText);
+  if (inputKeywords.length === 0) return { detected: false };
 
-  // Find entities in input that don't appear in any article
-  // This is the key check: user said X, but no article mentions X
-  const unmatchedInput = inputEntities.filter(e => !articleSet.has(e.toLowerCase()));
+  const articleText = articles.map(a => a.title).join(' ');
+  const articleKeywords = extractKeywords(articleText);
+  const articleKeywordSet = new Set(articleKeywords);
 
-  // Find entities in articles that don't appear in input (for context)
-  const unmatchedArticles = articleEntities.filter(e => !inputSet.has(e.toLowerCase()));
+  const unmatched = inputKeywords.filter(kw => !articleKeywordSet.has(kw));
+  const matchRatio = (inputKeywords.length - unmatched.length) / inputKeywords.length;
 
-  // Flag if: user mentioned specific entities that no article confirms
-  // And articles mention different entities (suggesting the user's claim is wrong)
-  if (unmatchedInput.length > 0 && unmatchedArticles.length > 0) {
-    const inputList = unmatchedInput.join(', ');
-    const articleList = unmatchedArticles.slice(0, 5).join(', ');
+  if (matchRatio < 0.3 && unmatched.length >= 2) {
+    const articleWordCount = {};
+    for (const kw of articleKeywords) {
+      articleWordCount[kw] = (articleWordCount[kw] || 0) + 1;
+    }
+    const topArticleWords = Object.entries(articleWordCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([word]) => word);
+
     return {
       detected: true,
-      inputEntities: unmatchedInput,
-      articleEntities: unmatchedArticles.slice(0, 5),
-      detail: `Bạn đề cập "${inputList}" nhưng các nguồn tin hiện có nói về "${articleList}". Thông tin bạn nhập có thể không chính xác.`,
+      inputKeywords: unmatched.slice(0, 5),
+      articleKeywords: topArticleWords,
+      detail: `Bạn đề cập "${unmatched.slice(0, 3).join('", "')}" nhưng các nguồn tin nói về "${topArticleWords.slice(0, 3).join('", ')}". Nội dung nhập có thể không chính xác.`,
       severity: 'warning'
     };
   }
