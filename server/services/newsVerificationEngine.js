@@ -421,30 +421,25 @@ function calculateComprehensiveScore(results, blogVerification = null) {
 // ============ ENTITY EXTRACTION & MISMATCH DETECTION ============
 
 const KNOWN_ENTITIES = [
-  // Countries
+  // Countries — these are what matter for mismatch detection
   'Nepal', 'Portugal', 'Pakistan', 'Ukraine', 'Vietnam', 'Thailand', 'Cambodia',
   'Myanmar', 'Malaysia', 'Indonesia', 'Philippines', 'Singapore', 'Australia',
   'India', 'China', 'Japan', 'Korea', 'Russia', 'Germany', 'France', 'Spain',
   'Italy', 'Brazil', 'Mexico', 'Canada', 'Egypt', 'Turkey', 'Iran', 'Iraq',
   'Israel', 'Syria', 'Afghanistan', 'Bangladesh', 'Sri Lanka', 'Taiwan',
-  // Common proper nouns in news
-  'WHO', 'UN', 'FBI', 'CIA', 'NASA', 'EU', 'NATO', 'IMF', 'WTO',
-  // Major brands
-  'Facebook', 'Google', 'Twitter', 'Amazon', 'Apple', 'Microsoft', 'Netflix',
-  'Shopee', 'Lazada', 'TikTok', 'Instagram', 'YouTube',
+  'Nepal', 'Tibet', 'Bangladesh',
+  // Major cities
+  'Kathmandu', 'Lisbon', 'Hanoi', 'Bangkok', 'Jakarta', 'Manila', 'Singapore',
+  'Delhi', 'Beijing', 'Tokyo', 'Seoul', 'Moscow', 'Berlin', 'Paris', 'Madrid',
+  'Rome', 'Brasilia', 'London', 'Washington', 'New York',
 ];
 
 function extractKeyEntities(text) {
   if (!text) return [];
   const entities = new Set();
 
-  // Extract capitalized words (likely proper nouns)
-  const capitalizedWords = text.match(/\b[A-ZÁÀẢÃẠĂẰẲẴẶÂẤẦẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ][a-zá-ỵ]+\b/g) || [];
-  for (const word of capitalizedWords) {
-    if (word.length >= 3) entities.add(word);
-  }
-
-  // Check against known entity list (case-insensitive)
+  // Only check against known entity list (case-insensitive)
+  // Don't extract random capitalized words — too many false positives
   const lowerText = text.toLowerCase();
   for (const entity of KNOWN_ENTITIES) {
     if (lowerText.includes(entity.toLowerCase())) {
@@ -464,51 +459,27 @@ function detectEntityMismatch(inputEntities, articleEntities) {
   const articleSet = new Set(articleEntities.map(e => e.toLowerCase()));
 
   // Find entities in input that don't appear in any article
+  // This is the key check: user said X, but no article mentions X
   const unmatchedInput = inputEntities.filter(e => !articleSet.has(e.toLowerCase()));
-  // Find entities in articles that don't appear in input
+
+  // Find entities in articles that don't appear in input (for context)
   const unmatchedArticles = articleEntities.filter(e => !inputSet.has(e.toLowerCase()));
 
-  // Only flag if there's a significant mismatch (at least 1 entity from input not in articles)
-  // and articles have entities that could be the "correct" version
+  // Flag if: user mentioned specific entities that no article confirms
+  // And articles mention different entities (suggesting the user's claim is wrong)
   if (unmatchedInput.length > 0 && unmatchedArticles.length > 0) {
-    // Check if any unmatched article entity is close to an unmatched input entity (possible typo)
-    const hasCloseMatch = unmatchedInput.some(input => {
-      return unmatchedArticles.some(article => {
-        const dist = levenshteinDistance(input.toLowerCase(), article.toLowerCase());
-        return dist >= 1 && dist <= 3 && Math.abs(input.length - article.length) <= 2;
-      });
-    });
-
-    if (hasCloseMatch) {
-      const inputList = unmatchedInput.join(', ');
-      const articleList = unmatchedArticles.slice(0, 3).join(', ');
-      return {
-        detected: true,
-        inputEntities: unmatchedInput,
-        articleEntities: unmatchedArticles.slice(0, 5),
-        detail: `User đề cập "${inputList}" nhưng các nguồn tin nói về "${articleList}". Có sự không khớp giữa nội dung nhập và thực tế.`,
-        severity: 'warning'
-      };
-    }
+    const inputList = unmatchedInput.join(', ');
+    const articleList = unmatchedArticles.slice(0, 5).join(', ');
+    return {
+      detected: true,
+      inputEntities: unmatchedInput,
+      articleEntities: unmatchedArticles.slice(0, 5),
+      detail: `Bạn đề cập "${inputList}" nhưng các nguồn tin hiện có nói về "${articleList}". Thông tin bạn nhập có thể không chính xác.`,
+      severity: 'warning'
+    };
   }
 
   return { detected: false };
-}
-
-function levenshteinDistance(a, b) {
-  const m = a.length, n = b.length;
-  if (m === 0) return n;
-  if (n === 0) return m;
-  const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
-  for (let i = 0; i <= m; i++) dp[i][0] = i;
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
-    }
-  }
-  return dp[m][n];
 }
 
 module.exports = { verifyNewsComprehensive };
