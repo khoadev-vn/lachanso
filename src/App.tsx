@@ -12,6 +12,7 @@ import ThirdPartyModal from "./components/ThirdPartyModal";
 import ThirdPartyResultsPanel from "./components/ThirdPartyResultsPanel";
 import { useState, useEffect, FormEvent, useRef } from "react";
 import type { PointerEvent } from "react";
+import { useLang } from "./contexts/LangContext";
 import { extractArticleForAnalysis } from "./constants/articleExtraction";
 import { FAKE_NEWS_LAWS } from "./constants/fakeNewsLaws";
 import { analyzeTextByKeywords } from "./constants/fakeNewsKeywords";
@@ -251,6 +252,7 @@ function buildPlainSummary(reasons: any[], input: any): { items: string[]; verdi
 }
 
 export default function App() {
+  const { lang, setLang, t } = useLang();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<PageId>(() => getPageFromPath(window.location.pathname));
   const [searchQuery, setSearchQuery] = useState("");
@@ -1384,8 +1386,12 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4">
+            <button onClick={() => setLang(lang === 'vi' ? 'en' : 'vi')} className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-full border border-gray-300 hover:border-gray-400 transition-colors bg-white/80">
+              <Globe className="w-3.5 h-3.5" />
+              {lang === 'vi' ? 'EN' : 'VI'}
+            </button>
             <button onClick={() => navigateToPage("check")} className="hidden md:block px-6 py-2.5 text-[15px] font-semibold rounded-full hover:bg-gray-200 transition-all active:scale-95 bg-[#ff8904] text-[#ffff]">
-              Kiểm Tra Ngay
+              {t('nav.cta')}
             </button>
             <button className="md:hidden p-2 text-[#111111]" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -1405,7 +1411,10 @@ export default function App() {
             navigateToPage("check");
             setIsMenuOpen(false);
           }} className="w-full px-6 py-3 bg-white text-[#151414] font-semibold rounded-full mt-2">
-            Kiểm Tra Ngay
+            {t('nav.cta')}
+          </button>
+          <button onClick={() => { setLang(lang === 'vi' ? 'en' : 'vi'); setIsMenuOpen(false); }} className="w-full px-6 py-3 flex items-center justify-center gap-2 border border-gray-300 rounded-full mt-2 text-sm font-medium">
+            <Globe className="w-4 h-4" /> {lang === 'vi' ? 'Switch to English' : 'Chuyển sang tiếng Việt'}
           </button>
           {isMobileDevice && <button onClick={() => {
             handleInstallClick();
@@ -1439,7 +1448,7 @@ export default function App() {
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="mb-10">
                 <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-black/10 text-sm font-semibold text-[#333] shadow-sm backdrop-blur">
                   <img src="/logo.png" alt="" className="w-8 h-8" />
-                  Nền tảng xác thực thông tin Việt Nam
+                  {t('hero.badge')}
                   <ChevronRight className="w-3.5 h-3.5 opacity-40" />
                 </span>
               </motion.div>
@@ -1455,9 +1464,8 @@ export default function App() {
                     transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
                     className="text-[68px] md:text-[88px] xl:text-[108px] font-black leading-[0.88] tracking-[-0.03em] uppercase text-[#111111] mb-8">
 
-                    BẢO VỆ<br />
-                    THÔNG TIN<br />
-                    <span className="text-orange-500 italic">Lá Chắn Số</span>
+                    {t('hero.title1')}<br />
+                    {t('hero.title2')}
                   </motion.h1>
 
                   <motion.p
@@ -1466,7 +1474,7 @@ export default function App() {
                     transition={{ delay: 0.2, duration: 0.6 }}
                     className="text-[17px] text-[#555] leading-relaxed max-w-[440px] mb-10">
 
-                    Kiểm tra tin giả, lừa đảo và trang web độc hại ngay lập tức. Công nghệ phân tích đa lớp bảo vệ bạn và cộng đồng.
+                    {t('hero.subtitle')}
                   </motion.p>
 
                   <motion.h2
@@ -1474,7 +1482,7 @@ export default function App() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15, duration: 0.6 }}
                     className="text-[36px] md:text-[48px] lg:text-[56px] font-black leading-tight tracking-tight text-[#111] mb-10">
-                    Kiểm trước <span className="text-orange-500">—</span> Tin sau
+                    {t('hero.slogan')}
                   </motion.h2>
 
                   <motion.div
@@ -1484,13 +1492,13 @@ export default function App() {
                     className="flex flex-wrap gap-3">
 
                     <button onClick={() => navigateToPage("check")} className="px-8 py-4 bg-orange-500 text-white text-[15px] font-bold rounded-full hover:bg-orange-400 transition-all active:scale-95 shadow-xl shadow-orange-500/25">
-                      Kiểm tra ngay
+                      {t('hero.cta')}
                     </button>
                     <button onClick={() => navigateToPage("resources")} className="px-8 py-4 border-2 border-black/20 text-[#111] text-[15px] font-bold rounded-full hover:border-black/40 hover:bg-black/5 transition-all active:scale-95">
-                      Xem tài nguyên
+                      {t('hero.cta2')}
                     </button>
-                    <button type="button" onClick={handleInstallClick} disabled={waitingInstall} title="Thêm vào màn hình chính" className="inline-flex items-center gap-2 px-6 py-4 border-2 border-orange-200 bg-orange-50 text-orange-600 text-[15px] font-bold rounded-full hover:border-orange-400 hover:bg-orange-100 transition-all active:scale-95 disabled:opacity-60">
-                      <Download className="h-5 w-5" /> {waitingInstall ? "Đang chuẩn bị…" : "Cài ứng dụng"}
+                    <button type="button" onClick={handleInstallClick} disabled={waitingInstall} title={t('nav.install')} className="inline-flex items-center gap-2 px-6 py-4 border-2 border-orange-200 bg-orange-50 text-orange-600 text-[15px] font-bold rounded-full hover:border-orange-400 hover:bg-orange-100 transition-all active:scale-95 disabled:opacity-60">
+                      <Download className="h-5 w-5" /> {waitingInstall ? t('hero.installing') : t('hero.install')}
                     </button>
                   </motion.div>
 
@@ -1503,17 +1511,17 @@ export default function App() {
 
                     <div>
                       <p className="text-[32px] font-black text-[#111] leading-none">&gt;80%</p>
-                      <p className="text-xs text-[#888] mt-1 font-medium">Tỷ lệ phát hiện tin giả</p>
+                      <p className="text-xs text-[#888] mt-1 font-medium">{t('hero.stat1')}</p>
                     </div>
                     <div className="w-px h-10 bg-black/10 hidden sm:block" />
                     <div>
                       <p className="text-[32px] font-black text-[#111] leading-none">99,86%</p>
-                      <p className="text-xs text-[#888] mt-1 font-medium">Tỷ lệ phát hiện lừa đảo</p>
+                      <p className="text-xs text-[#888] mt-1 font-medium">{t('hero.stat2')}</p>
                     </div>
                     <div className="w-px h-10 bg-black/10 hidden sm:block" />
                     <div>
                       <p className="text-[32px] font-black text-[#111] leading-none">7 lớp</p>
-                      <p className="text-xs text-[#888] mt-1 font-medium">Thuật toán & phân tích ngữ cảnh</p>
+                      <p className="text-xs text-[#888] mt-1 font-medium">{t('hero.stat3')}</p>
                     </div>
                   </motion.div>
                 </div>

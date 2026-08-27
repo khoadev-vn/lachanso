@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
+import { LangProvider } from './contexts/LangContext.tsx';
 import './index.css';
 
 if ('serviceWorker' in navigator && /https:|localhost/.test(window.location.protocol + window.location.hostname)) {
@@ -13,6 +14,8 @@ if ('serviceWorker' in navigator && /https:|localhost/.test(window.location.prot
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <LangProvider>
+      <App />
+    </LangProvider>
   </StrictMode>
 );
