@@ -1106,6 +1106,34 @@ export default function App() {
           pressArticles: liveNewsCheck.pressArticles,
           pressSourceLabel: liveNewsCheck.pressSourceLabel
         });
+
+        // Add comprehensive backend signals (entity mismatch etc.)
+        if (comprehensiveResult?.comprehensive?.signals) {
+          for (const sig of comprehensiveResult.comprehensive.signals) {
+            if (sig.type === 'negative' && sig.impact < 0) {
+              addReason({
+                id: "ENTITY_MISMATCH",
+                name: "Không khớp thực tế",
+                detail: sig.reason || "Phát hiện sự không khớp giữa nội dung nhập và nguồn tin thực tế.",
+                status: "warning",
+                icon: Info
+              });
+              score += sig.impact;
+            }
+          }
+        }
+        if (comprehensiveResult?.comprehensive?.entity_mismatch?.detected) {
+          const em = comprehensiveResult.comprehensive.entity_mismatch;
+          addReason({
+            id: "ENTITY_MISMATCH",
+            name: "Sai thông tin thực tế",
+            detail: em.detail || `User nói "${em.inputEntities?.[0]}" nhưng nguồn tin nói "${em.articleEntities?.[0]}"`,
+            status: "warning",
+            icon: AlertTriangle
+          });
+          score -= 15;
+        }
+
         const blockingMismatchIds = new Set([
           "KNOWN_IDENTITY_MISMATCH",
           "WIKIPEDIA_IDENTITY_MISMATCH",
@@ -1120,6 +1148,7 @@ export default function App() {
           "LIVE_PRESS_CONTRADICTS_CLAIM",
           "LIVE_PRESS_STRONG_CONTRADICTION",
           "FANTASY_EVENT_CLAIM",
+          "ENTITY_MISMATCH",
           "URL_PHISHING"]
         );
         const hasBlockingMismatch = reasons.some((item) => blockingMismatchIds.has(item.id) || item.status === "danger" && /MISMATCH|SAI|KNOWN|WIKIPEDIA/i.test(item.id || ""));

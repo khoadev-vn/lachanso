@@ -1,5 +1,5 @@
 ============================================================
-  LÁ CHÀN SỐ — API TÍCH HỢP KIỂM TRA LINK AN TOÀN
+  LÁ CHẮN SỐ — API TÍCH HỢP KIỂM TRA LINK AN TOÀN
   Dành cho: Unikorn.vn
 ============================================================
 
@@ -245,14 +245,4 @@ bên thứ ba.
   LINK_HOMOGLYPH    Homoglyph         danger    Dùng ký tự giống để giả mạo
   LINK_REDIRECT     Chuyển hướng      warning   Có redirect chain
 
-============================================================
-
-9. HỖ TRỢ
-------------------------------------------------------------
-  Website : https://lachansovn.com
-  Email   : admin@lachansovn.com
-  Fanpage : Lá Chàn Số trên Facebook
-
-============================================================
-Cập nhật lần cuối: 27/08/2026
 ============================================================
