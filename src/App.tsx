@@ -1440,13 +1440,13 @@ export default function App() {
                     Kiểm tra tin giả, lừa đảo và trang web độc hại ngay lập tức. Công nghệ phân tích đa lớp bảo vệ bạn và cộng đồng.
                   </motion.p>
 
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.15, duration: 0.5 }}
-                    className="inline-block mb-8 px-6 py-3 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[15px] font-black tracking-wide shadow-lg shadow-orange-500/20">
-                    Kiểm trước — Tin sau
-                  </motion.div>
+                  <motion.h2
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15, duration: 0.6 }}
+                    className="text-[36px] md:text-[48px] lg:text-[56px] font-black leading-tight tracking-tight text-[#111] mb-10">
+                    Kiểm trước <span className="text-orange-500">—</span> Tin sau
+                  </motion.h2>
 
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
