@@ -510,6 +510,70 @@ app.post('/api/analyze-link', async (req, res) => {
   }
 });
 
+// ---- Partner API: Unikorn check link ----
+const { partnerAuth, getPartnerStats } = require('./services/partnerAuth');
+
+app.post('/api/partner/unikorn/check-link', partnerAuth, async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ success: false, error: 'Thiếu trường url trong request body' });
+
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(url);
+    } catch {
+      return res.status(400).json({ success: false, error: 'URL không hợp lệ' });
+    }
+
+    const hostname = parsedUrl.hostname.replace(/^www\./, '');
+    const startTime = Date.now();
+
+    // Check cache
+    const cached = cacheService.get('partner-link', url);
+    if (cached) {
+      console.log(`[Partner] Cache HIT for ${hostname}`);
+      return res.json({ ...cached, cached: true });
+    }
+
+    console.log(`[Partner:${req.partnerId}] Checking ${hostname}...`);
+
+    // Run link analysis
+    const analysisResult = await linkAnalysis.analyzeLink(url);
+
+    // Map score to verdict
+    let verdict = 'safe';
+    if (analysisResult.score < 40) verdict = 'danger';
+    else if (analysisResult.score < 70) verdict = 'suspicious';
+
+    const responseData = {
+      success: true,
+      safe: verdict === 'safe',
+      score: analysisResult.score,
+      verdict,
+      hostname,
+      reasons: analysisResult.reasons || [],
+      cached: false,
+      executionTimeMs: Date.now() - startTime
+    };
+
+    // Cache for 60 minutes
+    cacheService.set('partner-link', url, responseData, 60);
+
+    console.log(`[Partner:${req.partnerId}] ${hostname} → score=${analysisResult.score} verdict=${verdict} (${Date.now() - startTime}ms)`);
+
+    res.json(responseData);
+  } catch (e) {
+    console.error('[Partner] Error:', e.message);
+    res.status(500).json({ success: false, error: 'Lỗi hệ thống khi kiểm tra link' });
+  }
+});
+
+// Partner stats
+app.get('/api/partner/:partnerId/stats', partnerAuth, (req, res) => {
+  const stats = getPartnerStats(req.params.partnerId);
+  res.json({ success: true, ...stats });
+});
+
 app.post('/api/analyze-text', (req, res) => {
   const { text } = req.body;
   if (!text) return res.status(400).json({ error: 'Missing text input' });
