@@ -12,6 +12,8 @@ const DEFAULT_HEADERS = {
 const RSS_FEEDS = {
   'Google News VN': 'https://news.google.com/rss/search?q={query}&hl=vi&gl=VN&ceid=VN:vi',
   'Bing News VN': 'https://www.bing.com/news/search?q={query}&format=rss&setlang=vi',
+  'Google News EN': 'https://news.google.com/rss/search?q={query}&hl=en&gl=US&ceid=US:en',
+  'Bing News EN': 'https://www.bing.com/news/search?q={query}&format=rss&setlang=en',
   'Google News Fact Check': 'https://news.google.com/rss/search?q={query}+factcheck&hl=vi&gl=VN&ceid=VN:vi',
   'Google News Chính trị': 'https://news.google.com/rss/search?q={query}+chính+trị&hl=vi&gl=VN&ceid=VN:vi',
   'Google News Kinh tế': 'https://news.google.com/rss/search?q={query}+kinh+tế&hl=vi&gl=VN&ceid=VN:vi',
@@ -165,6 +167,49 @@ async function scrapeTienphong(query, limit = 8) {
   } catch { return []; }
 }
 
+// ============ ENGLISH NEWS SCRAPERS ============
+async function scrapeBingNewsEN(query, limit = 10) {
+  try {
+    const url = `https://www.bing.com/news/search?q=${encodeURIComponent(query)}&format=rss&setlang=en`;
+    const { data } = await axios.get(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/rss+xml, application/xml, text/xml' },
+      timeout: 8000
+    });
+    const $ = cheerio.load(data, { xmlMode: true });
+    const articles = [];
+    $('item').each((i, el) => {
+      if (i >= limit) return;
+      const title = $(el).find('title').text().trim();
+      const link = $(el).find('link').text().trim();
+      const source = $(el).find('source').text().trim() || 'Bing News EN';
+      const description = $(el).find('description').text().trim();
+      if (title && link) articles.push({ title, description, link, source });
+    });
+    return articles;
+  } catch { return []; }
+}
+
+async function scrapeGoogleNewsEN(query, limit = 10) {
+  try {
+    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en&gl=US&ceid=US:en`;
+    const { data } = await axios.get(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/rss+xml, application/xml, text/xml' },
+      timeout: 8000
+    });
+    const $ = cheerio.load(data, { xmlMode: true });
+    const articles = [];
+    $('item').each((i, el) => {
+      if (i >= limit) return;
+      const title = $(el).find('title').text().trim();
+      const link = $(el).find('link').text().trim();
+      const source = $(el).find('source').text().trim() || 'Google News EN';
+      const description = $(el).find('description').text().trim();
+      if (title && link) articles.push({ title, description, link, source });
+    });
+    return articles;
+  } catch { return []; }
+}
+
 // ============ RSS PARSER ============
 async function fetchRSSFeed(url, sourceName, limit = 10) {
   try {
@@ -205,6 +250,13 @@ async function aggregateNews(query, options = {}) {
     scrapeNld(query),
     scrapeTienphong(query),
   ];
+
+  // Add English sources for international queries
+  const hasEnglishWords = /[a-zA-Z]{3,}/.test(query) && !/[\u00e0-\u1ef9]/.test(query);
+  if (hasEnglishWords) {
+    scrapers.push(scrapeBingNewsEN(query));
+    scrapers.push(scrapeGoogleNewsEN(query));
+  }
   
   if (includeRSS) {
     for (const [name, template] of Object.entries(RSS_FEEDS)) {
