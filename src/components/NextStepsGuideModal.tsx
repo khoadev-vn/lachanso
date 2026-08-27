@@ -5,7 +5,7 @@ interface NextStepsGuideModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   kind: "web" | "news";
-  dangerLevel: "danger" | "warning" | "safe";
+  dangerLevel: "danger" | "insufficient" | "safe";
 }
 
 const ACTION_CALLOUTS = [

@@ -20,7 +20,7 @@ export interface LCSNarrativeProfile {
 }
 export interface LCSEngineResult {
   lcsScore: number;
-  verdict: "VERIFIED" | "UNCERTAIN" | "SUSPICIOUS" | "DANGER";
+  verdict: "VERIFIED" | "UNCERTAIN" | "DANGER";
   verdictLabel: string;
   confidence: number;
   layers: {
@@ -945,19 +945,16 @@ function computeVerdict(score: number, allSignals: LCSSignal[]): {
     return { verdict: "DANGER", verdictLabel: "Nguy hiểm — Lừa đảo", confidence: 0.95 };
   }
   
-  // Educational content never goes beyond UNCERTAIN
+  // Educational content — always safe or uncertain
   if (isEducational) {
     if (score >= 60) return { verdict: "VERIFIED", verdictLabel: "Nội dung giáo dục — An toàn", confidence: 0.85 };
-    if (score >= 40) return { verdict: "UNCERTAIN", verdictLabel: "Nội dung giáo dục — Cần đối chiếu", confidence: 0.70 };
     return { verdict: "UNCERTAIN", verdictLabel: "Nội dung giáo dục", confidence: 0.65 };
   }
   
   if (score >= 78)
   return { verdict: "VERIFIED", verdictLabel: "Đã xác minh", confidence: 0.88 };
-  if (score >= 60)
-  return { verdict: "UNCERTAIN", verdictLabel: "Chưa xác minh", confidence: 0.65 };
   if (score >= 40)
-  return { verdict: "SUSPICIOUS", verdictLabel: "Đáng ngờ", confidence: 0.75 };
+  return { verdict: "UNCERTAIN", verdictLabel: "Chưa đủ dữ liệu", confidence: 0.65 };
   return { verdict: "DANGER", verdictLabel: "Nguy hiểm — Lừa đảo", confidence: 0.91 };
 }
 // LCS Score Engine v1.1 — Educational content detection

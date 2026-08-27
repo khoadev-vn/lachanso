@@ -1,7 +1,7 @@
 import { motion, AnimatePresence, animate, useMotionValue, useSpring, useTransform } from "motion/react";
 import { Analytics } from "@vercel/analytics/react";
 import GlobeViz from "./components/GlobeViz";
-import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users, Landmark, Scale, HeartPulse, Info, HelpCircle, Flag, LifeBuoy, ShieldAlert, Download, ListOrdered, MessageSquare, Newspaper } from "lucide-react";
+import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users, Landmark, Scale, HeartPulse, Info, HelpCircle, Flag, LifeBuoy, ShieldAlert, Download, ListOrdered, MessageSquare, Newspaper, Lock, BookOpen, MousePointerClick, FileSearch } from "lucide-react";
 import OwnerVerifyModal from "./components/OwnerVerifyModal";
 import ReportIssueModal from "./components/ReportIssueModal";
 import NextStepsGuideModal from "./components/NextStepsGuideModal";
@@ -26,14 +26,19 @@ import FactCheckBanner from "./components/FactCheckBanner";
 import BlogList from "./components/blog/BlogList";
 import BlogArticleView from "./components/blog/BlogArticleView";
 import { getBlogArticleBySlug } from "./data/blog/articles";
-type PageId = "home" | "check" | "resources" | "partners" | "mission" | "blog";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from "recharts";
+type PageId = "home" | "check" | "resources" | "partners" | "mission" | "blog" | "terms" | "privacy" | "guide" | "threats";
 const PAGE_PATHS: Record<PageId, string> = {
   home: "/",
   check: "/kiem-tra",
   resources: "/tai-nguyen",
   partners: "/dong-hanh",
   mission: "/su-menh",
-  blog: "/blog"
+  blog: "/blog",
+  terms: "/dieu-khoan",
+  privacy: "/chinh-sach",
+  guide: "/huong-dan",
+  threats: "/de-doa"
 };
 const PATH_TO_PAGE: Record<string, PageId> = {
   "/": "home",
@@ -41,7 +46,11 @@ const PATH_TO_PAGE: Record<string, PageId> = {
   "/tai-nguyen": "resources",
   "/dong-hanh": "partners",
   "/su-menh": "mission",
-  "/blog": "blog"
+  "/blog": "blog",
+  "/dieu-khoan": "terms",
+  "/chinh-sach": "privacy",
+  "/huong-dan": "guide",
+  "/de-doa": "threats"
 };
 const getPageFromPath = (pathname: string): PageId => {
   if (pathname.startsWith("/blog/")) return "blog";
@@ -65,23 +74,18 @@ const WEB_REASON_STATUS_ICON = (status: string) =>
   status === "warning" ? "bg-amber-100 text-amber-700" :
   "bg-emerald-100 text-emerald-700";
 
-// ===== 4-trạng thái Zero-Trust (v2.0) =====
-type WebStateKey = "safe" | "verify" | "warning" | "danger";
+// ===== 3-trạng thái mới: An toàn / Chưa đủ dữ liệu / Nguy hiểm =====
+type WebStateKey = "safe" | "insufficient" | "danger";
 const resolveWebState = (r: any): WebStateKey => {
   if (r?.state === "safe") return "safe";
-  if (r?.state === "suspicious") return "warning";
-  if (r?.state === "verify") return "verify";
   if (r?.state === "danger") return "danger";
-  if (r?.needsVerification) return "verify";
   if (r?.isSafe) return "safe";
-  if (r?.isWarning) return "warning";
   if (r?.isDanger) return "danger";
-  return "warning";
+  return "insufficient";
 };
 const STATE_UI: Record<WebStateKey, { stroke: string; badge: string; icon: any; label: string; badgeLong: string; bar: string }> = {
   safe: { stroke: "#22c55e", badge: "bg-green-50 text-green-700", icon: ShieldCheck, label: "AN TOÀN", badgeLong: "An toàn", bar: "bg-green-500" },
-  verify: { stroke: "#eab308", badge: "bg-yellow-50 text-yellow-700", icon: HelpCircle, label: "CẦN XÁC MINH THÊM", badgeLong: "Cần xác minh thêm", bar: "bg-yellow-500" },
-  warning: { stroke: "#f97316", badge: "bg-orange-50 text-orange-700", icon: AlertTriangle, label: "ĐÁNG NGỜ", badgeLong: "Đáng ngờ", bar: "bg-orange-500" },
+  insufficient: { stroke: "#f59e0b", badge: "bg-amber-50 text-amber-700", icon: AlertTriangle, label: "CHƯA ĐỦ DỮ LIỆU", badgeLong: "Chưa đủ dữ liệu", bar: "bg-amber-500" },
   danger: { stroke: "#ef4444", badge: "bg-red-50 text-red-700", icon: X, label: "NGUY HIỂM", badgeLong: "Nguy hiểm", bar: "bg-red-500" }
 };
 
@@ -217,7 +221,7 @@ function buildPlainSummary(reasons: any[], input: any): { items: string[]; verdi
   const success = reasons.filter((r) => r?.status === "success");
   const picked = educational ? (success.length > 0 ? success : warning) : danger.length > 0 ? danger : safe ? success : warning;
   const items = picked.slice(0, 4).map((r) => PLAIN_REASON_TEXT[r?.id] ?? (r?.detail ? (r.detail as string).split(".")[0] + "." : r?.name ?? ""));
-  let verdict = "Hệ thống chưa đủ dữ kiện để kết luận chắc chắn.";
+  let verdict = "Hệ thống chưa đủ dữ liệu để đánh giá nội dung này. Bạn cần cảnh giác kỹ trước khi sử dụng.";
   if (isMessage) {
     if (educational) {
       verdict = "Đây là nội dung hướng dẫn/giáo dục về cách nhận biết lừa đảo qua tin nhắn.";
@@ -227,8 +231,8 @@ function buildPlainSummary(reasons: any[], input: any): { items: string[]; verdi
       verdict = "Có dấu hiệu nguy hiểm rõ rệt trong tin nhắn. Dừng lại và kiểm chứng người gửi trước khi hành động.";
     } else if (safe || success.length > 0) {
       verdict = "Nội dung phù hợp với ngữ cảnh xác nhận/quen biết — dường như an toàn. Vẫn cẩn trọng nếu có yêu cầu tài chính.";
-    } else if (warning.length > 0) {
-      verdict = "Có vài điểm bất thường — tin nhắn đáng ngờ. Hãy thận trọng, không vội tin hoặc chuyển tiền.";
+    } else {
+      verdict = "Hệ thống chưa đủ dữ liệu để đánh giá tin nhắn này. Bạn cần cảnh giác kỹ trước khi tương tác.";
     }
     return { items, verdict };
   }
@@ -240,10 +244,8 @@ function buildPlainSummary(reasons: any[], input: any): { items: string[]; verdi
     verdict = "Có dấu hiệu nguy hiểm rõ rệt. Bạn nên dừng lại và kiểm chứng từ nguồn chính thống trước khi tin.";
   } else if (safe) {
     verdict = "Các dấu hiệu đều tích cực — nội dung phù hợp với quy chuẩn thông tin chính thống.";
-  } else if (warning.length > 0) {
-    verdict = "Có một vài điểm bất thường. Nên đối chiếu thêm với báo chí hoặc trang chính phủ trước khi coi là đúng.";
-  } else if (success.length > 0) {
-    verdict = "Các dấu hiệu đều tích cực — nội dung phù hợp với quy chuẩn thông tin chính thống.";
+  } else {
+    verdict = "Hệ thống chưa đủ dữ liệu để đánh giá nội dung này. Bạn cần cảnh giác kỹ trước khi sử dụng.";
   }
   return { items, verdict };
 }
@@ -262,9 +264,10 @@ export default function App() {
   const RATE_LIMIT_WINDOW = 60000;
 
   const [liveScamSites, setLiveScamSites] = useState<any[]>([]);
+  const [threatStats, setThreatStats] = useState({ today: 0, thisWeek: 0, thisMonth: 0, total: 0, trend: [] as { label: string; value: number }[] });
 
   useEffect(() => {
-    if (currentPage !== "resources") return;
+    if (currentPage !== "resources" && currentPage !== "threats") return;
 
     let disposed = false;
     const loadEverything = async () => {
@@ -281,6 +284,23 @@ export default function App() {
 
     loadEverything();
     const timer = setInterval(loadEverything, 30000);
+    return () => { disposed = true; clearInterval(timer); };
+  }, [currentPage]);
+
+  useEffect(() => {
+    if (currentPage !== "threats") return;
+    let disposed = false;
+    const loadStats = async () => {
+      try {
+        const res = await fetch('/api/v2/threat-stats');
+        const data = await res.json();
+        if (!disposed && data.success) {
+          setThreatStats({ today: data.today, thisWeek: data.thisWeek, thisMonth: data.thisMonth, total: data.total, trend: data.trend || [] });
+        }
+      } catch (err) { console.error("Error fetching threat stats:", err); }
+    };
+    loadStats();
+    const timer = setInterval(loadStats, 30000);
     return () => { disposed = true; clearInterval(timer); };
   }, [currentPage]);
 
@@ -535,7 +555,7 @@ export default function App() {
     setLoadingStep(0);
     setResultData({
       isSafe: false,
-      isWarning: true,
+      isWarning: false,
       isDanger: false,
       isEducational: false,
       type: checkType,
@@ -599,7 +619,7 @@ export default function App() {
           setResultData({
             state: webCheck.state,
             isSafe: webCheck.isSafe,
-            isWarning: webCheck.isWarning,
+            isWarning: false,
             isDanger: webCheck.isDanger,
             needsVerification: webCheck.needsVerification,
             riskScore: webCheck.riskScore,
@@ -680,10 +700,9 @@ export default function App() {
         const score = api?.score ?? heuristicFallback.score;
         const isDanger = verdict === "scam" || (score >= 0 && score < 40 && api?.heuristic?.verdict === "scam");
         const isSafe = !isDanger && (verdict === "verified" || score >= 80);
-        const isWarning = !isDanger && !isSafe;
 
         const analysisDetails = {
-          internal_verdict: isDanger ? `Hệ thống + AI chắc chắn đây là TIN NHẮN LỪA ĐẢO (${score}%).` : isSafe ? `AI phán loại tin nhắn là XÁC THỰC (${score}%).` : `AI đánh giá tin nhắn ĐÁNG NGỜ (${score}%). Nên kiểm chứng trước khi hành động.`,
+          internal_verdict: isDanger ? `Hệ thống + AI chắc chắn đây là TIN NHẮN LỪA ĐẢO (${score}%).` : isSafe ? `AI phán loại tin nhắn là XÁC THỰC (${score}%).` : `Hệ thống chưa đủ dữ liệu để đánh giá tin nhắn này (${score}%). Bạn cần cảnh giác kỹ trước khi tương tác.`,
           heuristics: `Phát hiện ${reasons.filter((r: any) => r.status !== "success").length} dấu hiệu bất thường trong tin nhắn.`,
           trust_analysis: usedAI ? "AI đã đối chiếu nội dung với các kịch bản lừa đảo phổ biến tại Việt Nam." : "Fallback heuristic — không dùng AI.",
           url_verification: api?.contacts?.urls?.length ? `Phát hiện ${api.contacts.urls.length} liên kết: ${api.contacts.urls.join(", ")}. KHÔNG nhấn vào liên kết lạ.` : "Không phát hiện liên kết trong tin nhắn.",
@@ -694,21 +713,21 @@ export default function App() {
           live_press_scan: "Không áp dụng.",
           open_knowledge_check: "Không áp dụng."
         };
-        const finalTitle = isDanger ? "CẢNH BÁO: TIN NHẮN LỪA ĐẢO" : isSafe ? "Tin nhắn an toàn" : "Tin nhắn cần kiểm chứng";
+        const finalTitle = isDanger ? "CẢNH BÁO: TIN NHẮN LỪA ĐẢO" : isSafe ? "Tin nhắn an toàn" : "Chưa đủ dữ liệu để đánh giá";
         const finalDescription = isDanger
           ? "Tin nhắn này mang nhiều dấu hiệu điển hình của lừa đảo. Tuyệt đối KHÔNG chuyển tiền, không cung cấp mã OTP/mật khẩu, không nhấn link lạ."
           : isSafe
             ? "Nội dung phù hợp với ngữ cảnh xác nhận/quen biết. Vui lòng vẫn kiểm tra kỹ nếu có yêu cầu tài chính."
-            : "Tin nhắn có vài điểm bất thường không rõ ràng. Nên giữ thái độ thận trọng, không vội tin hoặc chuyển tiền cho tới khi xác minh được người gửi.";
+            : "Hệ thống chưa đủ dữ liệu để đánh giá tin nhắn này. Bạn cần cảnh giác kỹ trước khi tương tác.";
         setResultData({
           isSafe,
-          isWarning,
+          isWarning: false,
           isDanger,
           isEducational: false,
           type: "news",
           url: "",
           score,
-          confidence: isDanger ? "Độ rủi ro rất cao" : isSafe ? "Độ an toàn cao" : "Cần kiểm chứng",
+          confidence: isDanger ? "Độ rủi ro rất cao" : isSafe ? "Độ an toàn cao" : "Chưa đủ dữ liệu",
           title: finalTitle,
           description: finalDescription,
           analysis: analysisDetails,
@@ -1187,11 +1206,11 @@ export default function App() {
         score = Math.max(0, Math.min(100, score));
 
         const isGossip = reasons.some((r) => r.id === "KG_GOSSIP");
-        let finalTitle = score >= 75 ? "Thông tin có độ tin cậy" : score >= 50 ? "Tin tức chưa được xác minh" : "CẢNH BÁO: Tin giả độc hại";
+        let finalTitle = score >= 75 ? "Thông tin có độ tin cậy" : score >= 50 ? "Chưa đủ dữ liệu để đánh giá" : "CẢNH BÁO: Tin giả độc hại";
         let finalDescription = score >= 75 ?
           "Nội dung tuân thủ các quy chuẩn thông tin chính thống. Hệ thống không phát hiện các dấu hiệu thao túng tâm lý hoặc kỹ thuật né bộ lọc." :
           score >= 50 ?
-            "Văn bản chứa một số dấu hiệu bất thường về ngôn ngữ hoặc cấu trúc. Đề nghị kiểm chứng thêm từ các nguồn tin chính thống." :
+            "Hệ thống chưa đủ dữ liệu để đánh giá nội dung này. Bạn cần cảnh giác kỹ trước khi sử dụng." :
             "Văn bản chứa nhiều dấu hiệu đặc thù của tin giả lừa đảo: Thao túng tâm lý, đe dọa, né bộ lọc hoặc thông tin tài chính phi lý.";
 
         if (isGossip && score >= 40) {
@@ -1208,19 +1227,19 @@ export default function App() {
           analysisDetails.internal_verdict = score >= 75 ?
             `Hệ thống nhận định: AN TOÀN. ${successReasonCount} tín hiệu đối chiếu tích cực (fact-check, báo chí, nguồn tin chính thống) củng cố nội dung. Mức tin cậy: cao (${score}%).` :
             score >= 50 ?
-              `Hệ thống nhận định: CẦN XÁC THỰC. Điểm tin cậy ${score}%. Nội dung chưa có đủ đối chiếu chắc chắn — nên kiểm chứng thêm từ báo chí hoặc cơ quan chính thống.` :
+              `Hệ thống nhận định: CHƯA ĐỦ DỮ LIỆU. Điểm tin cậy ${score}%. Hệ thống chưa đủ dữ liệu để đánh giá nội dung này — bạn cần cảnh giác kỹ trước khi sử dụng.` :
               `Hệ thống nhận định: NGUY HIỂM. Điểm tin cậy ${score}%. Nội dung mang nhiều dấu hiệu đặc thù của tin giả/lừa đảo — tuyệt đối không tin, chia sẻ hoặc chuyển tiền theo hướng dẫn trong nội dung.`;
         }
 
         setResultData({
           isSafe: score >= 75,
-          isWarning: score >= 50 && score < 75,
+          isWarning: false,
           isDanger: score < 50,
           isEducational: fullScanResult?.isEducational || false,
           type: "news",
           url: articleExtraction?.originalUrl ?? searchQuery.substring(0, 50) + (searchQuery.length > 50 ? "..." : ""),
           score: score,
-          confidence: score >= 75 ? "Độ tin cậy cao" : score >= 50 ? "Cần kiểm chứng thêm" : "Độ rủi ro rất cao",
+          confidence: score >= 75 ? "Độ tin cậy cao" : score < 50 ? "Độ rủi ro rất cao" : "Chưa đủ dữ liệu để đánh giá",
           title: finalTitle,
           description: finalDescription,
           analysisReasons: reasons.length > 0 ? reasons : [{ name: "Chưa đủ dữ kiện xác minh", status: "warning", detail: "Nội dung không có tín hiệu nguy hiểm rõ, nhưng cũng chưa có nguồn đủ mạnh để coi là chính xác tuyệt đối.", icon: Info }],
@@ -1266,7 +1285,7 @@ export default function App() {
           return;
         setResultData({
           isSafe: false,
-          isWarning: true,
+          isWarning: false,
           isDanger: false,
           isEducational: false,
           type: checkType,
@@ -1308,20 +1327,21 @@ export default function App() {
   };
   const navLinks = [
     { name: "Trang Chủ", id: "home" as PageId },
-    { name: "Kiểm Tra", id: "check" as PageId },
+    { name: "Hướng Dẫn", id: "guide" as PageId },
+    { name: "Mối Đe Dọa", id: "threats" as PageId },
     { name: "Blog", id: "blog" as PageId },
     { name: "Tài Nguyên", id: "resources" as PageId },
-    { name: "Đồng hành", id: "partners" as PageId },
-    { name: "Sứ mệnh", id: "mission" as PageId }];
+    { name: "Đồng Hành", id: "partners" as PageId },
+    { name: "Sứ Mệnh", id: "mission" as PageId }];
 
   return (
     <div className="min-h-screen text-[#111111] selection:bg-orange-200/50">
       <Analytics />
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#f5f4f0]/90 backdrop-blur-md border-b border-black/10">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
           <button type="button" onClick={() => navigateToPage("home")} className="flex items-center">
-            <img src="/logo.png" alt="Lá Chắn Số" className="w-16 h-16 -mr-1 -mt-2" />
-            <span className="font-bold text-[27px] tracking-tight text-[#ff8904]">Lá Chắn Số</span>
+            <img src="/logo.png" alt="Lá Chắn Số" className="w-14 h-14 -mr-1 -mt-1" />
+            <span className="font-bold text-[24px] tracking-tight text-[#ff8904]">Lá Chắn Số</span>
           </button>
 
 
@@ -1329,26 +1349,23 @@ export default function App() {
             {navLinks.map((link, index) => <button key={link.name} onClick={() => {
               navigateToPage(link.id);
               setIsMenuOpen(false);
-            }} className={`font-medium transition-colors ${currentPage === link.id ? "text-[#111111]" : "text-gray-500 hover:text-[#111111]"} ${index === 0 ? 'text-[19px]' : 'text-[20px]'}`}>
+            }} className={`font-medium transition-colors text-[17px] ${currentPage === link.id ? "text-[#111111]" : "text-gray-500 hover:text-[#111111]"}`}>
               {link.name}
             </button>)}
           </div>
 
           <div className="flex items-center gap-4">
-            <button onClick={() => navigateToPage("check")} className="hidden md:block px-6 py-2.5 text-base font-semibold rounded-full hover:bg-gray-200 transition-all active:scale-95 bg-[#ff8904] text-[#ffff]">
+            <button onClick={() => navigateToPage("check")} className="hidden md:block px-6 py-2.5 text-[15px] font-semibold rounded-full hover:bg-gray-200 transition-all active:scale-95 bg-[#ff8904] text-[#ffff]">
               Kiểm Tra Ngay
             </button>
-            <button type="button" onClick={handleInstallClick} title="Thêm vào màn hình chính" className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-full border border-gray-300 bg-white text-gray-700 hover:border-[#ff8904] hover:text-[#ff8904] transition-all active:scale-95">
-              <Download className="h-4 w-4 inline" /> Cài ứng dụng
-            </button>
             <button className="md:hidden p-2 text-[#111111]" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-              {isMenuOpen ? <X /> : <Menu />}
+              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
 
 
-        {isMenuOpen && <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="md:hidden absolute top-20 left-0 right-0 bg-[#f5f4f0] border-b border-black/10 p-6 flex flex-col gap-4 shadow-xl">
+        {isMenuOpen && <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="md:hidden absolute top-[72px] left-0 right-0 bg-[#f5f4f0] border-b border-black/10 p-6 flex flex-col gap-4 shadow-xl">
           {navLinks.map((link) => <button key={link.name} className={`text-lg font-medium text-left ${currentPage === link.id ? "text-[#111111]" : "text-gray-500"}`} onClick={() => {
             navigateToPage(link.id);
             setIsMenuOpen(false);
@@ -1373,7 +1390,7 @@ export default function App() {
         {currentPage === "home" && <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-white">
 
           { }
-          <main className="pt-20 bg-[#E9E8E4] text-[#111111] relative overflow-hidden">
+          <main className="pt-[72px] bg-[#E9E8E4] text-[#111111] relative overflow-hidden">
 
             { }
             <div className="absolute inset-0 opacity-[0.035] pointer-events-none" style={{ backgroundImage: "linear-gradient(#111 1px,transparent 1px),linear-gradient(90deg,#111 1px,transparent 1px)", backgroundSize: "60px 60px" }} />
@@ -1381,11 +1398,11 @@ export default function App() {
             <div className="relative z-10 max-w-[1520px] mx-auto px-6 lg:px-10 pt-14 pb-0">
 
               <div className="mb-10 flex flex-wrap gap-3 items-start">
-                <a href="https://unikorn.vn/p/lachanso?ref=embed-lachanso" target="_blank" rel="noopener noreferrer">
-                  <img src="https://unikorn.vn/api/widgets/badge/lachanso/rank?theme=light&type=daily" alt="Lá Chắn Số - Hàng ngày" style={{ width: 250, height: 64 }} width="250" height="64" loading="lazy" />
+                <a href="https://unikorn.vn/p/la-chan-so?ref=embed-lachanso" target="_blank" rel="noopener noreferrer">
+                  <img src="https://unikorn.vn/api/widgets/badge/la-chan-so/rank?theme=light&type=daily" alt="Lá Chắn Số - Hàng ngày" style={{ width: 250, height: 64 }} width="250" height="64" loading="lazy" />
                 </a>
-                <a href="https://unikorn.vn/p/lachanso?ref=embed-lachanso" target="_blank" rel="noopener noreferrer">
-                  <img src="https://unikorn.vn/api/widgets/badge/lachanso?theme=light" alt="Lá Chắn Số trên Unikorn.vn" style={{ width: 256, height: 64 }} width="256" height="64" loading="lazy" />
+                <a href="https://unikorn.vn/p/la-chan-so?ref=embed-lachanso" target="_blank" rel="noopener noreferrer">
+                  <img src="https://unikorn.vn/api/widgets/badge/la-chan-so?theme=light" alt="Lá Chắn Số trên Unikorn.vn" style={{ width: 256, height: 64 }} width="256" height="64" loading="lazy" />
                 </a>
               </div>
 
@@ -1966,9 +1983,9 @@ export default function App() {
                             </span>}
                           </>;
                         })()}
-                        {resultData.type !== "web" && <div className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black uppercase ${resultData.isSafe ? "bg-green-50 text-green-700" : resultData.isWarning ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
-                          {resultData.isSafe ? <ShieldCheck className="h-4 w-4" /> : resultData.isWarning ? <AlertTriangle className="h-4 w-4" /> : <X className="h-4 w-4" />}
-                          {resultData.isSafe ? "An toàn" : resultData.isWarning ? "Cần xác thực" : "Nguy hiểm"}
+                        {resultData.type !== "web" && <div className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black uppercase ${resultData.isSafe ? "bg-green-50 text-green-700" : resultData.isDanger ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700"}`}>
+                          {resultData.isSafe ? <ShieldCheck className="h-4 w-4" /> : resultData.isDanger ? <X className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+                          {resultData.isSafe ? "An toàn" : resultData.isDanger ? "Nguy hiểm" : "Chưa đủ dữ liệu"}
                         </div>}
                         {resultData.isEducational && (
                           <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-black uppercase text-blue-700 ml-2">
@@ -1993,7 +2010,7 @@ export default function App() {
                       const st = resolveWebState(resultData);
                       return <div className="flex flex-col gap-3 border-t border-gray-100 px-6 py-5">
                         <div className="flex flex-wrap items-center gap-3">
-                          {st === "verify" && <button type="button" onClick={() => setOwnerVerifyOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl bg-blue-600 px-6 py-3.5 text-[15px] font-bold text-white shadow-md transition-colors hover:bg-blue-700">
+                          {st === "insufficient" && <button type="button" onClick={() => setOwnerVerifyOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl bg-blue-600 px-6 py-3.5 text-[15px] font-bold text-white shadow-md transition-colors hover:bg-blue-700">
                             <ShieldCheck className="h-5 w-5" />
                             Tôi là chủ website — Yêu cầu xác minh
                           </button>}
@@ -2007,7 +2024,7 @@ export default function App() {
                           </button>
                           <button type="button" onClick={() => setColorLegendOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-gray-300 bg-white px-6 py-3.5 text-[15px] font-bold text-gray-800 shadow-md transition-colors hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700">
                             <HelpCircle className="h-5 w-5" />
-                            Giải thích 4 mức
+                            Giải thích 3 mức
                           </button>
                           <button type="button" onClick={() => setNextStepsOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-orange-300 bg-orange-50 px-6 py-3.5 text-[15px] font-bold text-orange-700 shadow-md transition-colors hover:bg-orange-100">
                             <LifeBuoy className="h-5 w-5" />
@@ -2059,17 +2076,17 @@ export default function App() {
 
                   {resultData.type === "news" && (() => {
                     const plain = buildPlainSummary(resultData.analysisReasons ?? [], resultData);
-                    return <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className={`overflow-hidden rounded-3xl border p-6 ${resultData.isSafe ? "border-emerald-200 bg-emerald-50/60" : resultData.isWarning ? "border-amber-200 bg-amber-50/60" : "border-red-200 bg-red-50/70"}`}>
+                    return <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className={`overflow-hidden rounded-3xl border p-6 ${resultData.isSafe ? "border-emerald-200 bg-emerald-50/60" : resultData.isDanger ? "border-red-200 bg-red-50/70" : "border-amber-200 bg-amber-50/60"}`}>
                       <div className="flex items-center gap-2 mb-3">
-                        {resultData.isSafe ? <ShieldCheck className="h-5 w-5 text-emerald-600" /> : resultData.isWarning ? <AlertTriangle className="h-5 w-5 text-amber-600" /> : <X className="h-5 w-5 text-red-600" />}
+                        {resultData.isSafe ? <ShieldCheck className="h-5 w-5 text-emerald-600" /> : resultData.isDanger ? <X className="h-5 w-5 text-red-600" /> : <AlertTriangle className="h-5 w-5 text-amber-600" />}
                           <h3 className="text-base font-black tracking-tight text-gray-950">Kết luận bằng lời đơn giản</h3>
                       </div>
-                      <p className={`text-[15px] leading-relaxed font-medium ${resultData.isSafe ? "text-emerald-900" : resultData.isWarning ? "text-amber-900" : "text-red-900"}`}>
+                      <p className={`text-[15px] leading-relaxed font-medium ${resultData.isSafe ? "text-emerald-900" : resultData.isDanger ? "text-red-900" : "text-amber-900"}`}>
                         {plain.verdict}
                       </p>
                       {plain.items.length > 0 && <ul className="mt-4 space-y-2">
                         {plain.items.map((item, i) => <li key={i} className="flex items-start gap-2.5 text-sm leading-relaxed text-gray-800">
-                          <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${resultData.isSafe ? "bg-emerald-400" : resultData.isWarning ? "bg-amber-400" : "bg-red-400"}`} />
+                          <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${resultData.isSafe ? "bg-emerald-400" : resultData.isDanger ? "bg-red-400" : "bg-amber-400"}`} />
                           <span>{item}</span>
                         </li>)}
                       </ul>}
@@ -2278,10 +2295,10 @@ export default function App() {
                         </button>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className={`px-5 py-2 rounded-xl text-sm font-bold border ${resultData.score >= 75 ? "bg-green-50 border-green-200 text-green-700" :
-                          resultData.score >= 50 ? "bg-orange-50 border-orange-200 text-orange-700" :
-                            "bg-red-50 border-red-200 text-red-700"}`}>
-                          {resultData.isSafe ? "AN TOÀN" : resultData.isWarning ? "CẦN XÁC THỰC" : "NGUY HIỂM"}
+                        <div className={`px-5 py-2 rounded-xl text-sm font-bold border ${resultData.isSafe ? "bg-green-50 border-green-200 text-green-700" :
+                          resultData.isDanger ? "bg-red-50 border-red-200 text-red-700" :
+                            "bg-amber-50 border-amber-200 text-amber-700"}`}>
+                          {resultData.isSafe ? "AN TOÀN" : resultData.isDanger ? "NGUY HIỂM" : "CHƯA ĐỦ DỮ LIỆU"}
                         </div>
                         <div className="px-5 py-2 rounded-xl bg-gray-50 border border-gray-200 text-sm font-bold flex items-center gap-2 text-gray-700">
                           <Target className="w-4 h-4 text-orange-600" />
@@ -2450,7 +2467,7 @@ export default function App() {
                     <div className="relative w-48 h-48 mb-10">
                       <svg className="w-full h-full transform -rotate-90">
                         <circle cx="96" cy="96" r="84" stroke="currentColor" strokeWidth="14" fill="transparent" className="text-gray-100" />
-                        <motion.circle cx="96" cy="96" r="84" stroke="currentColor" strokeWidth="14" fill="transparent" strokeDasharray={528} initial={{ strokeDashoffset: 528 }} animate={{ strokeDashoffset: 528 - 528 * resultData.score / 100 }} transition={{ duration: 1.5, ease: "easeOut" }} className={resultData.isSafe ? "text-green-500" : resultData.isWarning ? "text-orange-500" : "text-red-500"} />
+                        <motion.circle cx="96" cy="96" r="84" stroke="currentColor" strokeWidth="14" fill="transparent" strokeDasharray={528} initial={{ strokeDashoffset: 528 }} animate={{ strokeDashoffset: 528 - 528 * resultData.score / 100 }} transition={{ duration: 1.5, ease: "easeOut" }} className={resultData.isSafe ? "text-green-500" : resultData.isDanger ? "text-red-500" : "text-amber-500"} />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <span className="text-4xl font-black text-gray-900 leading-none">{resultData.score}%</span>
@@ -2458,10 +2475,10 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className={`w-full py-5 rounded-3xl mb-10 flex items-center justify-center gap-3 ${resultData.isSafe ? "bg-green-500/10 text-green-600" : resultData.isWarning ? "bg-orange-500/10 text-orange-600" : "bg-red-500/10 text-red-600"}`}>
-                      {resultData.isSafe ? <ShieldCheck className="w-6 h-6" /> : resultData.isWarning ? <AlertTriangle className="w-6 h-6" /> : <X className="w-6 h-6" />}
+                    <div className={`w-full py-5 rounded-3xl mb-10 flex items-center justify-center gap-3 ${resultData.isSafe ? "bg-green-500/10 text-green-600" : resultData.isDanger ? "bg-red-500/10 text-red-600" : "bg-amber-500/10 text-amber-600"}`}>
+                      {resultData.isSafe ? <ShieldCheck className="w-6 h-6" /> : resultData.isDanger ? <X className="w-6 h-6" /> : <AlertTriangle className="w-6 h-6" />}
                       <span className="text-2xl font-black tracking-widest">
-                        {resultData.isSafe ? "AN TOÀN" : resultData.isWarning ? "CẦN XÁC THỰC" : "NGUY HIỂM"}
+                        {resultData.isSafe ? "AN TOÀN" : resultData.isDanger ? "NGUY HIỂM" : "CHƯA ĐỦ DỮ LIỆU"}
                       </span>
                     </div>
 
@@ -2477,12 +2494,12 @@ export default function App() {
                     <div className="w-full space-y-4 mb-10">
                       <div className="flex justify-between text-[11px] font-bold text-gray-500 uppercase tracking-widest">
                         <span>Phân cấp rủi ro</span>
-                        <span className={resultData.isSafe ? "text-green-500" : resultData.isWarning ? "text-orange-500" : "text-red-500"}>
-                          {resultData.isSafe ? "Cấp độ 1 (An toàn)" : resultData.isWarning ? "Cấp độ 2 (Cảnh báo)" : "Cấp độ 3 (Khẩn cấp)"}
+                        <span className={resultData.isSafe ? "text-green-500" : resultData.isDanger ? "text-red-500" : "text-amber-500"}>
+                          {resultData.isSafe ? "Cấp độ 1 (An toàn)" : resultData.isDanger ? "Cấp độ 3 (Nguy hiểm)" : "Cấp độ 2 (Chưa đủ dữ liệu)"}
                         </span>
                       </div>
                       <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                        <motion.div initial={{ width: 0 }} animate={{ width: `${100 - resultData.score}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className={`h-full ${resultData.isSafe ? "bg-green-500" : resultData.isWarning ? "bg-orange-500" : "bg-red-500"}`} />
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${100 - resultData.score}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className={`h-full ${resultData.isSafe ? "bg-green-500" : resultData.isDanger ? "bg-red-500" : "bg-amber-500"}`} />
                       </div>
                     </div>
 
@@ -2512,7 +2529,7 @@ export default function App() {
                     <div className="space-y-4 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar">
                       {resultData.analysisReasons.map((res: any, idx: number) => <div key={idx} className="flex items-start gap-4 p-5 rounded-3xl border border-gray-50 bg-white hover:border-orange-200 hover:shadow-[0_8px_30px_rgb(255,137,4,0.1)] transition-all group cursor-default">
                         <div className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center ${res.status === "danger" ? "bg-red-50 text-red-500" :
-                          res.status === "warning" ? "bg-orange-50 text-orange-500" :
+                          res.status === "warning" ? "bg-amber-50 text-amber-500" :
                             "bg-green-50 text-green-500"}`}>
                           <res.icon className="w-5 h-5" />
                         </div>
@@ -2522,7 +2539,7 @@ export default function App() {
                             <span className="text-[15px] font-bold text-gray-900 truncate tracking-tight">{res.name}</span>
                           </div>
                           <p className={`text-[12px] leading-relaxed line-clamp-3 font-medium ${res.status === "danger" ? "text-red-600/80" :
-                            res.status === "warning" ? "text-orange-600/80" :
+                            res.status === "warning" ? "text-amber-600/80" :
                               "text-green-700/80"}`}>
                             {res.detail}
                           </p>
@@ -2801,6 +2818,49 @@ export default function App() {
                 </div>
               </motion.div>
             </div>
+
+            <div className="mt-16">
+              <div className="text-center">
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Dự án độc lập</h2>
+                <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-300 leading-8">
+                  Lá Chắn Số tại lachansovn.com là dự án độc lập, phi lợi nhuận do hai học sinh Gen Z Việt Nam sáng lập.
+                  Dự án không liên quan và không trực thuộc Viettel, Viettel Cyber Security hay bất kỳ tập đoàn, cơ quan nhà nước nào.
+                  Đây là sản phẩm web độc lập, khác với các phần mềm cùng tên "Lá Chắn Số" của các tổ chức khác tại Việt Nam.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-16">
+              <div className="text-center">
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Đội ngũ sáng lập</h2>
+                <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-300 leading-8">
+                  Lá Chắn Số được xây dựng bởi hai học sinh Gen Z người Việt Nam, với mong muốn dùng công nghệ bảo vệ cộng đồng trước tin giả và lừa đảo trực tuyến.
+                </p>
+              </div>
+              <div className="mt-10 grid gap-6 md:grid-cols-2">
+                {[
+                  {
+                    name: "Nguyễn Võ Anh Khoa",
+                    role: "Đồng sáng lập",
+                    bio: "Phụ trách kỹ thuật và kiến trúc hệ thống Lá Chắn Số - từ phân tích rủi ro đa tầng, cơ sở dữ liệu nguồn tin đến hạ tầng triển khai."
+                  },
+                  {
+                    name: "Nguyễn Lĩnh Nam",
+                    role: "Đồng sáng lập",
+                    bio: "Đồng sáng lập Lá Chắn Số, cùng xây dựng định hướng sản phẩm và lan tỏa sứ mệnh bảo vệ người dùng Việt trên không gian mạng."
+                  }
+                ].map((member) =>
+                  <motion.div key={member.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="rounded-[30px] border border-white/10 bg-white/5 p-8">
+                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-300 mb-4">
+                      <User className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-white">{member.name}</h3>
+                    <p className="mt-1 text-sm font-semibold text-orange-300 uppercase tracking-wide">{member.role}</p>
+                    <p className="mt-4 text-slate-300 leading-7">{member.bio}</p>
+                  </motion.div>
+                )}
+              </div>
+            </div>
           </div>
         </motion.div>}
         {currentPage === "blog" && (
@@ -2829,6 +2889,268 @@ export default function App() {
             )}
           </motion.div>
         )}
+        {currentPage === "threats" && (
+          <motion.div key="threats" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="pt-28 pb-20 px-6 min-h-screen bg-white">
+            <div className="max-w-[1200px] mx-auto">
+              <div className="inline-flex items-center gap-2 rounded-full bg-red-50 border border-red-100 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.25em] text-red-600">
+                <ShieldAlert className="w-3.5 h-3.5" /> Trung tâm tình báo mối đe dọa
+              </div>
+              <h1 className="mt-6 text-4xl md:text-5xl font-black tracking-tight text-black">Website đã kiểm tra hôm nay</h1>
+              <p className="mt-4 text-lg text-gray-500 leading-8">Số lượt kiểm tra website qua hệ thống Lá Chắn Số — phát hiện lừa đảo, phishing và tin giả.</p>
+
+              <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  { label: "LƯỢT KIỂM TRA HÔM NAY", value: threatStats.today, accent: "from-red-500 to-orange-500" },
+                  { label: "LƯỢT KIỂM TRA TUẦN NÀY", value: threatStats.thisWeek, accent: "from-orange-500 to-amber-500" },
+                  { label: "LƯỢT KIỂM TRA THÁNG NÀY", value: threatStats.thisMonth, accent: "from-amber-500 to-yellow-500" },
+                  { label: "TỔNG LƯỢT KIỂM TRA", value: threatStats.total, accent: "from-red-600 to-red-400" }
+                ].map(({ label, value, accent }) => (
+                  <div key={label} className="relative overflow-hidden rounded-3xl border border-gray-100 bg-gray-50/70 p-6">
+                    <div className={`absolute -top-8 -right-8 h-24 w-24 rounded-full bg-gradient-to-br ${accent} opacity-20 blur-2xl`} />
+                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-400">{label}</p>
+                    <p className="mt-3 text-2xl md:text-3xl font-black tracking-tight text-black tabular-nums">{value.toLocaleString("vi-VN")}</p>
+                    <p className="mt-1 text-xs text-gray-400">Qua hệ thống Lá Chắn Số</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-10 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+                <div className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
+                  <h2 className="text-xl font-bold text-black">Phân bố tên miền cấp cao (TLD)</h2>
+                  <p className="mt-2 text-sm text-gray-500">Tỷ lệ tên miền bị lạm dụng trong các website độc hại năm 2026.</p>
+                  <div className="mt-6 h-[340px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={[
+                        { name: ".com", value: 50.8, color: "#ef4444" },
+                        { name: ".top", value: 16.8, color: "#f97316" },
+                        { name: ".xyz", value: 9.7, color: "#f59e0b" },
+                        { name: ".cc", value: 6.2, color: "#eab308" },
+                        { name: ".shop", value: 3.3, color: "#84cc16" },
+                        { name: ".net", value: 3.2, color: "#22c55e" },
+                        { name: ".buzz", value: 3.1, color: "#14b8a6" },
+                        { name: ".cn", value: 2.6, color: "#0ea5e9" },
+                        { name: ".org", value: 2.3, color: "#6366f1" },
+                        { name: ".info", value: 1.9, color: "#8b5cf6" }
+                      ]} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f1f1" />
+                        <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} unit="%" />
+                        <Tooltip formatter={(value: any) => [`${value}%`, "Tỷ lệ"]} contentStyle={{ borderRadius: 12, border: "1px solid #f1f1f1", fontSize: 13 }} />
+                        <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((_, i) => <Cell key={i} fill={([
+                            "#ef4444", "#f97316", "#f59e0b", "#eab308", "#84cc16",
+                            "#22c55e", "#14b8a6", "#0ea5e9", "#6366f1", "#8b5cf6"
+                          ])[i]} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <ul className="mt-4 grid grid-cols-2 gap-2 text-xs text-gray-500">
+                    {[["Tên miền", "Tỷ lệ lạm dụng"], [".com", "50.8%"], [".top", "16.8%"], [".xyz", "9.7%"], [".cc", "6.2%"]].map(([a, b], i) => (
+                      <li key={a} className={`flex justify-between rounded-xl px-3 py-2 ${i === 0 ? "col-span-2 bg-gray-50 font-semibold text-gray-700" : "bg-white border border-gray-100"}`}><span>{a}</span><span className="tabular-nums">{b}</span></li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
+                  <h2 className="text-xl font-bold text-black">Xu hướng mối đe dọa</h2>
+                  <p className="mt-2 text-sm text-gray-500">Tổng số website độc hại tích lũy theo tháng.</p>
+                  <div className="mt-6 h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={threatStats.trend.length > 0 ? threatStats.trend : [
+                        { label: "—", value: 0 }
+                      ]} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="threatGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#ef4444" stopOpacity={0.35} />
+                            <stop offset="100%" stopColor="#ef4444" stopOpacity={0.02} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f1f1" />
+                        <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} tickFormatter={(v: any) => `${(v / 1e6).toFixed(0)}M`} />
+                        <Tooltip formatter={(value: any) => [value.toLocaleString("vi-VN"), "Mối đe dọa"]} contentStyle={{ borderRadius: 12, border: "1px solid #f1f1f1", fontSize: 13 }} />
+                        <Area type="monotone" dataKey="value" stroke="#ef4444" strokeWidth={2.5} fill="url(#threatGradient)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="mt-4 rounded-2xl bg-red-50/70 border border-red-100 p-4 text-sm leading-6 text-red-700">
+                    <strong>Đen đỏ tăng trưởng ~2%/tháng.</strong> AI đang giúp tội phạm tạo website giả hàng loạt (xem bài "Outsider Enterprise" trong Blog).
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-10 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+                <div className="flex items-center justify-between border-b border-gray-100 px-8 py-5">
+                  <h2 className="flex items-center gap-2 text-lg font-bold text-black"><ShieldAlert className="h-5 w-5 text-red-500" />Mối đe dọa gần đây</h2>
+                  <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">{liveScamSites.length} domain mới phát hiện</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100 text-xs uppercase tracking-wider text-gray-400">
+                        <th className="px-8 py-3 font-semibold">Domain</th>
+                        <th className="px-6 py-3 font-semibold">Nguồn</th>
+                        <th className="px-6 py-3 font-semibold">Phát hiện</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(liveScamSites.length > 0 ? liveScamSites.slice(0, 12) : [
+                        { domain: "shopee-khuyenmai-2026.com", source: "manual", discoveredAt: "2026-04-02" },
+                        { domain: "nganhang-abc-login.net", source: "manual", discoveredAt: "2026-04-01" },
+                        { domain: "nhan-qua-mien-phi.org", source: "manual", discoveredAt: "2026-03-31" },
+                        { domain: "facebook-verify-account.com", source: "manual", discoveredAt: "2026-03-30" },
+                        { domain: "crypto-invest-bonus.io", source: "manual", discoveredAt: "2026-03-29" }
+                      ]).map((site: any) => (
+                        <tr key={site.domain} className="border-b border-gray-50 transition-colors hover:bg-red-50/30">
+                          <td className="px-8 py-3.5 font-mono font-medium text-red-600 break-all">{site.domain}</td>
+                          <td className="px-6 py-3.5 text-gray-500">{site.source || "feed"}</td>
+                          <td className="px-6 py-3.5 text-gray-500 whitespace-nowrap">{(site.discoveredAt || site.date || "").toString().slice(0, 10)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="mt-8 rounded-2xl bg-gray-50 border border-gray-100 p-5 text-center text-sm text-gray-500">
+                Số liệu thống kê mang tính tham khảo, tổng hợp từ các nguồn cảnh báo công khai và hệ thống giám sát của Lá Chắn Số. Không dùng để định giá bảo hiểm hoặc quyết định kinh doanh.
+              </div>
+            </div>
+          </motion.div>
+        )}
+        {currentPage === "guide" && (
+          <motion.div key="guide" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="pt-28 pb-20 px-6 min-h-screen bg-white">
+            <div className="max-w-4xl mx-auto">
+              <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 border border-orange-100 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.25em] text-[#ff8904]">
+                <BookOpen className="w-3.5 h-3.5" /> Hướng dẫn
+              </div>
+              <h1 className="mt-6 text-4xl md:text-5xl font-black tracking-tight text-black">Cách Dùng Lá Chắn Số trong 30 Giây</h1>
+              <p className="mt-4 text-lg text-gray-500 leading-8">Dán bất kỳ đường link hoặc đoạn tin nhắn nào bạn nghi ngờ vào ô kiểm tra — hệ thống sẽ phân tích và chấm điểm tin cậy cho bạn. Dưới đây là chi tiết 3 bước:</p>
+
+              <div className="mt-10 grid gap-6 md:grid-cols-3">
+                {[
+                  { step: 1, icon: MousePointerClick, title: "Dán nội dung cần kiểm tra", desc: "Copy URL website, bài báo hoặc đoạn tin nhắn Zalo/Facebook nghi ngờ, dán vào ô tìm kiếm." },
+                  { step: 2, icon: LifeBuoy, title: "Bấm \"Kiểm Tra Ngay\"", desc: "Hệ thống quét cấu trúc, tên miền, nguồn tin, đối chiếu báo chí và sự kiện thực tế." },
+                  { step: 3, icon: ShieldCheck, title: "Đọc kết quả và hành động", desc: "Màu xanh = an toàn, vàng = cần xác minh, đỏ = nguy hiểm. Có ghi chú lý do chi tiết cho từng kết luận." }
+                ].map(({ step, icon: Icon, title, desc }) => (
+                  <div key={step} className="rounded-3xl border border-gray-100 bg-gray-50/70 p-6 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-100/60 transition-all">
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[#ff8904] text-white font-black text-sm">{step}</span>
+                      <Icon className="h-6 w-6 text-[#ff8904]" />
+                    </div>
+                    <h3 className="mt-4 font-bold text-black">{title}</h3>
+                    <p className="mt-2 text-sm text-gray-500 leading-6">{desc}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-10 rounded-3xl border border-emerald-100 bg-emerald-50/60 p-8">
+                <h2 className="flex items-center gap-2 text-xl font-bold text-emerald-800"><CheckCircle2 className="h-5 w-5" /> Cách đọc biểu tượng màu sắc</h2>
+                <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                  <div className="rounded-2xl bg-white border border-emerald-200 p-4">
+                    <p className="font-bold text-emerald-700">🟢 Xanh lá — AN TOÀN</p>
+                    <p className="mt-1 text-sm text-gray-600">Nội dung đáng tin cậy từ 75 điểm trở lên, có nguồn đối chiếu rõ ràng.</p>
+                  </div>
+                  <div className="rounded-2xl bg-white border border-amber-200 p-4">
+                    <p className="font-bold text-amber-700">🟡 Vàng — CẦN XÁC MINH</p>
+                    <p className="mt-1 text-sm text-gray-600">Từ 50-74 điểm, chưa đủ bằng chứng. Hãy kiểm tra thêm trước khi chia sẻ.</p>
+                  </div>
+                  <div className="rounded-2xl bg-white border border-red-200 p-4">
+                    <p className="font-bold text-red-700">🔴 Đỏ — NGUY HIỂM</p>
+                    <p className="mt-1 text-sm text-gray-600">Dưới 50 điểm, mang dấu hiệu đặc trưng của tin giả hoặc lừa đảo.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-10 grid gap-6 md:grid-cols-2">
+                <div className="rounded-3xl bg-[#0a0a0a] text-white p-8">
+                  <h2 className="text-lg font-bold">💡 Ví dụ thực tế</h2>
+                  <p className="mt-3 text-sm leading-7 text-gray-300">Bạn nhận được tin nhắn: <em className="text-white">"Tài khoản ngân hàng của bạn sắp bị khóa. Bấm link sau để xác thực: bit.ly/xxx"</em></p>
+                  <p className="mt-3 text-sm leading-7 text-gray-300">→ Dán link và đoạn tin vào ô kiểm tra. Hệ thống sẽ phát hiện: tên miền rút gọn, mạo danh ngân hàng, tạo áp lực gấp gáp — và chấm điểm đỏ.</p>
+                </div>
+                <div className="rounded-3xl border border-orange-100 bg-orange-50/50 p-8">
+                  <h2 className="flex items-center gap-2 text-lg font-bold text-orange-800"><HelpCircle className="h-5 w-5" /> Cần hỗ trợ thêm?</h2>
+                  <p className="mt-3 text-sm leading-7 text-gray-700">Tham gia fanpage chính thức của Lá Chắn Số hoặc đọc thêm các bài viết về thủ đoạn lừa đảo trong mục Blog. Chúng tôi luôn cập nhật theo cảnh báo mới nhất từ các trang báo uy tín.</p>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <button type="button" onClick={() => navigateToPage("blog")} className="rounded-full bg-white border border-orange-200 px-5 py-2.5 text-sm font-semibold text-orange-700 hover:bg-orange-50 transition-colors">Đọc Blog cảnh báo</button>
+                    <button type="button" onClick={() => navigateToPage("check")} className="rounded-full bg-[#ff8904] px-5 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition-colors">Kiểm tra ngay</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+        {currentPage === "terms" && (
+          <motion.div key="terms" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="pt-32 pb-20 px-6 min-h-screen bg-white">
+            <div className="max-w-3xl mx-auto">
+              <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 border border-orange-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.25em] text-[#ff8904]">
+                <ShieldCheck className="w-3.5 h-3.5" /> Pháp lý
+              </div>
+              <h1 className="mt-6 text-4xl md:text-5xl font-black tracking-tight text-black">Điều Khoản Sử Dụng</h1>
+              <p className="mt-4 text-gray-500">Cập nhật lần cuối: 09/08/2026. Bằng cách sử dụng Lá Chắn Số, bạn đồng ý với các điều khoản dưới đây.</p>
+              <div className="mt-10 space-y-8 text-sm leading-7 text-gray-700">
+                <section>
+                  <h2 className="text-xl font-bold text-black">1. Chấp nhận điều khoản</h2>
+                  <p className="mt-3">Khi truy cập hoặc sử dụng website Lá Chắn Số, bạn mặc định đồng ý tuân thủ các điều khoản sử dụng này cùng mọi quy định pháp luật hiện hành của Việt Nam và quốc tế có liên quan.</p>
+                </section>
+                <section>
+                  <h2 className="text-xl font-bold text-black">2. Mục đích phục vụ</h2>
+                  <p className="mt-3">Lá Chắn Số cung cấp công cụ hỗ trợ phân tích, nhận diện tin giả, website độc hại và các dấu hiệu lừa đảo. Kết quả kiểm tra mang tính tham khảo, hỗ trợ quyết định và <strong>không thay thế</strong> tư vấn pháp lý, quan điểm của cơ quan nhà nước hoặc phán quyết của toà án.</p>
+                </section>
+                <section>
+                  <h2 className="text-xl font-bold text-black">3. Trách nhiệm người dùng</h2>
+                  <p className="mt-3">Bạn cam kết không lợi dụng hệ thống để: xâm nhập trái phép, làm gián đoạn dịch vụ, quét khối lượng bất thường gây quá tải, hoặc đưa vào hệ thống các nội dung vi phạm pháp luật. Bạn chịu trách nhiệm với chính nội dung bạn đưa vào kiểm tra.</p>
+                </section>
+                <section>
+                  <h2 className="text-xl font-bold text-black">4. Miễn trừ trách nhiệm</h2>
+                  <p className="mt-3">Dù hệ thống được xây dựng với tiêu chuẩn cao nhất, Lá Chắn Số không bảo đảm kết quả phân tích là tuyệt đối chính xác trong mọi trường hợp. Chúng tôi không chịu trách nhiệm đối với thiệt hại phát sinh từ quyết định của người dùng dựa trên kết quả kiểm tra.</p>
+                </section>
+                <section>
+                  <h2 className="text-xl font-bold text-black">5. Sở hữu trí tuệ</h2>
+                  <p className="mt-3">Toàn bộ thương hiệu, giao diện và tài liệu của Lá Chắn Số thuộc quyền sở hữu của chúng tôi. Việc sao chép, tái sản xuất hoặc khai thác thương mại chưa có sự cho phép bằng văn bản đều bị cấm.</p>
+                </section>
+                <section>
+                  <h2 className="text-xl font-bold text-black">6. Liên hệ</h2>
+                  <p className="mt-3">Mọi thắc mắc về điều khoản vui lòng liên hệ qua fanpage chính thức của Lá Chắn Số hoặc email hỗ trợ tại footer.</p>
+                </section>
+              </div>
+            </div>
+          </motion.div>
+        )}
+        {currentPage === "privacy" && (
+          <motion.div key="privacy" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="pt-32 pb-20 px-6 min-h-screen bg-white">
+            <div className="max-w-3xl mx-auto">
+              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.25em] text-emerald-600">
+                <Lock className="w-3.5 h-3.5" /> Quyền riêng tư
+              </div>
+              <h1 className="mt-6 text-4xl md:text-5xl font-black tracking-tight text-black">Chính Sách Bảo Mật</h1>
+              <p className="mt-4 text-gray-500">Cập nhật lần cuối: 09/08/2026. Chúng tôi tiến hành bảo vệ thông tin của bạn.</p>
+              <div className="mt-10 space-y-8 text-sm leading-7 text-gray-700">
+                <section>
+                  <h2 className="text-xl font-bold text-black">1. Thông tin chúng tôi thu thập</h2>
+                  <p className="mt-3">Khi bạn sử dụng công cụ kiểm tra, hệ thống xử lý nội dung văn bản hoặc URL bạn cung cấp. Chúng tôi không chủ động thu thập danh tính, không ghi mật khẩu, không bán dữ liệu cho bên thứ ba.</p>
+                </section>
+                <section>
+                  <h2 className="text-xl font-bold text-black">2. Mục đích xử lý dữ liệu</h2>
+                  <p className="mt-3">Dữ liệu chỉ được dùng vào mục đích phân tích rủi ro, cải thiện độ chính xác của mô hình và phòng chống lạm dụng hệ thống (chống quá tải, spam).</p>
+                </section>
+                <section>
+                  <h2 className="text-xl font-bold text-black">3. Lưu trữ và bảo mật</h2>
+                  <p className="mt-3">Chúng tôi áp dụng các biện phát kỹ thuật — mã hoá trên đường truyền (TLS), giới hạn đơn truy cập, kiểm soát truy cập nội bộ — để bảo vệ dữ liệu khỏi truy nhập trái phép.</p>
+                </section>
+                <section>
+                  <h2 className="text-xl font-bold text-black">4. Chia sẻ dữ liệu</h2>
+                  <p className="mt-3">Chúng tôi không chia sẻ dữ liệu người dùng với bên thứ ba vì mục đích thương mại, trừ khi bắt buộc bởi cơ quan chức năng có thẩm quyền theo quy định pháp luật.</p>
+                </section>
+                <section>
+                  <h2 className="text-xl font-bold text-black">5. Quyền của bạn</h2>
+                  <p className="mt-3">Bạn có quyền yêu cầu xoá hoặc chỉnh sửa dữ liệu của mình trong phạm vi hệ thống cho phép bằng cách liên hệ qua kênh hỗ trợ chính thông của Lá Chắn Số.</p>
+                </section>
+              </div>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
       <AnimatePresence>
         {selectedInfoItem &&
@@ -2853,23 +3175,34 @@ export default function App() {
         }
       </AnimatePresence>
       <footer className="py-12 border-t border-black/10 bg-white">
-        <div className="max-w-[1600px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center">
-            <img src="/logo.png" alt="Lá Chắn Số" className="w-12 h-12 -mr-1 -mt-2" />
-            <span className="text-xl font-bold tracking-tighter text-[#ff8904]">Lá Chắn Số</span>
+        <div className="max-w-[1600px] mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 pb-8 border-b border-black/5">
+            <div className="flex items-center">
+              <img src="/logo.png" alt="Lá Chắn Số" className="w-12 h-12 -mr-1 -mt-2" />
+              <span className="text-xl font-bold tracking-tighter text-[#ff8904]">Lá Chắn Số</span>
+            </div>
+            <nav className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+              <button type="button" onClick={() => navigateToPage("guide")} className={`text-sm font-medium transition-colors ${currentPage === "guide" ? "text-[#ff8904]" : "text-gray-500 hover:text-black"}`}>Hướng dẫn sử dụng</button>
+              <button type="button" onClick={() => navigateToPage("threats")} className={`text-sm font-medium transition-colors ${currentPage === "threats" ? "text-[#ff8904]" : "text-gray-500 hover:text-black"}`}>Mối đe dọa</button>
+              <button type="button" onClick={() => navigateToPage("terms")} className={`text-sm font-medium transition-colors ${currentPage === "terms" ? "text-[#ff8904]" : "text-gray-500 hover:text-black"}`}>Điều khoản sử dụng</button>
+              <button type="button" onClick={() => navigateToPage("privacy")} className={`text-sm font-medium transition-colors ${currentPage === "privacy" ? "text-[#ff8904]" : "text-gray-500 hover:text-black"}`}>Chính sách bảo mật</button>
+              <a href="https://www.facebook.com/profile.php?id=61592680388542" target="_blank" rel="noreferrer" className="text-sm font-medium text-gray-500 hover:text-black transition-colors inline-flex items-center gap-1.5">
+                <ShieldAlert className="w-4 h-4" /> Báo cáo lỗ hổng bảo mật
+              </a>
+            </nav>
+            <div className="flex items-center gap-6">
+              <a href="https://www.facebook.com/profile.php?id=61592680388542" target="_blank" rel="noreferrer" className="text-gray-500 hover:text-[#1877f2] transition-colors">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              </a>
+              <a href="https://youtube.com/@lachansovn?si=gWlNIAaSq1xcmv5f" target="_blank" rel="noreferrer" className="text-gray-500 hover:text-[#ff0000] transition-colors">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              </a>
+              <a href="mailto:kanh05113@gmail.com" className="text-gray-500 hover:text-[#ea4335] transition-colors">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>
+              </a>
+            </div>
           </div>
-          <div className="flex items-center gap-6">
-            <a href="https://www.facebook.com/profile.php?id=61592680388542" target="_blank" rel="noreferrer" className="text-gray-500 hover:text-[#1877f2] transition-colors">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-            </a>
-            <a href="https://youtube.com/@lachansovn?si=gWlNIAaSq1xcmv5f" target="_blank" rel="noreferrer" className="text-gray-500 hover:text-[#ff0000] transition-colors">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-            </a>
-            <a href="mailto:kanh05113@gmail.com" className="text-gray-500 hover:text-[#ea4335] transition-colors">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>
-            </a>
-          </div>
-          <p className="text-sm text-[#4a5565]">
+          <p className="pt-8 text-center text-sm text-[#4a5565]">
             Copyright © 2026 Lá Chắn Số. Bảo lưu mọi quyền.
           </p>
         </div>
@@ -2914,9 +3247,9 @@ export default function App() {
         open={nextStepsOpen}
         onOpenChange={setNextStepsOpen}
         kind={resultData?.type === "news" ? "news" : "web"}
-        dangerLevel={resultData?.type === "news" ? (resultData.isDanger ? "danger" : resultData.isWarning ? "warning" : "safe") : (() => {
+        dangerLevel={resultData?.type === "news" ? (resultData.isDanger ? "danger" : resultData.isSafe ? "safe" : "insufficient") : (() => {
           const st = resultData ? resolveWebState(resultData) : "safe";
-          return st === "danger" ? "danger" : st === "warning" ? "warning" : "safe";
+          return st === "danger" ? "danger" : st === "safe" ? "safe" : "insufficient";
         })()}
       />
       <WhyScoreModal
