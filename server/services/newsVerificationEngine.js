@@ -434,7 +434,38 @@ const COUNTRY_NAMES = [
 function extractCountries(text) {
   if (!text) return [];
   const lower = text.toLowerCase();
-  return COUNTRY_NAMES.filter(c => lower.includes(c.toLowerCase()));
+  const found = COUNTRY_NAMES.filter(c => lower.includes(c.toLowerCase()));
+
+  // Also check for fuzzy matches (typos): if a word is 1-2 edits from a country name
+  const words = lower.split(/\s+/);
+  for (const word of words) {
+    if (word.length < 4) continue;
+    for (const country of COUNTRY_NAMES) {
+      const cl = country.toLowerCase();
+      if (word === cl) continue;
+      const dist = levenshteinSimple(word, cl);
+      if (dist >= 1 && dist <= 2 && Math.abs(word.length - cl.length) <= 2) {
+        found.push(country); // Add the correct country name
+      }
+    }
+  }
+  return [...new Set(found)];
+}
+
+function levenshteinSimple(a, b) {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+    }
+  }
+  return dp[m][n];
 }
 
 function detectKeywordMismatch(inputText, articles) {
