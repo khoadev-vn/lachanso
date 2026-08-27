@@ -418,58 +418,62 @@ function calculateComprehensiveScore(results, blogVerification = null) {
 
 // ============ ENTITY EXTRACTION & MISMATCH DETECTION ============
 
-// ============ KEYWORD MISMATCH DETECTION ============
+// ============ ENTITY MISMATCH DETECTION ============
 
-const STOP_WORDS = new Set([
-  'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-  'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been',
-  'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
-  'could', 'should', 'may', 'might', 'can', 'shall', 'not', 'no',
-  'more', 'than', 'still', 'missing', 'after', 'deadly',
-  'flash', 'flood', 'floods', 'rescue', 'rescuers', 'helicopters',
-  'survivors', 'victims', 'killed', 'dead', 'disaster', 'crisis',
-  'search', 'seek', 'widespread', 'destruction', 'villages', 'area',
-]);
+const COUNTRY_NAMES = [
+  'Nepal', 'Portugal', 'Pakistan', 'Ukraine', 'Vietnam', 'Thailand', 'Cambodia',
+  'Myanmar', 'Malaysia', 'Indonesia', 'Philippines', 'Singapore', 'Australia',
+  'India', 'China', 'Japan', 'Korea', 'Russia', 'Germany', 'France', 'Spain',
+  'Italy', 'Brazil', 'Mexico', 'Canada', 'Egypt', 'Turkey', 'Iran', 'Iraq',
+  'Israel', 'Syria', 'Afghanistan', 'Bangladesh', 'Sri Lanka', 'Taiwan', 'Tibet',
+  'Nepal', 'Kathmandu', 'Lisbon', 'Hanoi', 'Bangkok', 'Jakarta', 'Manila',
+  'Delhi', 'Beijing', 'Tokyo', 'Seoul', 'Moscow', 'Berlin', 'Paris', 'Madrid',
+  'Rome', 'London', 'Washington', 'New York', 'Texas', 'California', 'Florida',
+];
 
-function extractKeywords(text) {
+function extractCountries(text) {
   if (!text) return [];
-  return text
-    .toLowerCase()
-    .replace(/[^a-záàảãạăằẳẵặâấầẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưứừửữựỳýỷỹđ\s]/g, '')
-    .split(/\s+/)
-    .filter(w => w.length >= 3 && !STOP_WORDS.has(w));
+  const lower = text.toLowerCase();
+  return COUNTRY_NAMES.filter(c => lower.includes(c.toLowerCase()));
 }
 
 function detectKeywordMismatch(inputText, articles) {
   if (!articles || articles.length === 0) return { detected: false };
 
-  const inputKeywords = extractKeywords(inputText);
-  if (inputKeywords.length === 0) return { detected: false };
-
+  const inputCountries = extractCountries(inputText);
   const articleText = articles.map(a => a.title).join(' ');
-  const articleKeywords = extractKeywords(articleText);
-  const articleKeywordSet = new Set(articleKeywords);
+  const articleCountries = extractCountries(articleText);
 
-  const unmatched = inputKeywords.filter(kw => !articleKeywordSet.has(kw));
-  const matchRatio = (inputKeywords.length - unmatched.length) / inputKeywords.length;
+  // If input has countries but articles mention different countries
+  if (inputCountries.length > 0 && articleCountries.length > 0) {
+    const inputSet = new Set(inputCountries.map(c => c.toLowerCase()));
+    const articleSet = new Set(articleCountries.map(c => c.toLowerCase()));
+    const unmatched = inputCountries.filter(c => !articleSet.has(c.toLowerCase()));
 
-  if (matchRatio < 0.3 && unmatched.length >= 2) {
-    const articleWordCount = {};
-    for (const kw of articleKeywords) {
-      articleWordCount[kw] = (articleWordCount[kw] || 0) + 1;
+    if (unmatched.length > 0) {
+      return {
+        detected: true,
+        inputKeywords: unmatched,
+        articleKeywords: articleCountries.slice(0, 5),
+        detail: `Bạn đề cập "${unmatched.join('", "')}" nhưng các nguồn tin nói về "${articleCountries.slice(0, 3).join('", ')}". Có sự không khớp giữa nội dung nhập và thực tế.`,
+        severity: 'warning'
+      };
     }
-    const topArticleWords = Object.entries(articleWordCount)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([word]) => word);
+  }
 
-    return {
-      detected: true,
-      inputKeywords: unmatched.slice(0, 5),
-      articleKeywords: topArticleWords,
-      detail: `Bạn đề cập "${unmatched.slice(0, 3).join('", "')}" nhưng các nguồn tin nói về "${topArticleWords.slice(0, 3).join('", ')}". Nội dung nhập có thể không chính xác.`,
-      severity: 'warning'
-    };
+  // Also check: if input has NO countries but articles clearly mention specific countries
+  // This means the input might be fake/made up
+  if (inputCountries.length === 0 && articleCountries.length >= 2) {
+    const uniqueCountries = [...new Set(articleCountries)];
+    if (uniqueCountries.length >= 2) {
+      return {
+        detected: true,
+        inputKeywords: [],
+        articleKeywords: uniqueCountries.slice(0, 5),
+        detail: `Nội dung nhập không đề cập địa điểm cụ thể, nhưng các nguồn tin nói về "${uniqueCountries.slice(0, 3).join('", ')}". Hãy kiểm tra lại thông tin.`,
+        severity: 'warning'
+      };
+    }
   }
 
   return { detected: false };
