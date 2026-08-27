@@ -1,58 +1,58 @@
 ============================================================
-  LA CHAN SO — API TICH HOP KIEM TRA LINK AN TOAN
+  LÁ CHÀN SỐ — API TÍCH HỢP KIỂM TRA LINK AN TOÀN
   Dành cho: Unikorn.vn
 ============================================================
 
-1. TONG QUAN
+1. TỔNG QUAN
 ------------------------------------------------------------
-La Chan So cung cap API kiem tra link an toan. Khi nguoi
-dung dang san pham tren dien dan Unikorn, he thong tu dong
-goi API de kiem tra link co lua dao, phishing hay khong.
+Lá Chàn Số cung cấp API kiểm tra link an toàn. Khi người
+dùng đăng sản phẩm trên diễn đàn Unikorn, hệ thống tự động
+gọi API để kiểm tra link có lừa đảo, phishing hay không.
 
-Ket qua tra ve:
-  - safe       ->  Cho phep dang
-  - suspicious ->  Canh bao, can duyet thu cong
-  - danger     ->  Chan, khong cho dang
+Kết quả trả về:
+  - safe       ->  Cho phép đăng
+  - suspicious ->  Cảnh báo, cần duyệt thủ công
+  - danger     ->  Chặn, không cho đăng
 
 ============================================================
 
-2. THONG TIN KET NOI
+2. THÔNG TIN KẾT NỐI
 ------------------------------------------------------------
-  Base URL  : https://lachansovn.com
-  Endpoint  : POST /api/partner/unikorn/check-link
-  Method    : POST
-  Content-Type : application/json
+  Base URL    : https://lachansovn.com
+  Endpoint    : POST /api/partner/unikorn/check-link
+  Method      : POST
+  Content-Type: application/json
 
 ============================================================
 
-3. XAC THUC (AUTHENTICATION)
+3. XÁC THỰC (AUTHENTICATION)
 ------------------------------------------------------------
-Moi request can co header x-api-key:
+Mỗi request cần có header x-api-key:
 
   x-api-key: lcs_unikorn_a1b2c3d4e5f6
 
-Luu y: API key duoc cung cap rieng. Khong chia se key cho
-ben thu ba.
+Lưu ý: API key được cung cấp riêng. Không chia sẻ key cho
+bên thứ ba.
 
 ============================================================
 
-4. CACH GOI API
+4. CÁCH GỌI API
 ------------------------------------------------------------
 
-4.1. REQUEST EXAMPLE (cURL)
+4.1. VÍ DỤ GỌI (cURL)
 
   curl -X POST https://lachansovn.com/api/partner/unikorn/check-link \
     -H "Content-Type: application/json" \
     -H "x-api-key: lcs_unikorn_a1b2c3d4e5f6" \
     -d '{"url": "https://shopee.vn/sp/12345"}'
 
-4.2. BODY PARAMETERS
+4.2. THÔNG SỐ BODY
 
-  Field   Type     Bat buoc   Mo ta
-  ------  ------   --------   -----
-  url     string   Co         Link can kiem tra
+  Field   Kiểu      Bắt buộc   Mô tả
+  ------  --------  ---------  -----
+  url     string    Có         Link cần kiểm tra
 
-4.3. RESPONSE — LINK AN TOAN
+4.3. RESPONSE — LINK AN TOÀN
 
   {
     "success": true,
@@ -64,7 +64,7 @@ ben thu ba.
     "cached": false
   }
 
-4.4. RESPONSE — LINK NGUY HIEM
+4.4. RESPONSE — LINK NGUY HIỂM
 
   {
     "success": true,
@@ -75,8 +75,8 @@ ben thu ba.
     "reasons": [
       {
         "id": "LINK_SCAM",
-        "name": "LUA DAO / CO BAC",
-        "detail": "Domain nam trong danh sach den lua dao",
+        "name": "LỪA ĐẢO / CỜ BẠC",
+        "detail": "Domain nằm trong danh sách đen lừa đảo",
         "status": "danger",
         "scoreDelta": -80
       }
@@ -84,7 +84,7 @@ ben thu ba.
     "cached": false
   }
 
-4.5. RESPONSE — LINK DANG NGHI
+4.5. RESPONSE — LINK ĐÁNG NGỜ
 
   {
     "success": true,
@@ -95,8 +95,8 @@ ben thu ba.
     "reasons": [
       {
         "id": "LINK_NEW_DOMAIN",
-        "name": "TEN MIEN MOI",
-        "detail": "Ten miem chi moi dang ky 3 ngay",
+        "name": "TÊN MIỀN MỚI",
+        "detail": "Tên miền chỉ mới đăng ký 3 ngày",
         "status": "warning",
         "scoreDelta": -25
       }
@@ -104,50 +104,50 @@ ben thu ba.
     "cached": false
   }
 
-4.6. RESPONSE — LOI
+4.6. RESPONSE — LỖI
 
   {
     "success": false,
-    "error": "Thieu truong url trong request body"
+    "error": "Thiếu trường url trong request body"
   }
 
 ============================================================
 
-5. Y NGHIA CAC TRUONG
+5. Ý NGHĨA CÁC TRƯỜNG
 ------------------------------------------------------------
 
 5.1. safe (boolean)
-  true  = Link an toan, cho phep dang
-  false = Link khong an toan, can xem xet
+  true  = Link an toàn, cho phép đăng
+  false = Link không an toàn, cần xem xét
 
 5.2. score (number, 0-100)
-  80-100 = An toan
-  50-79  = Dang nghi, can kiem tra them
-  0-49   = Nguy hiem, khong nen cho dang
+  80-100 = An toàn
+  50-79  = Đáng ngờ, cần kiểm tra thêm
+  0-49   = Nguy hiểm, không nên cho đăng
 
 5.3. verdict (string)
-  "safe"       = An toan     -> Cho dang ngay
-  "suspicious" = Dang nghi   -> Duyet thu cong
-  "danger"     = Nguy hiem   -> Chan dang
+  "safe"       = An toàn     -> Cho đăng ngay
+  "suspicious" = Đáng ngờ    -> Duyệt thủ công
+  "danger"     = Nguy hiểm    -> Chặn đăng
 
 5.4. reasons (array)
-  Danh sach cac ly do danh gia. Moi ly do co:
-    id         = Ma loi (vi du: LINK_SCAM, LINK_PHISHING)
-    name       = Ten loi
-    detail     = Chi tiet loi
+  Danh sách các lý do đánh giá. Mỗi lý do có:
+    id         = Mã lỗi (ví dụ: LINK_SCAM, LINK_PHISHING)
+    name       = Tên lỗi
+    detail     = Chi tiết lỗi
     status     = "success" / "warning" / "danger"
-    scoreDelta = Diem tru/them
+    scoreDelta = Điểm trừ/thêm
 
 5.5. hostname (string)
-  Ten miem duoc trich xuat tu URL (vi du: shopee.vn)
+  Tên miền được trích xuất từ URL (ví dụ: shopee.vn)
 
 5.6. cached (boolean)
-  true  = Ket qua lay tu cache (da check truoc do)
-  false = Ket qua check moi
+  true  = Kết quả lấy từ cache (đã check trước đó)
+  false = Kết quả check mới
 
 ============================================================
 
-6. VI DU TICH HOP
+6. VÍ DỤ TÍCH HỢP
 ------------------------------------------------------------
 
 6.1. JAVASCRIPT (Node.js)
@@ -169,30 +169,30 @@ ben thu ba.
     return result.success ? result : null;
   }
 
-  // Su dung khi nguoi dung dang san pham
+  // Sử dụng khi người dùng đăng sản phẩm
   app.post('/api/products', async (req, res) => {
     const { link } = req.body;
     const safety = await checkLinkSafety(link);
 
     if (!safety) {
-      return res.status(500).json({ error: 'Loi kiem tra link' });
+      return res.status(500).json({ error: 'Lỗi kiểm tra link' });
     }
 
     if (safety.verdict === 'danger') {
       return res.status(400).json({
-        error: 'Link khong an toan, vui long chon link khac'
+        error: 'Link không an toàn, vui lòng chọn link khác'
       });
     }
 
     if (safety.verdict === 'suspicious') {
-      // Luu o trang thai "cho duyet"
+      // Lưu ở trạng thái "chờ duyệt"
       await saveProduct({ ...req.body, status: 'pending_review' });
-      return res.json({ message: 'San pham cho duyet' });
+      return res.json({ message: 'Sản phẩm chờ duyệt' });
     }
 
-    // safe -> cho dang ngay
+    // safe -> cho đăng ngay
     await saveProduct({ ...req.body, status: 'published' });
-    res.json({ message: 'Dang san pham thanh cong' });
+    res.json({ message: 'Đăng sản phẩm thành công' });
   });
 
 6.2. PYTHON
@@ -211,48 +211,48 @@ ben thu ba.
       result = response.json()
       return result if result['success'] else None
 
-  # Su dung
+  # Sử dụng
   safety = check_link_safety('https://shopee.vn/sp/12345')
   if safety and safety['verdict'] == 'danger':
-      print('Link khong an toan!')
+      print('Link không an toàn!')
 
 ============================================================
 
 7. RATE LIMIT
 ------------------------------------------------------------
-  Gioi han    : 100 requests/phut
-  Tra ve khi vuot : 429 Too Many Requests
+  Giới hạn        : 100 requests/phút
+  Trả về khi vượt : 429 Too Many Requests
 
   {
-    "error": "Qua nhieu yeu cau. Vui long thu lai sau it phut."
+    "error": "Quá nhiều yêu cầu. Vui lòng thử lại sau ít phút."
   }
 
 ============================================================
 
-8. DANH SACH MA LOI (reasons.id)
+8. DANH SÁCH MÃ LỖI (reasons.id)
 ------------------------------------------------------------
 
-  Ma                Ten               Muc do    Y nghia
+  Mã                Tên               Mức độ    Ý nghĩa
   ----------------  ----------------  --------  ---------------------------
-  LINK_SCAM         Lua dao           danger    Domain trong danh sach den
-  LINK_PHISHING     Gia mao           danger    Trang web gia mao thuong hieu
-  LINK_GAMBLING     Co bac            danger    Trang co bac, ca cuoc
-  LINK_NEW_DOMAIN   Ten miem moi      warning   Moi dang ky < 30 ngay
-  LINK_NO_SSL       Khong co SSL      warning   Khong su dung HTTPS
-  LINK_SHORTENER    Rut gon URL       warning   Dung dich vu rut gon link
-  LINK_DEEP_SUB     Subdomain sau    warning   Qua nhieu subdomain
-  LINK_SUSPICIOUS   TLD dang ngo      warning   Dung dau .xyz, .top, .buzz...
-  LINK_HOMOGLYPH    Homoglyph         danger    Dung ky tu giong de gia mao
-  LINK_REDIRECT     Chuyen huong      warning   Co redirect chain
+  LINK_SCAM         Lừa đảo           danger    Domain trong danh sách đen
+  LINK_PHISHING     Giả mạo           danger    Trang web giả mạo thương hiệu
+  LINK_GAMBLING     Cờ bạc            danger    Trang cờ bạc, cá cược
+  LINK_NEW_DOMAIN   Tên miền mới      warning   Mới đăng ký < 30 ngày
+  LINK_NO_SSL       Không có SSL      warning   Không sử dụng HTTPS
+  LINK_SHORTENER    Rút gọn URL       warning   Dùng dịch vụ rút gọn link
+  LINK_DEEP_SUB     Subdomain sâu     warning   Quá nhiều subdomain
+  LINK_SUSPICIOUS   TLD đáng ngờ      warning   Dùng đuôi .xyz, .top, .buzz...
+  LINK_HOMOGLYPH    Homoglyph         danger    Dùng ký tự giống để giả mạo
+  LINK_REDIRECT     Chuyển hướng      warning   Có redirect chain
 
 ============================================================
 
-9. HO TRO
+9. HỖ TRỢ
 ------------------------------------------------------------
-  Website   : https://lachansovn.com
-  Email     : admin@lachansovn.com
-  Fanpage   : La Chan So tren Facebook
+  Website : https://lachansovn.com
+  Email   : admin@lachansovn.com
+  Fanpage : Lá Chàn Số trên Facebook
 
 ============================================================
-Cap nhat lan cuoi: 27/08/2026
+Cập nhật lần cuối: 27/08/2026
 ============================================================
