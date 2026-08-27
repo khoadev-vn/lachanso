@@ -359,25 +359,25 @@ export default function App() {
   const [checkType, setCheckType] = useState<"web" | "news" | "message">("web");
   const CHECK_TYPE_META: Record<string, { label: string; placeholder: string; example: string; badge: string; ring: string; input: string }> = {
     web: {
-      label: "Website / URL",
-      placeholder: "Nhập đường dẫn website cần kiểm tra...",
-      example: "Ví dụ: https://shopee.vn hoặc vietcombank.com.vn",
+      label: t('type.web'),
+      placeholder: t('check.placeholder.web'),
+      example: "Example: https://shopee.vn or vietcombank.com.vn",
       badge: "bg-orange-500/20 text-orange-300",
       ring: "focus:border-orange-400 focus:ring-orange-400/10 focus:ring-4",
       input: "border-white/10 bg-white/8"
     },
     news: {
-      label: "Tin giả / Bài báo",
-      placeholder: "Nhập tiêu đề hoặc dán đoạn tin cần kiểm tra...",
-      example: "Ví dụ: “Ăn nhiều trứng gây ung thư”",
+      label: t('type.news'),
+      placeholder: t('check.placeholder.news'),
+      example: "Example: \"Eating too many eggs causes cancer\"",
       badge: "bg-sky-500/20 text-sky-300",
       ring: "focus:border-sky-400 focus:ring-sky-400/10 focus:ring-4",
       input: "border-white/10 bg-white/8"
     },
     message: {
-      label: "Tin nhắn / SMS",
-      placeholder: "Dán nguyên văn nội dung tin nhắn cần kiểm tra...",
-      example: "Ví dụ: “Tài khoản của bạn sắp hết hạn, bấm vào đây…”",
+      label: t('type.message'),
+      placeholder: t('check.placeholder.msg'),
+      example: "Example: \"Your account is expiring, click here…\"",
       badge: "bg-purple-500/20 text-purple-300",
       ring: "focus:border-purple-400 focus:ring-purple-400/10 focus:ring-4",
       input: "border-white/10 bg-white/8"
@@ -1608,7 +1608,7 @@ export default function App() {
                         disabled={isChecking}
                         className={`w-full py-4 rounded-2xl font-bold transition-all active:scale-[0.98] text-[15px] shadow-lg ${checkType === "news" ? "bg-sky-500 shadow-sky-500/20 hover:bg-sky-400" : checkType === "message" ? "bg-purple-500 shadow-purple-500/20 hover:bg-purple-400" : "bg-orange-500 shadow-orange-500/20 hover:bg-orange-400"} text-white`}>
 
-                        {isChecking ? "Đang kiểm tra..." : "Bắt đầu kiểm tra →"}
+                        {isChecking ? t('check.loading') : t('check.submit')}
                       </button>
 
                       <div className="flex items-center gap-2">
@@ -1618,7 +1618,7 @@ export default function App() {
                     </form>
 
                     <p className="mt-4 text-[12px] text-white/30 leading-relaxed">
-                      Nhập đường dẫn hoặc văn bản để xem kết quả ngay lập tức.
+                      {t('check.helper')}
                     </p>                  </motion.div>
                 </div>
               </div>
@@ -1670,14 +1670,14 @@ export default function App() {
 
               <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-16">
                 <div className="max-w-xl">
-                  <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#111111]">Lá Chắn Số là gì?</h2>
+                  <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#111111]">{t('what.title')}</h2>
                   <button className="px-8 py-3 font-semibold rounded-full hover:bg-gray-200 transition-all active:scale-95 bg-[#ff8904] text-[#ffff]">
-                    Tìm hiểu thêm
+                    {t('what.more')}
                   </button>
                 </div>
                 <div className="max-w-md">
                   <p className="text-lg text-gray-500 leading-relaxed">
-                    Lá Chắn Số: Định nghĩa lại sự an toàn trực tuyến. Chúng tôi xây dựng một lớp lọc thông tin minh bạch, giúp người dùng phân định giữa thực tại - tin giả và chống khỏi lừa đảo . Một giải pháp bảo mật tinh gọn, hiệu quả và luôn sẵn sàng bảo vệ bạn.
+                    {t('what.desc')}
                   </p>
                 </div>
               </div>
@@ -1702,9 +1702,9 @@ export default function App() {
                   }
                 }} className="md:col-span-2 relative rounded-[32px] overflow-hidden bg-white border border-black/8 p-10 min-h-[400px] flex flex-col justify-between group shadow-sm">
                   <div className="relative z-10">
-                    <h3 className="text-2xl font-bold mb-4 text-[#ff8904]">CÔNG NGHỆ XÁC THỰC LỚP SÂU</h3>
+                    <h3 className="text-2xl font-bold mb-4 text-[#ff8904]">{t('what.card1.title')}</h3>
                     <p className="text-gray-600 max-w-2xl">
-                      Lá Chắn Số vận hành trên nền tảng phân tích đa tầng, cho phép bóc tách dữ liệu và nhận diện hành vi độc hại trong thời gian thực. Bằng cách kết hợp thuật toán thông minh và mạng lưới dữ liệu thực thi, chúng tôi kiến tạo một lớp lọc minh bạch giúp bạn phân định xác thực giữa thực tại và tin giả. Đây là giải pháp bảo mật tinh gọn, chủ động ngăn chặn lừa đảo và bảo vệ an toàn tuyệt đối cho hành trình số của bạn.
+                      {t('what.card1.desc')}
                     </p>
                   </div>
                 </motion.div>
@@ -1719,10 +1719,10 @@ export default function App() {
                   }
                 }} className="rounded-[32px] bg-white border border-black/8 p-10 flex flex-col justify-between min-h-[400px] shadow-sm">
                   <div className="text-[#ff8904]">
-                    <h3 className="text-2xl font-bold mb-4 text-[#ff8904]">QUY CHUẨN & NỀN TẢNG RIÊNG</h3>
+                    <h3 className="text-2xl font-bold mb-4 text-[#ff8904]">{t('what.card2.title')}</h3>
                   </div>
                   <p className="text-gray-600">
-                    Thiết lập bộ quy tắc đánh giá độc lập kết hợp công nghệ nội bộ. Đảm bảo mọi thông tin đều được gán nhãn minh bạch dựa trên cơ sở khoa học và pháp lý.
+                    {t('what.card2.desc')}
                   </p>
                 </motion.div>
 
@@ -1736,10 +1736,10 @@ export default function App() {
                   }
                 }} className="rounded-[32px] bg-white border border-black/8 p-10 flex flex-col justify-between min-h-[400px] shadow-sm">
                   <div>
-                    <h3 className="text-2xl font-bold mb-4 text-[#ff8904]">DỮ LIỆU THỰC THI</h3>
+                    <h3 className="text-2xl font-bold mb-4 text-[#ff8904]">{t('what.card3.title')}</h3>
                   </div>
                   <p className="text-gray-600">
-                    Kết nối mạng lưới dữ liệu từ các cộng đồng bảo mật uy tín. Mọi cảnh báo đều dựa trên sự đối soát thực tế, kiến tạo một bản đồ an toàn cho người dùng Việt.
+                    {t('what.card3.desc')}
                   </p>
                 </motion.div>
 
@@ -1753,10 +1753,10 @@ export default function App() {
                   }
                 }} className="rounded-[32px] bg-white border border-black/8 p-10 flex flex-col justify-between min-h-[400px] shadow-sm">
                   <div>
-                    <h3 className="text-2xl font-bold mb-4 text-[#ff8904]">TRẢI NGHIỆM AN TOÀN</h3>
+                    <h3 className="text-2xl font-bold mb-4 text-[#ff8904]">{t('what.card4.title')}</h3>
                   </div>
                   <p className="text-[black]">
-                    Thiết kế tinh gọn, ưu tiên sự đơn giản và minh bạch trong mọi tương tác. Lá Chắn Số không chỉ bảo vệ dữ liệu, mà còn kiến tạo một môi trường số đáng tin cậy, giúp bạn luôn tự tin và an tâm trên hành trình trực tuyến.
+                    {t('what.card4.desc')}
                   </p>
                 </motion.div>
 
@@ -1770,10 +1770,10 @@ export default function App() {
                   }
                 }} className="rounded-[32px] bg-white/5 backdrop-blur-sm border border-white/10 p-10 flex flex-col justify-between h-[400px] text-white border-t-[color:var(--color-orange-200)] border-r-[color:var(--color-orange-200)] border-b-[color:var(--color-orange-200)] border-l-[color:var(--color-orange-200)]">
                   <div>
-                    <h3 className="text-2xl font-bold mb-4 text-[#ff8904]">TIẾN HÓA LIÊN TỤC</h3>
+                    <h3 className="text-2xl font-bold mb-4 text-[#ff8904]">{t('what.card5.title')}</h3>
                   </div>
                   <p className="text-[#000000]">
-                    Hệ thống kết nối mạng lưới dữ liệu động, liên tục cập nhật và vô hiệu hóa các phương thức lừa đảo mới nhất từ cộng đồng. Bằng cách hợp nhất các nguồn tin thực thi, Lá Chắn Số kiến tạo một lớp phòng thủ chủ động, giúp bạn đi trước kẻ xấu một bước trên mọi nền tảng số.
+                    {t('what.card5.desc')}
                   </p>
                 </motion.div>
               </motion.div>
@@ -1840,19 +1840,19 @@ export default function App() {
         {currentPage === "check" && <motion.div key="check" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="pt-32 pb-20 px-6 min-h-screen">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold mb-4 text-[#ff8904]">Trung Tâm Kiểm Tra An Toàn</h2>
-              <p className="text-[black]">Phân tích URL, tệp tin và nội dung nghi ngờ bằng công nghệ Sandbox độc quyền.</p>
+              <h2 className="text-4xl font-bold mb-4 text-[#ff8904]">{t('check.title')}</h2>
+              <p className="text-[black]">{t('check.subtitle')}</p>
             </div>
 
             <div className="flex items-center justify-center gap-4 mb-8">
               <button onClick={() => setCheckType("web")} className={`px-6 py-2 rounded-full text-sm font-bold transition-all border border-[#ff8904] ${checkType === "web" ? "bg-[#ff8904] text-white" : "bg-white text-[#ff8904] hover:bg-orange-50"}`}>
-                Kiểm tra Web
+                {t('check.tab1')}
               </button>
               <button onClick={() => setCheckType("news")} className={`px-6 py-2 rounded-full text-sm font-bold transition-all border border-[#ff8904] ${checkType === "news" ? "bg-[#ff8904] text-white" : "bg-white text-[#ff8904] hover:bg-orange-50"}`}>
-                Kiểm tra Tin giả
+                {t('check.tab2')}
               </button>
               <button onClick={() => setCheckType("message")} className={`px-6 py-2 rounded-full text-sm font-bold transition-all border border-[#ff8904] ${checkType === "message" ? "bg-[#ff8904] text-white" : "bg-white text-[#ff8904] hover:bg-orange-50"}`}>
-                Kiểm tra Tin nhắn
+                {t('check.tab3')}
               </button>
             </div>
 
@@ -3227,12 +3227,12 @@ export default function App() {
               <span className="text-xl font-bold tracking-tighter text-[#ff8904]">Lá Chắn Số</span>
             </div>
             <nav className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-              <button type="button" onClick={() => navigateToPage("guide")} className={`text-sm font-medium transition-colors ${currentPage === "guide" ? "text-[#ff8904]" : "text-gray-500 hover:text-black"}`}>Hướng dẫn sử dụng</button>
-              <button type="button" onClick={() => navigateToPage("threats")} className={`text-sm font-medium transition-colors ${currentPage === "threats" ? "text-[#ff8904]" : "text-gray-500 hover:text-black"}`}>Mối đe dọa</button>
-              <button type="button" onClick={() => navigateToPage("terms")} className={`text-sm font-medium transition-colors ${currentPage === "terms" ? "text-[#ff8904]" : "text-gray-500 hover:text-black"}`}>Điều khoản sử dụng</button>
-              <button type="button" onClick={() => navigateToPage("privacy")} className={`text-sm font-medium transition-colors ${currentPage === "privacy" ? "text-[#ff8904]" : "text-gray-500 hover:text-black"}`}>Chính sách bảo mật</button>
+              <button type="button" onClick={() => navigateToPage("guide")} className={`text-sm font-medium transition-colors ${currentPage === "guide" ? "text-[#ff8904]" : "text-gray-500 hover:text-black"}`}>{t('footer.guide')}</button>
+              <button type="button" onClick={() => navigateToPage("threats")} className={`text-sm font-medium transition-colors ${currentPage === "threats" ? "text-[#ff8904]" : "text-gray-500 hover:text-black"}`}>{t('footer.threats')}</button>
+              <button type="button" onClick={() => navigateToPage("terms")} className={`text-sm font-medium transition-colors ${currentPage === "terms" ? "text-[#ff8904]" : "text-gray-500 hover:text-black"}`}>{t('footer.terms')}</button>
+              <button type="button" onClick={() => navigateToPage("privacy")} className={`text-sm font-medium transition-colors ${currentPage === "privacy" ? "text-[#ff8904]" : "text-gray-500 hover:text-black"}`}>{t('footer.privacy')}</button>
               <a href="https://www.facebook.com/profile.php?id=61592680388542" target="_blank" rel="noreferrer" className="text-sm font-medium text-gray-500 hover:text-black transition-colors inline-flex items-center gap-1.5">
-                <ShieldAlert className="w-4 h-4" /> Báo cáo lỗ hổng bảo mật
+                <ShieldAlert className="w-4 h-4" /> {t('footer.report')}
               </a>
             </nav>
             <div className="flex items-center gap-6">
@@ -3248,7 +3248,7 @@ export default function App() {
             </div>
           </div>
           <p className="pt-8 text-center text-sm text-[#4a5565]">
-            Copyright © 2026 Lá Chắn Số. Bảo lưu mọi quyền.
+            {t('footer.copyright')}
           </p>
         </div>
       </footer>
