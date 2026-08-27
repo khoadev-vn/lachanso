@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { vi } from '../i18n/vi';
+import { en } from '../i18n/en';
 
 type Lang = 'vi' | 'en';
 
