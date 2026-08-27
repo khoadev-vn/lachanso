@@ -1441,6 +1441,14 @@ export default function App() {
                   </motion.p>
 
                   <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.15, duration: 0.5 }}
+                    className="inline-block mb-8 px-6 py-3 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[15px] font-black tracking-wide shadow-lg shadow-orange-500/20">
+                    Kiểm trước — Tin sau
+                  </motion.div>
+
+                  <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
