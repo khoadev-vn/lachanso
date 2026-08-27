@@ -22,6 +22,14 @@ export interface NewsSearchResult {
   timestamp: number;
 }
 const rateLimiter = new RateLimiter(5, 100);
+function detectQueryLanguage(text: string): "vi" | "en" | "mixed" {
+  const vietnameseChars = (text.match(/[ăắằẵẳấầẩẫậèêếềễểệòóôơờớỡởợưứừửữựỳỹ]/gi) || []).length;
+  const latinChars = (text.match(/[a-zA-Z]/g) || []).length;
+  if (vietnameseChars > 0 && latinChars > vietnameseChars * 3) return "mixed";
+  if (vietnameseChars > latinChars * 0.3) return "vi";
+  return "en";
+}
+
 export async function searchNews(query: string, options?: {
   language?: string;
   sortBy?: "relevancy" | "popularity" | "publishedAt";
@@ -40,37 +48,59 @@ export async function searchNews(query: string, options?: {
       console.warn("[v0] News API quota exhausted");
       return [];
     }
-    const params = new URLSearchParams({
-      q: query,
-      format: "rss",
-      setlang: options?.language || "vi"
-    });
+    const detectedLang = options?.language || detectQueryLanguage(query);
+    const searchLangs = detectedLang === "mixed" ? ["vi", "en"] :
+                       detectedLang === "en" ? ["en"] :
+                       ["vi", "en"];
     const startTime = performance.now();
-    const response = await withTimeout(fetch(`${BING_NEWS_BASE}?${params}`), 5000);
-    if (!response || !response.ok) {
-      console.error(`[v0] Bing News error: ${response?.statusText}`);
-      return [];
+    const allArticles: NewsArticle[] = [];
+
+    for (const lang of searchLangs) {
+      try {
+        const params = new URLSearchParams({
+          q: query,
+          format: "rss",
+          setlang: lang
+        });
+        const response = await withTimeout(fetch(`${BING_NEWS_BASE}?${params}`), 5000);
+        if (!response || !response.ok) {
+          console.error(`[v0] Bing News error (${lang}): ${response?.statusText}`);
+          continue;
+        }
+        const xmlText = await response.text();
+        if (!xmlText) continue;
+        const xml = new DOMParser().parseFromString(xmlText, "application/xml");
+        if (xml.getElementsByTagName("parsererror").length > 0) continue;
+        const items = Array.from(xml.querySelectorAll("item")).slice(0, options?.pageSize || 15);
+        const articles: NewsArticle[] = items.map((item) => ({
+          title: item.querySelector("title")?.textContent?.trim() ?? "",
+          description: undefined,
+          url: item.querySelector("link")?.textContent?.trim() ?? "",
+          source: { name: item.querySelector("News\\:Source")?.textContent?.trim() ?? item.querySelector("source")?.textContent?.trim() ?? "Bing News" },
+          author: undefined,
+          publishedAt: item.querySelector("pubDate")?.textContent?.trim() ?? new Date().toISOString(),
+          content: undefined,
+          image: undefined
+        }));
+        allArticles.push(...articles);
+      } catch (e) {
+        console.warn(`[v0] Bing News search error (${lang}):`, e);
+      }
     }
-    const xmlText = await response.text();
-    if (!xmlText) return [];
-    const xml = new DOMParser().parseFromString(xmlText, "application/xml");
-    if (xml.getElementsByTagName("parsererror").length > 0) return [];
-    const items = Array.from(xml.querySelectorAll("item")).slice(0, options?.pageSize || 15);
-    const articles: NewsArticle[] = items.map((item) => ({
-      title: item.querySelector("title")?.textContent?.trim() ?? "",
-      description: undefined,
-      url: item.querySelector("link")?.textContent?.trim() ?? "",
-      source: { name: item.querySelector("News\\:Source")?.textContent?.trim() ?? item.querySelector("source")?.textContent?.trim() ?? "Bing News" },
-      author: undefined,
-      publishedAt: item.querySelector("pubDate")?.textContent?.trim() ?? new Date().toISOString(),
-      content: undefined,
-      image: undefined
-    }));
+
+    const seen = new Set<string>();
+    const deduped = allArticles.filter(a => {
+      const key = a.title.toLowerCase().trim();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
     const responseTime = performance.now() - startTime;
     apiOrchestrator.recordAPICall("newsApi", responseTime, true);
-    apiOrchestrator.decrementQuota("newsApi", 1);
-    apiOrchestrator.getCache().set(cacheKey, articles, 4 * 60 * 60 * 1000);
-    return articles;
+    apiOrchestrator.decrementQuota("newsApi", searchLangs.length);
+    apiOrchestrator.getCache().set(cacheKey, deduped, 4 * 60 * 60 * 1000);
+    return deduped;
   }
   catch (error) {
     console.error("[v0] News API fetch error:", error);
@@ -127,8 +157,10 @@ export const TRUSTED_NEWS_SOURCES = new Set([
 "BBC",
 "BBC News",
 "The New York Times",
+"New York Times",
 "The Guardian",
 "The Washington Post",
+"Washington Post",
 "CNN",
 "NPR",
 "Al Jazeera",
@@ -141,7 +173,37 @@ export const TRUSTED_NEWS_SOURCES = new Set([
 "The Vietnam News",
 "VnExpress",
 "Tuổi Trẻ",
-"Thanh Niên"]
+"Thanh Niên",
+"DW",
+"Deutsche Welle",
+"NHK",
+"NHK World",
+"France 24",
+"Agence France-Presse",
+"AFP",
+"Agence Press",
+"The New Yorker",
+"The Atlantic",
+"Time",
+"Bloomberg",
+"Forbes",
+"The Wall Street Journal",
+"Wall Street Journal",
+"South China Morning Post",
+"SCMP",
+"Yonhap",
+"Xinhua",
+"CGTN",
+"Global Times",
+"Anadolu Agency",
+"AA",
+"Reuters Japan",
+"The Straits Times",
+"Bangkok Post",
+"Jakarta Post",
+"ABS-CBN",
+"Manila Bulletin"
+]
 );
 export function isTrustedNewsSource(sourceName: string): boolean {
   return TRUSTED_NEWS_SOURCES.has(sourceName);

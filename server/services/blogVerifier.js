@@ -1,5 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
+const ssrfGuard = require('./ssrfGuard');
 
 // ============ NUANCED BLOG & INDEPENDENT CONTENT VERIFICATION ============
 
@@ -382,11 +383,14 @@ async function verifyBlogContent(text, url = null) {
   let metadata = null;
   if (url) {
     try {
-      const { data } = await axios.get(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0' },
-        timeout: 8000
-      });
-      metadata = extractBlogMetadata(data);
+      const safe = await ssrfGuard.assertSafeUrl(url);
+      if (safe.ok) {
+        const { data } = await axios.get(url, {
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+          timeout: 8000
+        });
+        metadata = extractBlogMetadata(data);
+      }
     } catch {}
   }
   

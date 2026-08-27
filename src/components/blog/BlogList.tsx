@@ -23,7 +23,7 @@ export default function BlogList({ onArticleClick }: BlogListProps) {
       !selectedCategory || article.category === selectedCategory;
     
     return matchesSearch && matchesCategory;
-  });
+  }).sort((a, b) => Number(b.pinned) - Number(a.pinned));
 
   return (
     <div className="min-h-screen bg-gray-50">

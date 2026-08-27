@@ -20,6 +20,7 @@ const thirdParty = require('./thirdPartyChecker');
 const verifiedDomains = require('./verifiedDomains');
 const { llmChat, isLLMConfigured } = require('./llmClient');
 const { openrouterChat, isOpenRouterConfigured } = require('./openrouterClient');
+const ssrfGuard = require('./ssrfGuard');
 
 const WEIGHTS = { c1: 0.18, c2: 0.14, c3: 0.08, c4: 0.14, c5: 0.15, c6: 0.10, c7: 0.06, c8: 0.05, c9: 0.10 };
 
@@ -197,6 +198,9 @@ async function collectC3(hostname) {
 // ============ c4: Web Content & DOM (cloaking + SPA JS scan + form phân loại) ============
 async function fetchOnce(url, ua) {
   try {
+    // SSRF guard: chặn redirect/URL nội bộ ngay tại điểm fetch
+    const safe = await ssrfGuard.assertSafeUrl(url);
+    if (!safe.ok) return { status: 0, html: '' };
     const r = await axios.get(url, {
       timeout: 6000,
       httpsAgent: new https.Agent({ rejectUnauthorized: false }),
@@ -319,6 +323,8 @@ const inlineJs = $('script:not([src])').text() || '';
     await Promise.all(srcs.map(async (src) => {
       try {
         const abs = /^https?:\/\//i.test(src) ? src : new URL(src, url).href;
+        const safe = await ssrfGuard.assertSafeUrl(abs);
+        if (!safe.ok) return;
         const jr = await axios.get(abs, { timeout: 3000, headers: { 'User-Agent': MOBILE_UA }, validateStatus: () => true });
         const js = String(jr.data || '');
         if (/createElement\s*\(\s*['"]form|type\s*=\s*['"]password|input_otp|login_submit|otp_input|password\s*field/i.test(js)) {
@@ -476,6 +482,8 @@ async function collectC7(url) {
   while (hops < 6 && current && !seen.has(current)) {
     seen.add(current);
     try {
+      const safe = await ssrfGuard.assertSafeUrl(current);
+      if (!safe.ok) break;
       const r = await axios.get(current, {
         timeout: 2500, maxRedirects: 0, validateStatus: () => true,
         headers: { 'User-Agent': MOBILE_UA }
@@ -540,6 +548,8 @@ const C9_CACHE_TTL = 30 * 60 * 1000; // 30 phút
 
 async function extractPageText(url, userAgentOverride) {
   try {
+    const safe = await ssrfGuard.assertSafeUrl(url);
+    if (!safe.ok) return null;
     const r = await axios.get(url, {
       timeout: 7000,
       maxRedirects: 5,

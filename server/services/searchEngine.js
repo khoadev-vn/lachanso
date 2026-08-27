@@ -267,6 +267,183 @@ async function scrapeBingNews(query, limit = 15) {
   }
 }
 
+async function scrapeBingNewsEN(query, limit = 15) {
+  try {
+    const url = `https://www.bing.com/news/search?q=${encodeURIComponent(query)}&format=rss&setlang=en&cc=us`;
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Accept': 'application/rss+xml, application/xml, text/xml'
+      },
+      timeout: 8000
+    });
+
+    const $xml = cheerio.load(response.data, { xmlMode: true });
+    const results = [];
+
+    $xml('item').each((i, el) => {
+      if (i >= limit) return;
+      const title = $xml(el).find('title').text().trim();
+      const link = $xml(el).find('link').text().trim();
+      const source = $xml(el).find('source').text().trim() || 'Bing News';
+      const description = $xml(el).find('description').text().trim() || title;
+
+      if (title && link) {
+        results.push({ title, description, link, source });
+      }
+    });
+    return results;
+  } catch (error) {
+    console.error('[Search Engine] Lỗi khi scrape Bing News EN:', error.message);
+    return [];
+  }
+}
+
+async function scrapeGoogleNewsRSS_EN(query, limit = 15) {
+  try {
+    const extendedQuery = query + " after:2020-01-01";
+    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(extendedQuery)}&hl=en&gl=US&ceid=US:en`;
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Accept': 'application/rss+xml, application/xml, text/xml'
+      },
+      timeout: 8000
+    });
+
+    const $xml = cheerio.load(response.data, { xmlMode: true });
+    const results = [];
+
+    $xml('item').each((i, el) => {
+      if (i >= limit) return;
+      const title = $xml(el).find('title').text().trim();
+      const link = $xml(el).find('link').text().trim();
+      const source = $xml(el).find('source').text().trim() || 'Google News';
+      const description = $xml(el).find('description').text().trim() || title;
+
+      if (title && link) {
+        results.push({ title, description, link, source });
+      }
+    });
+    return results;
+  } catch (error) {
+    console.error('[Search Engine] Lỗi khi scrape Google News RSS EN:', error.message);
+    return [];
+  }
+}
+
+async function scrapeReutersSearch(query, limit = 8) {
+  try {
+    const url = `https://www.reuters.com/site-search/?query=${encodeURIComponent(query)}&section=all`;
+    const response = await axios.get(url, {
+      headers: DEFAULT_HEADERS,
+      timeout: 10000
+    });
+
+    const $ = cheerio.load(response.data);
+    const articles = [];
+
+    $('a[href*="/20"]').each((i, el) => {
+      if (i >= limit) return;
+      const title = $(el).attr('title') || $(el).text().trim();
+      const link = $(el).attr('href');
+      if (title && link && title.length > 15) {
+        const absoluteLink = link.startsWith('http') ? link : `https://www.reuters.com${link}`;
+        articles.push({ title, description: '', link: absoluteLink, source: 'Reuters' });
+      }
+    });
+
+    return articles;
+  } catch (error) {
+    console.error('[Search Engine] Lỗi khi scrape Reuters:', error.message);
+    return [];
+  }
+}
+
+async function scrapeBBCNews(query, limit = 8) {
+  try {
+    const url = `https://www.bbc.com/search?q=${encodeURIComponent(query)}`;
+    const response = await axios.get(url, {
+      headers: DEFAULT_HEADERS,
+      timeout: 10000
+    });
+
+    const $ = cheerio.load(response.data);
+    const articles = [];
+
+    $('a[href*="/news/"], a[href*="/article/"]').each((i, el) => {
+      if (i >= limit) return;
+      const title = $(el).attr('title') || $(el).text().trim();
+      const link = $(el).attr('href');
+      if (title && link && title.length > 15) {
+        const absoluteLink = link.startsWith('http') ? link : `https://www.bbc.com${link}`;
+        articles.push({ title, description: '', link: absoluteLink, source: 'BBC' });
+      }
+    });
+
+    return articles;
+  } catch (error) {
+    console.error('[Search Engine] Lỗi khi scrape BBC:', error.message);
+    return [];
+  }
+}
+
+async function scrapeAPNewsSearch(query, limit = 8) {
+  try {
+    const url = `https://apnews.com/search?q=${encodeURIComponent(query)}`;
+    const response = await axios.get(url, {
+      headers: DEFAULT_HEADERS,
+      timeout: 10000
+    });
+
+    const $ = cheerio.load(response.data);
+    const articles = [];
+
+    $('a[href*="/article/"]').each((i, el) => {
+      if (i >= limit) return;
+      const title = $(el).attr('title') || $(el).text().trim();
+      const link = $(el).attr('href');
+      if (title && link && title.length > 15) {
+        const absoluteLink = link.startsWith('http') ? link : `https://apnews.com${link}`;
+        articles.push({ title, description: '', link: absoluteLink, source: 'AP News' });
+      }
+    });
+
+    return articles;
+  } catch (error) {
+    console.error('[Search Engine] Lỗi khi scrape AP News:', error.message);
+    return [];
+  }
+}
+
+async function scrapeCNNSearch(query, limit = 8) {
+  try {
+    const url = `https://www.cnn.com/search?q=${encodeURIComponent(query)}&section=all`;
+    const response = await axios.get(url, {
+      headers: DEFAULT_HEADERS,
+      timeout: 10000
+    });
+
+    const $ = cheerio.load(response.data);
+    const articles = [];
+
+    $('a[href*="/20"]').each((i, el) => {
+      if (i >= limit) return;
+      const title = $(el).attr('title') || $(el).text().trim();
+      const link = $(el).attr('href');
+      if (title && link && title.length > 15) {
+        const absoluteLink = link.startsWith('http') ? link : `https://www.cnn.com${link}`;
+        articles.push({ title, description: '', link: absoluteLink, source: 'CNN' });
+      }
+    });
+
+    return articles;
+  } catch (error) {
+    console.error('[Search Engine] Lỗi khi scrape CNN:', error.message);
+    return [];
+  }
+}
+
 const WIKI_HEADERS = {
   'User-Agent': 'LachanSoNewsVerifier/1.0 (https://lachansovn.com; contact: admin)',
   'Accept': 'application/json'
@@ -313,16 +490,22 @@ async function scrapeWikipedia(query, limit = 5) {
 async function searchVietnameseNews(query) {
   const fallbackQuery = query.replace(/"/g, '');
 
-  console.warn('[Search Engine] Đang tìm kiếm đa nguồn (Bing News + Google News + VnExpress + Dân Trí + VietnamNet + Tuổi Trẻ + Wikipedia)...');
+  console.warn('[Search Engine] Đang tìm kiếm đa nguồn (Bing News VI + Google News VI + VnExpress + Dân Trí + VietnamNet + Tuổi Trẻ + Wikipedia + Bing News EN + Google News EN + Reuters + BBC + AP + CNN)...');
 
-  const [bingNews, googleNews, vnexpress, dantri, vietnamnet, tuoitre, wikipedia] = await Promise.allSettled([
+  const [bingNews, googleNews, vnexpress, dantri, vietnamnet, tuoitre, wikipedia, bingNewsEN, googleNewsEN, reuters, bbc, apnews, cnn] = await Promise.allSettled([
     scrapeBingNews(fallbackQuery),
     scrapeGoogleNewsRSS(fallbackQuery),
     scrapeVnExpress(fallbackQuery),
     scrapeDantri(fallbackQuery),
     scrapeVietnamNet(fallbackQuery),
     scrapeTuoitre(fallbackQuery),
-    scrapeWikipedia(fallbackQuery)
+    scrapeWikipedia(fallbackQuery),
+    scrapeBingNewsEN(fallbackQuery),
+    scrapeGoogleNewsRSS_EN(fallbackQuery),
+    scrapeReutersSearch(fallbackQuery),
+    scrapeBBCNews(fallbackQuery),
+    scrapeAPNewsSearch(fallbackQuery),
+    scrapeCNNSearch(fallbackQuery)
   ]);
 
   const merged = [
@@ -332,11 +515,17 @@ async function searchVietnameseNews(query) {
     ...(dantri.status === 'fulfilled' ? dantri.value : []),
     ...(vietnamnet.status === 'fulfilled' ? vietnamnet.value : []),
     ...(tuoitre.status === 'fulfilled' ? tuoitre.value : []),
-    ...(wikipedia.status === 'fulfilled' ? wikipedia.value : [])
+    ...(wikipedia.status === 'fulfilled' ? wikipedia.value : []),
+    ...(bingNewsEN.status === 'fulfilled' ? bingNewsEN.value : []),
+    ...(googleNewsEN.status === 'fulfilled' ? googleNewsEN.value : []),
+    ...(reuters.status === 'fulfilled' ? reuters.value : []),
+    ...(bbc.status === 'fulfilled' ? bbc.value : []),
+    ...(apnews.status === 'fulfilled' ? apnews.value : []),
+    ...(cnn.status === 'fulfilled' ? cnn.value : [])
   ];
 
-  const deduped = dedupeArticles(merged).slice(0, 20);
-  console.log(`[Search Engine] Tìm thấy ${deduped.length} bài báo.`);
+  const deduped = dedupeArticles(merged).slice(0, 30);
+  console.log(`[Search Engine] Tìm thấy ${deduped.length} bài báo (VI + EN).`);
   return deduped;
 }
 
@@ -345,6 +534,12 @@ module.exports = {
   scrapeVnExpress,
   scrapeGoogleNewsRSS,
   scrapeBingNews,
+  scrapeBingNewsEN,
+  scrapeGoogleNewsRSS_EN,
+  scrapeReutersSearch,
+  scrapeBBCNews,
+  scrapeAPNewsSearch,
+  scrapeCNNSearch,
   scrapeDantri,
   scrapeVietnamNet,
   scrapeTuoitre,

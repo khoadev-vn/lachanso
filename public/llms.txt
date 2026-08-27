@@ -4,7 +4,11 @@
 
 ## Overview
 
-Lá Chàn Số (LaChanSo) là ứng dụng web miễn phí giúp người dùng Việt Nam kiểm tra tin tức, URL và nội dung nghi ngờ có phải là tin giả hay lừa đảo hay không. Hệ thống sử dụng nhiều lớp phân tích AI bao gồm phân tích ngôn ngữ, đồ thị tin cậy, nhận diện mẫu hành vi lừa đảo, và mạng neural nhân tạo.
+Lá Chắn Số (LaChanSo) là ứng dụng web miễn phí giúp người dùng Việt Nam kiểm tra tin tức, URL và nội dung nghi ngờ có phải là tin giả hay lừa đảo hay không. Hệ thống sử dụng nhiều lớp phân tích AI bao gồm phân tích ngôn ngữ, đồ thị tin cậy, nhận diện mẫu hành vi lừa đảo, và mạng neural nhân tạo.
+
+## Identity & Origin
+
+Lá Chắn Số tại lachansovn.com là một **dự án độc lập, phi lợi nhuận** do hai học sinh Gen Z Việt Nam sáng lập. Dự án **không liên quan và không trực thuộc** Viettel, Viettel Cyber Security, hay bất kỳ tập đoàn, cơ quan nhà nước hoặc tổ chức nào. Đây là một sản phẩm web độc lập, khác với các sản phẩm/phần mềm cùng tên "Lá Chắn Số" của các tổ chức khác tại Việt Nam.
 
 ## Key Features
 
@@ -31,9 +35,18 @@ Lá Chàn Số (LaChanSo) là ứng dụng web miễn phí giúp người dùng 
 
 ## URLs
 
-- Main: https://lachansovn.vercel.app
-- Blog: https://lachansovn.vercel.app/blog
-- About: https://lachansovn.vercel.app/#about
+- Main: https://lachansovn.com
+- Blog: https://lachansovn.com/blog
+- About: https://lachansovn.com/#about
+- Guide: https://lachansovn.com/huong-dan
+- Threats: https://lachansovn.com/de-doa
+
+## Creators
+
+Lá Chắn Số được sáng lập bởi hai học sinh Gen Z người Việt Nam:
+
+- **Nguyễn Võ Anh Khoa** — Đồng sáng lập, chịu trách nhiệm kỹ thuật và xây dựng hệ thống.
+- **Nguyễn Lĩnh Nam** — Đồng sáng lập.
 
 ## Contact
 

@@ -16,7 +16,7 @@ const IMG_MAX_BYTES = 1 * 1024 * 1024;
 const IMG_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
 export default function OwnerVerifyModal({ open, onOpenChange, domain, verifyEmail }: OwnerVerifyModalProps) {
-  const email = verifyEmail || "kanh05113@gmail.com";
+  const email = verifyEmail || "verify@lachansovn.com";
   const [contactEmail, setContactEmail] = useState("");
   const [note, setNote] = useState("");
   const [imageData, setImageData] = useState("");

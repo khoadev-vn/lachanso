@@ -1,0 +1,53 @@
+# Lá Chắn Số — production HTTPS (kích hoạt khi domain trỏ A -> 45.115.17.54)
+lachansovn.com, www.lachansovn.com {
+	# Chặn truy cập trực tiếp một số route nội bộ nhạy cảm
+	@priv {
+		path /api/debug/*
+		path /api/config*
+		path /health/internal
+	}
+	handle @priv {
+		respond 404
+	}
+
+	encode zstd gzip
+
+	# Bot (Googlebot/bingbot/GPTBot...) → backend prerender (render SPA thành HTML tĩnh)
+	# LƯU Ý: KHÔNG match prerenderbot — UA này do backend dùng khi page.goto để lấy shell tĩnh,
+	# nếu match sẽ tạo loop render vô hạn.
+	@bot {
+		header_regexp User-Agent "(?i)(googlebot|bingbot|gptbot|claudebot|anthropic-ai|ccbot|bytespider|facebookexternalhit|twitterbot|slurp|duckduckbot|applebot|semrushbot|ahrefsbot|yandexbot|baiduspider|petalbot|amazonbot|meta-externalagent|google-extended|chatgpt-user|perplexitybot|dotbot|archive.org_bot|ia_archiver)"
+		not {
+			path *.xml *.txt *.png *.svg *.ico *.js *.css *.webmanifest
+		}
+	}
+	handle @bot {
+		reverse_proxy 127.0.0.1:3001
+	}
+
+	# API → backend ứng dụng
+	handle /api/* {
+		reverse_proxy 127.0.0.1:3001 {
+			header_up X-LCS-Backend-Secret {env.LCS_BACKEND_SECRET}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+		}
+	}
+
+	handle /health {
+		reverse_proxy 127.0.0.1:3001
+	}
+
+	# Frontend static (SPA) — vue router fallback → index.html
+	handle {
+		root * /opt/lachanso/dist
+		try_files {path} /index.html
+		file_server
+		header Cache-Control "public, max-age=0, must-revalidate"
+	}
+}
+
+# HTTP test — giữ dự phòng khi chưa trỏ DNS (cổng 8080)
+:8080 {
+	reverse_proxy 127.0.0.1:3001
+}

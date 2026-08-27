@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
+const { incrementThreat, getThreatStats } = require('./services/threatStats');
 const { searchVietnameseNews } = require('./services/searchEngine');
 const { filterArticles } = require('./services/semanticFilter');
 const keywordExtractor = require('./services/keywordExtractor');
@@ -10,6 +11,7 @@ const ArticleComparator = require('./services/articleComparator');
 const { isLLMConfigured, getLLMStatus } = require('./services/llmClient');
 const cacheService = require('./services/cacheService');
 const autoCrawlService = require('./services/autoCrawlService');
+const { prerenderMiddleware } = require('./services/prerenderService');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -52,7 +54,8 @@ const ALLOWED_ORIGINS = new Set([
 
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || ALLOWED_ORIGINS.has(origin)) {
+    // Cho phép Chrome extension (origin dạng chrome-extension://<id>) — id không cố định
+    if (!origin || ALLOWED_ORIGINS.has(origin) || origin.startsWith('chrome-extension://')) {
       return callback(null, true);
     }
     return callback(null, false);
@@ -62,6 +65,10 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '2mb' }));
+
+// ---- Prerender cho bot (Googlebot/bingbot/GPTBot...) — render SPA thành HTML tĩnh ----
+// Phải đặt TRƯỚC secretGate vì bot không gửi x-lcs-backend-secret và không đi qua /api/*
+app.use(prerenderMiddleware);
 
 // ---- Security headers ----
 app.use((req, res, next) => {
@@ -79,13 +86,18 @@ function rateLimiter(maxRequests, windowMs) {
   return (req, res, next) => {
     const key = req.ip || req.headers['x-forwarded-for'] || 'unknown';
     const now = Date.now();
-    const bucket = rateLimitBuckets.get(key) || { count: 0, resetAt: now + windowMs };
-    if (bucket.resetAt <= now) {
-      bucket.count = 0;
-      bucket.resetAt = now + windowMs;
+    let bucket = rateLimitBuckets.get(key);
+    if (!bucket || bucket.resetAt <= now) {
+      bucket = { count: 0, resetAt: now + windowMs };
+      rateLimitBuckets.set(key, bucket);
     }
     bucket.count += 1;
-    rateLimitBuckets.set(key, bucket);
+    // Dọn bucket đã hết hạn định kỳ để tránh memory leak theo IP
+    if (rateLimitBuckets.size > 5000) {
+      for (const [k, b] of rateLimitBuckets) {
+        if (b.resetAt <= now) rateLimitBuckets.delete(k);
+      }
+    }
     if (bucket.count > maxRequests) {
       return res.status(429).json({ error: 'Quá nhiều yêu cầu. Vui lòng thử lại sau ít phút.' });
     }
@@ -94,6 +106,16 @@ function rateLimiter(maxRequests, windowMs) {
 }
 const throttleAnalysis = rateLimiter(20, 60 * 1000);
 const throttleGeneral = rateLimiter(60, 60 * 1000);
+
+// ---- Admin gate: endpoint vận hành (cache/crawl) chỉ chấp nhận header x-lcs-admin-secret ----
+// Không lộ qua frontend public; dùng riêng cho thao tác vận hành từ VPS.
+const adminGate = (req, res, next) => {
+  const secret = process.env.LCS_ADMIN_SECRET;
+  if (secret && req.get('x-lcs-admin-secret') !== secret) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  next();
+};
 
 // Secret gate áp cho toàn bộ /api/* (trừ khi chạy local không có LCS_BACKEND_SECRET)
 app.use('/api', secretGate);
@@ -108,6 +130,23 @@ app.use('/api/fact-check', throttleGeneral);
 app.use('/api/check-domain', throttleGeneral);
 app.use('/api/verify-nli', throttleGeneral);
 app.use('/api/verify-message', throttleGeneral);
+app.use('/api/news/summarize', throttleGeneral);
+app.use('/api/v2/web-verify/async', throttleAnalysis);
+app.use('/api/v2/web-verify/status', rateLimiter(240, 60 * 1000));
+app.use('/api/v2/web-verify', throttleAnalysis);
+app.use('/api/v2/verify', throttleAnalysis);
+app.use('/api/scam-domains', throttleGeneral);
+app.use('/api/fake-news', throttleGeneral);
+app.use('/api/cached-news', throttleGeneral);
+app.use('/api/cache/stats', throttleGeneral);
+app.use('/api/crawl/stats', throttleGeneral);
+app.use('/api/crawl/trigger', throttleAnalysis);
+
+// Admin-gate: endpoint vận hành không dành cho công chúng
+app.use('/api/cache', adminGate);
+app.use('/api/crawl', adminGate);
+app.use('/api/ai/status', adminGate);
+app.use('/api/cached-news', adminGate);
 
 
 app.get('/health', (req, res) => {
@@ -404,6 +443,7 @@ app.post('/api/verify-nli', async (req, res) => {
 const threatDetection = require('./services/threatDetection');
 const linkAnalysis = require('./services/linkAnalysis');
 const apiProxy = require('./services/apiProxy');
+const ssrfGuard = require('./services/ssrfGuard');
 
 // Proxy API giữ key server-side (không lộ key trong bundle client)
 app.get('/api/proxy/*path', throttleGeneral, (req, res) => {
@@ -714,12 +754,16 @@ function webVerifyCacheKey(url) {
 }
 
 function buildWebVerifyResponse(result, startTime) {
-    return {
+    const response = {
         success: true,
         ...result,
-        ownerVerifyEmail: process.env.PROCESS_VERIFY_EMAIL || 'kanh05113@gmail.com',
         execution_time_ms: Date.now() - startTime
     };
+    // Chỉ trả email liên hệ xác minh nếu được cấu hình tường minh (không hardcode email cá nhân)
+    if (process.env.PROCESS_VERIFY_EMAIL) {
+        response.ownerVerifyEmail = process.env.PROCESS_VERIFY_EMAIL;
+    }
+    return response;
 }
 
 // ============ ASYNC JOB STORE — web-verify chạy nền, tránh timeout Vercel ============
@@ -747,6 +791,7 @@ function runWebVerifyJob(jobId, url) {
             job.result = responseData;
             job.doneAt = Date.now();
         }
+        incrementThreat();
         console.log(`[API-v2][web:async] ✅ job=${jobId} state=${result.state} R=${result.R} C=${result.C} (${responseData.execution_time_ms}ms)`);
     }).catch((error) => {
         console.error(`[API-v2][web:async] ❌ job=${jobId} error:`, error.message);
@@ -755,11 +800,15 @@ function runWebVerifyJob(jobId, url) {
     });
 }
 
-app.post('/api/v2/web-verify/async', (req, res) => {
+app.post('/api/v2/web-verify/async', async (req, res) => {
     try {
         const { url } = req.body;
         const normalized = normalizeWebUrl(url);
         if (!normalized) return res.status(400).json({ error: 'Missing or invalid url input' });
+
+        // SSRF guard: chặn URL trỏ tới tài nguyên nội bộ trước khi chạy job
+        const safe = await ssrfGuard.assertSafeUrl(normalized);
+        if (!safe.ok) return res.status(400).json({ error: `URL không được phép quét: ${safe.reason}` });
 
         // Trả ngay kết quả cache nếu có (lần check sau ~0ms)
         const cacheKey = webVerifyCacheKey(normalized);
@@ -806,24 +855,32 @@ app.post('/api/v2/web-verify', async (req, res) => {
         const { url } = req.body;
         if (!url) return res.status(400).json({ error: 'Missing url input' });
 
+        const normalized = normalizeWebUrl(url);
+        if (!normalized) return res.status(400).json({ error: 'Invalid url input' });
+
+        // SSRF guard
+        const safe = await ssrfGuard.assertSafeUrl(normalized);
+        if (!safe.ok) return res.status(400).json({ error: `URL không được phép quét: ${safe.reason}` });
+
         console.log(`\n[API-v2][web] 🔍 Zero-Trust Web Verify: "${String(url).substring(0, 50)}..."`);
         const startTime = Date.now();
 
         // Cache kết quả theo URL gốc (10 phút) — lần check sau gần như tức thì,
         // tránh tình trạng backend chậm hơn giới hạn timeout của Vercel proxy.
-        const cacheKey = webVerifyCacheKey(url);
+        const cacheKey = webVerifyCacheKey(normalized);
         const cached = cacheService.get('web-verify', cacheKey);
         if (cached) {
             console.log(`[API-v2][web] ⚡ Cache hit: ${cacheKey} (${Date.now() - startTime}ms)`);
             return res.json({ ...cached, cached: true, cacheHit: true });
         }
 
-        const result = await verifyWebsiteV2(url);
+        const result = await verifyWebsiteV2(normalized);
 
         const responseData = buildWebVerifyResponse(result, startTime);
 
         cacheService.set('web-verify', cacheKey, responseData, 10);
 
+        incrementThreat();
         console.log(`[API-v2][web] ✅ state=${result.state} R=${result.R} C=${result.C} (${responseData.execution_time_ms}ms)`);
         res.json(responseData);
     } catch (error) {
@@ -924,6 +981,17 @@ app.get('/api/scam-domains', (req, res) => {
   }
 });
 
+// ============ THREAT STATS — Thống kê mối đe dọa thật từ hệ thống ============
+app.get('/api/v2/threat-stats', (req, res) => {
+  try {
+    const stats = getThreatStats();
+    return res.json({ success: true, ...stats });
+  } catch (e) {
+    console.error('[threat-stats] Error:', e.message);
+    return res.json({ success: true, today: 0, thisWeek: 0, thisMonth: 0, total: 0 });
+  }
+});
+
 // Get fake news list (live; mới nhất trước)
 app.get('/api/fake-news', (req, res) => {
   try {
@@ -944,15 +1012,7 @@ app.get('/api/fake-news', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 Server đang chạy tại port ${PORT}`);
-  console.log(`✅ Mô hình phân tích ngôn ngữ đã sẵn sàng`);
-  console.log(`🔗 Endpoint xác thực: POST http://localhost:${PORT}/api/verify-news`);
-  console.log(`🔗 Endpoint full-scan: POST http://localhost:${PORT}/api/full-scan`);
-  console.log(`🔗 Endpoint comprehensive: POST http://localhost:${PORT}/api/verify-comprehensive`);
-  console.log(`🔗 Endpoint fast-verify: POST http://localhost:${PORT}/api/verify-fast`);
-  console.log(`🔗 Endpoint NLI: POST http://localhost:${PORT}/api/verify-nli`);
-  console.log(`🔗 Endpoint Fact Check: POST http://localhost:${PORT}/api/fact-check`);
-  console.log(`🔗 Cache Stats: GET http://localhost:${PORT}/api/cache/stats`);
-  console.log(`🔗 Crawl Stats: GET http://localhost:${PORT}/api/crawl/stats`);
+  console.log('✅ Backend Lá Chắn Số ready (endpoints không liệt kê ở log để giảm lộ bề mặt).');
   
   // Start auto-crawl service (every 6 hours)
   autoCrawlService.start(6);

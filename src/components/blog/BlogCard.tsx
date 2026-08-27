@@ -20,6 +20,11 @@ export default function BlogCard({ article, onClick }: BlogCardProps) {
           <Clock className="h-3 w-3" />
           {article.readTime} phút đọc
         </span>
+        {article.pinned && (
+          <span className="rounded-full bg-gray-900 px-3 py-1 font-semibold text-white">
+            Ghim
+          </span>
+        )}
       </div>
       
       <h3 className="mt-4 text-xl font-bold text-gray-900 group-hover:text-[#ff8904] transition-colors">

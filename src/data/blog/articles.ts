@@ -10,9 +10,112 @@ export interface BlogArticle {
   readTime: number;
   image?: string;
   author: string;
+  pinned?: boolean;
 }
 
 export const BLOG_ARTICLES: BlogArticle[] = [
+  {
+    id: "11",
+    slug: "cam-on-unikorn-vi-da-dong-hanh",
+    title: "LÁ CHẮN SỐ × UNIKORN — CẢM ƠN VÌ ĐÃ ĐỒNG HÀNH",
+    description: "Unikorn đã hỗ trợ tài trợ công nghệ cho Lá Chắn Số và cùng đưa sản phẩm đến gần hơn với cộng đồng startup Việt Nam. Cảm ơn Unikorn vì đã tin tưởng và đồng hành.",
+    category: "Đồng Hành",
+    tags: ["unikorn", "đồng hành", "tài trợ", "startup"],
+    publishedAt: "2026-08-09",
+    readTime: 3,
+    author: "Lá Chắn Số",
+    pinned: true,
+    content: `
+## Cảm ơn vì đã đồng hành
+
+Một dự án nhỏ, một hành trình lớn — và Lá Chắn Số rất vui khi trên hành trình đó có Unikorn đồng hành.
+
+Lá Chắn Số xin gửi lời cảm ơn chân thành đến Unikorn vì đã hỗ trợ tài trợ công nghệ cho dự án, đồng thời tạo điều kiện để đội ngũ có thêm nền tảng và nguồn lực tiếp tục phát triển sản phẩm.
+
+Đặc biệt, sự đồng hành này không chỉ dừng lại ở việc hỗ trợ công nghệ. Unikorn còn là nơi để Lá Chắn Số có cơ hội đưa sản phẩm đến gần hơn với cộng đồng startup và công nghệ Việt Nam.
+
+## Top 3 Product of the Day trên Unikorn
+
+Sau những ngày đầu ra mắt, Lá Chắn Số đã có những tín hiệu rất tích cực từ cộng đồng và đạt **Top 3 Product of the Day** trên Unikorn.
+
+Đối với một dự án được xây dựng bởi một nhóm bạn trẻ, đây thực sự là một cột mốc rất đáng nhớ.
+
+Chúng mình tin rằng những sản phẩm công nghệ có ý nghĩa không nhất thiết phải bắt đầu từ một đội ngũ lớn. Quan trọng là có một vấn đề đủ đáng để giải quyết, một tập thể đủ nghiêm túc để theo đuổi và những người đồng hành sẵn sàng tin tưởng.
+
+Cảm ơn Unikorn vì đã tin tưởng và đồng hành cùng Lá Chắn Số.
+
+Chặng đường phía trước vẫn còn rất dài. Lá Chắn Số sẽ luôn tiếp tục cải thiện sản phẩm, lắng nghe phản hồi từ cộng đồng và xây dựng một nền tảng kiểm chứng thông tin ngày càng hữu ích, dễ tiếp cận hơn.
+
+## Lá Chắn Số × Unikorn
+
+Cùng xây dựng một môi trường thông tin an toàn hơn cho cộng đồng Việt Nam.
+    `
+  },
+  {
+    id: "12",
+    slug: "cam-on-vietnix-tai-tro-hosting",
+    title: "Lời Cảm Ơn Đến Vietnix",
+    description: "Vietnix đã đồng hành quý báu với Lá Chắn Số thông qua việc tài trợ hạ tầng hosting. Cảm ơn đội ngũ Vietnix vì đã tin tưởng và đồng hành ngay từ những ngày đầu.",
+    category: "Đồng Hành",
+    tags: ["vietnix", "hosting", "đồng hành", "tài trợ"],
+    publishedAt: "2026-08-09",
+    readTime: 2,
+    author: "Lá Chắn Số",
+    pinned: true,
+    content: `
+# Lời cảm ơn đến Vietnix
+
+Trong quá trình phát triển Lá Chắn Số, tụi mình đã nhận được sự đồng hành quý báu từ **Vietnix** thông qua việc tài trợ hạ tầng **hosting** cho dự án.
+
+Đối với một dự án được xây dựng bởi hai học sinh, sự hỗ trợ này không chỉ giúp tụi mình có thêm điều kiện để phát triển và vận hành sản phẩm, mà còn là nguồn động lực rất lớn để tiếp tục theo đuổi những ý tưởng có ích cho cộng đồng.
+
+Tụi mình xin gửi lời cảm ơn chân thành đến đội ngũ Vietnix vì đã tin tưởng và đồng hành cùng Lá Chắn Số ngay từ những ngày đầu.
+
+Hy vọng trong thời gian tới, Lá Chắn Số sẽ luôn tiếp tục hoàn thiện hơn nữa để mang đến một công cụ hữu ích, góp phần xây dựng môi trường số an toàn và đáng tin cậy hơn cho mọi người.
+
+Một lần nữa, xin chân thành cảm ơn Vietnix vì đã đồng hành cùng dự án.
+
+## Liên kết
+
+- Trải nghiệm Lá Chắn Số tại: https://lachansovn.vercel.app/
+- Vietnix: https://vietnix.vn/
+    `
+  },
+  {
+    id: "13",
+    slug: "cam-on-retask-vi-da-dong-hanh",
+    title: "CẢM ƠN RETASK — CẢM ƠN VÌ ĐÃ ĐỒNG HÀNH CÙNG LÁ CHẮN SỐ",
+    description: "Retask đã hỗ trợ và cung cấp công nghệ cho Lá Chắn Số, giúp đội ngũ có thêm nguồn lực để tiếp tục xây dựng, thử nghiệm và hoàn thiện sản phẩm.",
+    category: "Đồng Hành",
+    tags: ["retask", "đồng hành", "tài trợ", "công nghệ"],
+    publishedAt: "2026-08-09",
+    readTime: 3,
+    author: "Lá Chắn Số",
+    pinned: true,
+    content: `
+# Cảm ơn Retask — Cảm ơn vì đã đồng hành cùng Lá Chắn Số
+
+Một sản phẩm công nghệ có thể bắt đầu từ một ý tưởng rất đơn giản, nhưng để biến ý tưởng đó thành một sản phẩm thực sự hoạt động và có thể phục vụ cộng đồng, phía sau luôn cần rất nhiều sự hỗ trợ.
+
+Trong hành trình phát triển Lá Chắn Số, tụi mình rất vui khi nhận được sự đồng hành từ **Retask**.
+
+Lá Chắn Số xin gửi lời cảm ơn chân thành đến Retask vì đã hỗ trợ và cung cấp công nghệ cho dự án, giúp đội ngũ có thêm nguồn lực để tiếp tục xây dựng, thử nghiệm và hoàn thiện sản phẩm.
+
+Với tụi mình, sự hỗ trợ này không đơn thuần chỉ là một phần về công nghệ. Đó còn là sự tin tưởng dành cho một dự án được xây dựng bởi một đội ngũ trẻ, với mong muốn tạo ra một công cụ gần gũi và hữu ích hơn cho cộng đồng trong việc nhận diện tin giả, lừa đảo, website đáng ngờ và những nội dung có nguy cơ gây mất an toàn trên không gian mạng.
+
+Trong thời gian qua, Lá Chắn Số đã liên tục cập nhật dựa trên phản hồi từ người dùng, từ hệ thống kiểm tra website, tin nhắn, tin tức cho đến các tính năng AI hỗ trợ phân tích và giải thích kết quả. Và chắc chắn hành trình này vẫn chưa dừng lại.
+
+Mỗi sự đồng hành, mỗi góp ý và mỗi lượt sử dụng đều giúp tụi mình có thêm động lực để tiếp tục cải thiện sản phẩm.
+
+Cảm ơn Retask vì đã tin tưởng và đồng hành cùng Lá Chắn Số.
+
+Hy vọng đây sẽ không chỉ là một lần hỗ trợ, mà là điểm bắt đầu cho nhiều cơ hội hợp tác và những sản phẩm công nghệ ý nghĩa hơn trong tương lai.
+
+## Lá Chắn Số
+
+Bảo vệ thông tin. Bảo vệ cộng đồng.
+    `
+  },
   {
     id: "1",
     slug: "cach-nhat-biet-tin-gia-tren-facebook",
@@ -809,6 +912,118 @@ Con người không thể nhớ và kiểm tra mọi thông tin. Công cụ AI g
 ## Kết Luận
 
 Công cụ AI giúp kiểm tra tin giả nhanh chóng, nhưng tư duy phản biện vẫn là quan trọng nhất. Hãy sử dụng kết hợp công cụ và kiến thức cá nhân.
+    `
+  },
+  {
+    id: "14",
+    slug: "nhom-outside-enterprise-lua-dao-ai",
+    title: "Cảnh báo đỏ: Nhóm tội phạm 'Outsider Enterprise' dùng AI tạo hàng nghìn website giả, đánh cắp gần 4 triệu thẻ",
+    description: "Bộ Công an và các ngân hàng phát cảnh báo về chiến dịch lừa đảo toàn cầu do nhóm 'Outsider Enterprise' vận hành: AI tự động tạo website giả mạo ngân hàng, đơn vị vận chuyển và sàn thương mại điện tử, đánh cắp ~3,87 triệu thẻ tín dụng chỉ trong 2 tháng.",
+    category: "Phòng Chống Lừa Đảo",
+    tags: ["AI", "deepfake", "website giả", "SMS", "cảnh báo", "ngân hàng"],
+    publishedAt: "2026-08-08",
+    readTime: 5,
+    author: "Lá Chắn Số",
+    content: `
+## Câu chuyện thật từ cảnh báo của Bộ Công an
+
+Đầu tháng 8/2026, Cục An ninh mạng và Phòng chống tội phạm sử dụng công nghệ cao (Bộ Công an) và một số tổ chức tài chính đồng loạt phát cảnh báo về chiến dịch lừa đảo quy mô toàn cầu do nhóm tội phạm **"Outsider Enterprise"** vận hành.
+
+Đây là sự kết hợp giữa **AI và lừa đảo**:
+
+- Hệ thống **dùng trí tuệ nhân tạo tự động tạo ra hàng nghìn website giả mạo**: ngân hàng, đơn vị vận chuyển, sàn thương mại điện tử.
+- **Phát tán hàng loạt SMS chứa đường link độc hại**, dẫn người dùng vào web giả giống hệt trang thật.
+- Chỉ riêng tháng 5-6/2026, nhóm đã phát tán **hơn 2,5 triệu SMS** và đánh cắp thông tin của khoảng **3,87 triệu thẻ tín dụng**, thiệt hại lên tới **1,9 tỷ USD**.
+
+## Điểm đáng chú ý
+
+Hệ thống có thể **đánh cắp thông tin theo thời gian thực ngay trong lúc bạn đang nhập liệu** — không cần chờ bạn bấm nút xác nhận nào.
+
+## Nhận diện tin nhắn lừa đảo kiểu này
+
+### 1. SMS có nội dung "gấp"
+Tài khoản sắp bị khóa, xác minh ngay kẻo mất tiền, có bưu kiện chưa nhận, trúng thưởng… — đây là các dấu hiệu điển hình.
+
+### 2. Tên miền khác một ký tự
+Viết gần giống website thật (typo domain). Chỉ cần sai một ký tự cũng có thể là web giả.
+
+### 3. Link rút gọn
+Bit.ly, cutt.ly… giấu địa chỉ thật. Đừng bấm vào link rút gọn trong tin nhắn lạ.
+
+### 4. Yêu cầu nhập OTP / mật khẩu gấp
+Ngân hàng thật **không bao giờ** yêu cầu bạn gửi mật khẩu, mã OTP qua tin nhắn SMS hoặc "nhân viên hỗ trợ".
+
+## 4 bước bảo vệ tại chỗ
+
+1. **Bình tĩnh** — đừng vì áp lực "khẩn cấp" mà làm theo.
+2. **Không bấm link** trong SMS/email/Facebook/Zalo lạ.
+3. **Tự gõ địa chỉ** ngân hàng thật vào trình duyệt để đăng nhập.
+4. **Dán link vào Lá Chắn Số** trước khi nhập bất kỳ thông tin gì.
+    `
+  },
+  {
+    id: "15",
+    slug: "lua-dao-shipper-huy-dang-ky-giao-hang",
+    title: "Cảnh giác 'shipper' gọi điện: từ thông báo đơn hàng đến yêu cầu chuyển tiền hủy đăng ký",
+    description: "Cảnh báo mới từ Công an TP Cần Thơ (8/2026): đối tượng giả danh shipper rồi chuyển sang giả nhân viên bưu điện yêu cầu nạn nhân 'hủy đăng ký tài khoản giao hàng' và chuyển tiền 'xác minh', liên tục viện lỗi giao dịch để chuyển thêm tiền.",
+    category: "Phòng Chống Lừa Đảo",
+    tags: ["shipper", "bưu điện", "giao hàng", "chuyển tiền", "cảnh báo"],
+    publishedAt: "2026-08-05",
+    readTime: 4,
+    author: "Lá Chắn Số",
+    content: `
+## Kịch bản lừa đảo thực tế (theo Công an TP Cần Thơ)
+
+1. Một người tự xưng **shipper** gọi điện thông báo bạn đang được giao một đơn hàng.
+2. Sau đó chuyển qua giả danh **nhân viên bưu điện** / "tổng đài hỗ trợ đơn vị vận chuyển".
+3. Họ nói bạn bị **đăng ký nhầm tài khoản shipper**, viện lý do sẽ phát sinh nghĩa vụ tài chính, rủi ro pháp lý.
+4. Đối tượng hướng dẫn bạn liên hệ với một số "tổng đài" do chúng cung cấp, mở ra "thủ tục hủy" bằng… chuyển tiền.
+5. Tiền chuyển xong, chúng báo "giao dịch lỗi, sai cú pháp, tiền chưa vào hệ thống" → yêu cầu chuyển thêm nhiều lần để "khắc phục lỗi".
+
+## Dấu hiệu nhận biết
+
+- **Số "tổng đài" do đối tượng cung cấp** — đừng gọi theo số họ gửi, hãy tra số chính thức trên website.
+- **"Hủy đăng ký" qua chuyển tiền là phi lý.** Bưu chính, vận chuyển, cơ quan nhà nước **không bao giờ** yêu cầu chuyển tiền để hủy dịch vụ hay "khắc phục lỗi hệ thống".
+- **Kịch bản lặp lỗi chuyển khoản** nhiều lần là dấu hiệu không phải nghiệp vụ thật.
+
+## Xử lý khi nghi ngờ
+
+- Cúp máy, gọi tổng đài chính thức (số trên website, không phải số chúng gửi).
+- Không cung cấp OTP, số tài khoản, mật khẩu.
+- Dán chính nội dung tin nhắn lên Lá Chắn Số để kiểm tra mức rủi ro và tìm bài cảnh báo tương tự.
+  `
+  },
+  {
+    id: "16",
+    slug: "bien-lai-chuyen-khoan-gia",
+    title: "Biên lai chuyển khoản thành công 'nhưng tiền chưa vào': chiêu tạo biên lai giả mới",
+    description: "Công an tỉnh Nghệ An (8/2026) cảnh báo thủ đoạn dùng phần mềm chỉnh sửa ảnh tạo biên lai chuyển khoản giả với đầy đủ số tài khoản, tên người nhận và số tiền — đánh vào tâm lý giao tài sản trước khi ngân hàng xử lý.",
+    category: "Phòng Chống Lừa Đảo",
+    tags: ["biên lai giả", "chuyển khoản", "fake bill", "deepfake", "giao dịch"],
+    publishedAt: "2026-08-04",
+    readTime: 4,
+    author: "Lá Chắn Số",
+    content: `
+## Vì sao "biên lai" không nên là căn cứ duy nhất?
+
+Thực tế mới (2026): các đối tượng dùng **phần mềm chỉnh sửa ảnh hoặc AI để tạo biên lai chuyển khoản thành công giả** với đầy đủ thông tin — số tài khoản, tên người nhận, số tiền giao dịch. Một số trường hợp còn kèm theo ảnh chụp màn hình giả (fake bill) để thuyết phục.
+
+Nếu bạn giao hàng hoặc giao tài sản trước khi kiểm tra số dư thực tế — coi như đã mất tiền.
+
+## Cách kiểm tra không bao giờ sai
+
+1. **Đừng tin ảnh biên lai.** Chỉ tin **số dư thực tế trong app ngân hàng** được ghi nhận.
+2. Kiểm tra **SMS thông báo ghi có** từ ngân hàng (không phải tin nhắn do người ta soạn).
+3. Giao dịch lớn: **yêu cầu đối tác nhận diện rõ người** (tháo khẩu trang/giả che) trước khi giao tài sản.
+4. Người nóng vội thúc giao nhưng "quên" chuyển tiền — cho vào danh sách nghi ngờ.
+
+## Câu hỏi bạn nên hỏi trực tiếp trước khi giao
+
+- "Bạn đã chuyển chưa?" — mời xem ảnh màn hình app, không phải ảnh biên lai.
+- "Sao số dư tôi chưa tăng?" — Chờ vài phút, gọi ngân hàng xác minh.
+- Đối tác lạ + khẩn khoản giao: giảm thấy cảnh giác hơn.
+
+**Ảnh thì dễ tạo, tiền thật mới khó.** Chỉ tin số dư trong app của chính bạn.
     `
   }
 ];
