@@ -1,0 +1,258 @@
+============================================================
+  LA CHAN SO — API TICH HOP KIEM TRA LINK AN TOAN
+  Dành cho: Unikorn.vn
+============================================================
+
+1. TONG QUAN
+------------------------------------------------------------
+La Chan So cung cap API kiem tra link an toan. Khi nguoi
+dung dang san pham tren dien dan Unikorn, he thong tu dong
+goi API de kiem tra link co lua dao, phishing hay khong.
+
+Ket qua tra ve:
+  - safe       ->  Cho phep dang
+  - suspicious ->  Canh bao, can duyet thu cong
+  - danger     ->  Chan, khong cho dang
+
+============================================================
+
+2. THONG TIN KET NOI
+------------------------------------------------------------
+  Base URL  : https://lachansovn.com
+  Endpoint  : POST /api/partner/unikorn/check-link
+  Method    : POST
+  Content-Type : application/json
+
+============================================================
+
+3. XAC THUC (AUTHENTICATION)
+------------------------------------------------------------
+Moi request can co header x-api-key:
+
+  x-api-key: lcs_unikorn_a1b2c3d4e5f6
+
+Luu y: API key duoc cung cap rieng. Khong chia se key cho
+ben thu ba.
+
+============================================================
+
+4. CACH GOI API
+------------------------------------------------------------
+
+4.1. REQUEST EXAMPLE (cURL)
+
+  curl -X POST https://lachansovn.com/api/partner/unikorn/check-link \
+    -H "Content-Type: application/json" \
+    -H "x-api-key: lcs_unikorn_a1b2c3d4e5f6" \
+    -d '{"url": "https://shopee.vn/sp/12345"}'
+
+4.2. BODY PARAMETERS
+
+  Field   Type     Bat buoc   Mo ta
+  ------  ------   --------   -----
+  url     string   Co         Link can kiem tra
+
+4.3. RESPONSE — LINK AN TOAN
+
+  {
+    "success": true,
+    "safe": true,
+    "score": 92,
+    "verdict": "safe",
+    "hostname": "shopee.vn",
+    "reasons": [],
+    "cached": false
+  }
+
+4.4. RESPONSE — LINK NGUY HIEM
+
+  {
+    "success": true,
+    "safe": false,
+    "score": 15,
+    "verdict": "danger",
+    "hostname": "shopee-fake.com",
+    "reasons": [
+      {
+        "id": "LINK_SCAM",
+        "name": "LUA DAO / CO BAC",
+        "detail": "Domain nam trong danh sach den lua dao",
+        "status": "danger",
+        "scoreDelta": -80
+      }
+    ],
+    "cached": false
+  }
+
+4.5. RESPONSE — LINK DANG NGHI
+
+  {
+    "success": true,
+    "safe": false,
+    "score": 55,
+    "verdict": "suspicious",
+    "hostname": "shop-ban-hang.com",
+    "reasons": [
+      {
+        "id": "LINK_NEW_DOMAIN",
+        "name": "TEN MIEN MOI",
+        "detail": "Ten miem chi moi dang ky 3 ngay",
+        "status": "warning",
+        "scoreDelta": -25
+      }
+    ],
+    "cached": false
+  }
+
+4.6. RESPONSE — LOI
+
+  {
+    "success": false,
+    "error": "Thieu truong url trong request body"
+  }
+
+============================================================
+
+5. Y NGHIA CAC TRUONG
+------------------------------------------------------------
+
+5.1. safe (boolean)
+  true  = Link an toan, cho phep dang
+  false = Link khong an toan, can xem xet
+
+5.2. score (number, 0-100)
+  80-100 = An toan
+  50-79  = Dang nghi, can kiem tra them
+  0-49   = Nguy hiem, khong nen cho dang
+
+5.3. verdict (string)
+  "safe"       = An toan     -> Cho dang ngay
+  "suspicious" = Dang nghi   -> Duyet thu cong
+  "danger"     = Nguy hiem   -> Chan dang
+
+5.4. reasons (array)
+  Danh sach cac ly do danh gia. Moi ly do co:
+    id         = Ma loi (vi du: LINK_SCAM, LINK_PHISHING)
+    name       = Ten loi
+    detail     = Chi tiet loi
+    status     = "success" / "warning" / "danger"
+    scoreDelta = Diem tru/them
+
+5.5. hostname (string)
+  Ten miem duoc trich xuat tu URL (vi du: shopee.vn)
+
+5.6. cached (boolean)
+  true  = Ket qua lay tu cache (da check truoc do)
+  false = Ket qua check moi
+
+============================================================
+
+6. VI DU TICH HOP
+------------------------------------------------------------
+
+6.1. JAVASCRIPT (Node.js)
+
+  async function checkLinkSafety(url) {
+    const response = await fetch(
+      'https://lachansovn.com/api/partner/unikorn/check-link',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': 'lcs_unikorn_a1b2c3d4e5f6'
+        },
+        body: JSON.stringify({ url })
+      }
+    );
+
+    const result = await response.json();
+    return result.success ? result : null;
+  }
+
+  // Su dung khi nguoi dung dang san pham
+  app.post('/api/products', async (req, res) => {
+    const { link } = req.body;
+    const safety = await checkLinkSafety(link);
+
+    if (!safety) {
+      return res.status(500).json({ error: 'Loi kiem tra link' });
+    }
+
+    if (safety.verdict === 'danger') {
+      return res.status(400).json({
+        error: 'Link khong an toan, vui long chon link khac'
+      });
+    }
+
+    if (safety.verdict === 'suspicious') {
+      // Luu o trang thai "cho duyet"
+      await saveProduct({ ...req.body, status: 'pending_review' });
+      return res.json({ message: 'San pham cho duyet' });
+    }
+
+    // safe -> cho dang ngay
+    await saveProduct({ ...req.body, status: 'published' });
+    res.json({ message: 'Dang san pham thanh cong' });
+  });
+
+6.2. PYTHON
+
+  import requests
+
+  def check_link_safety(url):
+      response = requests.post(
+          'https://lachansovn.com/api/partner/unikorn/check-link',
+          json={'url': url},
+          headers={
+              'Content-Type': 'application/json',
+              'x-api-key': 'lcs_unikorn_a1b2c3d4e5f6'
+          }
+      )
+      result = response.json()
+      return result if result['success'] else None
+
+  # Su dung
+  safety = check_link_safety('https://shopee.vn/sp/12345')
+  if safety and safety['verdict'] == 'danger':
+      print('Link khong an toan!')
+
+============================================================
+
+7. RATE LIMIT
+------------------------------------------------------------
+  Gioi han    : 100 requests/phut
+  Tra ve khi vuot : 429 Too Many Requests
+
+  {
+    "error": "Qua nhieu yeu cau. Vui long thu lai sau it phut."
+  }
+
+============================================================
+
+8. DANH SACH MA LOI (reasons.id)
+------------------------------------------------------------
+
+  Ma                Ten               Muc do    Y nghia
+  ----------------  ----------------  --------  ---------------------------
+  LINK_SCAM         Lua dao           danger    Domain trong danh sach den
+  LINK_PHISHING     Gia mao           danger    Trang web gia mao thuong hieu
+  LINK_GAMBLING     Co bac            danger    Trang co bac, ca cuoc
+  LINK_NEW_DOMAIN   Ten miem moi      warning   Moi dang ky < 30 ngay
+  LINK_NO_SSL       Khong co SSL      warning   Khong su dung HTTPS
+  LINK_SHORTENER    Rut gon URL       warning   Dung dich vu rut gon link
+  LINK_DEEP_SUB     Subdomain sau    warning   Qua nhieu subdomain
+  LINK_SUSPICIOUS   TLD dang ngo      warning   Dung dau .xyz, .top, .buzz...
+  LINK_HOMOGLYPH    Homoglyph         danger    Dung ky tu giong de gia mao
+  LINK_REDIRECT     Chuyen huong      warning   Co redirect chain
+
+============================================================
+
+9. HO TRO
+------------------------------------------------------------
+  Website   : https://lachansovn.com
+  Email     : admin@lachansovn.com
+  Fanpage   : La Chan So tren Facebook
+
+============================================================
+Cap nhat lan cuoi: 27/08/2026
+============================================================
