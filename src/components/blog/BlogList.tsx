@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Search, Filter } from "lucide-react";
 import { BLOG_ARTICLES, getBlogCategories } from "../../data/blog/articles";
+import { useLang } from "../../contexts/LangContext";
 import BlogCard from "./BlogCard";
 
 interface BlogListProps {
@@ -8,6 +9,7 @@ interface BlogListProps {
 }
 
 export default function BlogList({ onArticleClick }: BlogListProps) {
+  const { t } = useLang();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   
@@ -30,10 +32,10 @@ export default function BlogList({ onArticleClick }: BlogListProps) {
       <div className="mx-auto max-w-6xl px-4 py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Blog An Ninh Mạng
+            {t('blog.title')}
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Kiến thức phòng chống lừa đảo, bảo vệ bản thân và gia đình trên không gian mạng
+            {t('blog.subtitle')}
           </p>
         </div>
 
@@ -42,7 +44,7 @@ export default function BlogList({ onArticleClick }: BlogListProps) {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Tìm kiếm bài viết..."
+              placeholder={t('blog.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-12 pr-4 text-gray-900 placeholder-gray-500 focus:border-[#ff8904] focus:ring-2 focus:ring-[#ff8904]/20 outline-none transition-all"
@@ -56,7 +58,7 @@ export default function BlogList({ onArticleClick }: BlogListProps) {
               onChange={(e) => setSelectedCategory(e.target.value || null)}
               className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 focus:border-[#ff8904] focus:ring-2 focus:ring-[#ff8904]/20 outline-none transition-all"
             >
-              <option value="">Tất cả danh mục</option>
+              <option value="">{t('blog.allCategories')}</option>
               {categories.map(category => (
                 <option key={category} value={category}>{category}</option>
               ))}
@@ -65,12 +67,12 @@ export default function BlogList({ onArticleClick }: BlogListProps) {
         </div>
 
         <div className="mb-6 text-sm text-gray-500">
-          Hiển thị {filteredArticles.length} / {BLOG_ARTICLES.length} bài viết
+          {t('blog.showing').replace('${count}', String(filteredArticles.length)).replace('${total}', String(BLOG_ARTICLES.length))}
         </div>
 
         {filteredArticles.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500">Không tìm thấy bài viết phù hợp</p>
+            <p className="text-gray-500">{t('blog.noResults')}</p>
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

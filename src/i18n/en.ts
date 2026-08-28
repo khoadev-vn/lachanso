@@ -477,6 +477,21 @@ export const en: Record<string, string> = {
   'install.androidStep3': 'Select <strong>"Add to Home Screen"</strong> or <strong>"Install App"</strong>.',
   'install.tip': 'Tip: if Chromium has hidden the button by default, look for "Install App" in the ⋮ browser menu.',
 
+  // ── Blog ──
+  'blog.title': 'Cybersecurity Blog',
+  'blog.subtitle': 'Knowledge on scam prevention, protecting yourself and your family online',
+  'blog.search': 'Search articles...',
+  'blog.allCategories': 'All categories',
+  'blog.showing': 'Showing ${count} / ${total} articles',
+  'blog.noResults': 'No matching articles found',
+  'blog.readMore': 'Read more',
+  'blog.minRead': 'min read',
+  'blog.pinned': 'Pinned',
+  'blog.backToList': 'Back to article list',
+  'blog.share': 'Share article',
+  'blog.copyLink': 'Copy link',
+  'blog.copied': 'Link copied!',
+
   // ── Reason texts ──
   'reason.UNSOURCED_CLAIM': 'This sentence is written as news but has no newspaper or publisher name.',
   'reason.FANTASY_EVENT_CLAIM': 'Characters and events mentioned (dragons, sea monsters, robots...) only exist in movies or fairy tales.',

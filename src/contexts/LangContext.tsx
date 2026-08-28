@@ -16,10 +16,9 @@ export function useLang() {
   return useContext(LangContext);
 }
 
-// Detect browser language
+// Default to Vietnamese — most users are Vietnamese
 function detectBrowserLang(): Lang {
-  const nav = navigator.language || (navigator as any).userLanguage || '';
-  return nav.toLowerCase().startsWith('en') ? 'en' : 'vi';
+  return 'vi';
 }
 
 // Load saved preference or detect

@@ -1,5 +1,6 @@
 import { Calendar, Clock, Tag, ArrowRight } from "lucide-react";
 import type { BlogArticle } from "../../data/blog/articles";
+import { useLang } from "../../contexts/LangContext";
 
 interface BlogCardProps {
   article: BlogArticle;
@@ -7,6 +8,7 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ article, onClick }: BlogCardProps) {
+  const { t } = useLang();
   return (
     <div 
       className="group cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 transition-all hover:border-[#ff8904]/20 hover:shadow-lg hover:shadow-[#ff8904]/5"
@@ -18,11 +20,11 @@ export default function BlogCard({ article, onClick }: BlogCardProps) {
         </span>
         <span className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
-          {article.readTime} phút đọc
+          {article.readTime} {t('blog.minRead')}
         </span>
         {article.pinned && (
           <span className="rounded-full bg-gray-900 px-3 py-1 font-semibold text-white">
-            Ghim
+            {t('blog.pinned')}
           </span>
         )}
       </div>
@@ -42,7 +44,7 @@ export default function BlogCard({ article, onClick }: BlogCardProps) {
         </div>
         
         <span className="flex items-center gap-1 text-sm font-semibold text-[#ff8904] group-hover:gap-2 transition-all">
-          Đọc thêm
+          {t('blog.readMore')}
           <ArrowRight className="h-4 w-4" />
         </span>
       </div>

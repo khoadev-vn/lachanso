@@ -477,6 +477,21 @@ export const vi: Record<string, string> = {
   'install.androidStep3': 'Chọn <strong>"Thêm vào màn hình chính"</strong> hoặc <strong>"Cài đặt ứng dụng"</strong>.',
   'install.tip': 'Mẹo: nếu Chromium đã mặc định ẩn nút, hãy tìm mục "Cài đặt ứng dụng" trong menu ⋮ của trình duyệt.',
 
+  // ── Blog ──
+  'blog.title': 'Blog An Ninh Mạng',
+  'blog.subtitle': 'Kiến thức phòng chống lừa đảo, bảo vệ bản thân và gia đình trên không gian mạng',
+  'blog.search': 'Tìm kiếm bài viết...',
+  'blog.allCategories': 'Tất cả danh mục',
+  'blog.showing': 'Hiển thị ${count} / ${total} bài viết',
+  'blog.noResults': 'Không tìm thấy bài viết phù hợp',
+  'blog.readMore': 'Đọc thêm',
+  'blog.minRead': 'phút đọc',
+  'blog.pinned': 'Ghim',
+  'blog.backToList': 'Quay lại danh sách bài viết',
+  'blog.share': 'Chia sẻ bài viết',
+  'blog.copyLink': 'Sao chép link',
+  'blog.copied': 'Đã sao chép link!',
+
   // ── Reason texts (PLAIN_REASON_TEXT) ──
   'reason.UNSOURCED_CLAIM': 'Câu này được viết như tin tức nhưng lại không kèm tên báo hay nhà xuất bản nào.',
   'reason.FANTASY_EVENT_CLAIM': 'Nhân vật sự kiện được nhắc đến (rồng, thủy quái, robot...) chỉ tồn tại trong phim ảnh hoặc truyện cổ tích.',

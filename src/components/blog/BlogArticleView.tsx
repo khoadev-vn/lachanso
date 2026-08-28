@@ -1,5 +1,6 @@
 import { ArrowLeft, Calendar, Clock, User, Tag, Share2, Facebook, Mail } from "lucide-react";
 import type { BlogArticle } from "../../data/blog/articles";
+import { useLang } from "../../contexts/LangContext";
 
 interface BlogArticleViewProps {
   article: BlogArticle;
@@ -7,6 +8,7 @@ interface BlogArticleViewProps {
 }
 
 export default function BlogArticleView({ article, onBack }: BlogArticleViewProps) {
+  const { t } = useLang();
   const shareUrl = `https://lachansovn.com/blog/${article.slug}`;
   const shareText = `${article.title} - ${article.description}`;
 
@@ -72,7 +74,7 @@ export default function BlogArticleView({ article, onBack }: BlogArticleViewProp
           className="flex items-center gap-2 text-gray-600 hover:text-[#ff8904] transition-colors mb-8"
         >
           <ArrowLeft className="h-5 w-5" />
-          Quay lại danh sách bài viết
+          {t('blog.backToList')}
         </button>
 
         <header className="mb-8">
@@ -82,7 +84,7 @@ export default function BlogArticleView({ article, onBack }: BlogArticleViewProp
             </span>
             <span className="flex items-center gap-1">
               <Clock className="h-4 w-4" />
-              {article.readTime} phút đọc
+              {article.readTime} {t('blog.minRead')}
             </span>
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
@@ -127,7 +129,7 @@ export default function BlogArticleView({ article, onBack }: BlogArticleViewProp
         )}
 
         <div className="mt-8 rounded-2xl bg-gray-100 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Chia sẻ bài viết</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">{t('blog.share')}</h3>
           <div className="flex gap-3">
             <a
               href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
@@ -148,12 +150,12 @@ export default function BlogArticleView({ article, onBack }: BlogArticleViewProp
             <button
               onClick={() => {
                 navigator.clipboard.writeText(shareUrl);
-                alert("Đã sao chép link!");
+                alert(t('blog.copied'));
               }}
               className="flex items-center gap-2 rounded-full bg-[#ff8904] px-4 py-2 text-white hover:bg-[#e67a00] transition-colors"
             >
               <Share2 className="h-4 w-4" />
-              Sao chép link
+              {t('blog.copyLink')}
             </button>
           </div>
         </div>
