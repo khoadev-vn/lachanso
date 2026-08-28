@@ -16,8 +16,8 @@ export const en: Record<string, string> = {
 
   // ── Hero ──
   'hero.badge': 'Vietnam Information Verification Platform',
-  'hero.title1': 'PROTECT YOUR',
-  'hero.title2': 'INFORMATION',
+  'hero.title1': 'Lá Chàn Số',
+  'hero.title2': '',
   'hero.subtitle': 'Instantly check for fake news, scams and malicious websites. Multi-layer analysis technology protects you and your community.',
   'hero.slogan': 'Verify first — Trust after',
   'hero.cta': 'Check Now',

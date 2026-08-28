@@ -1464,8 +1464,7 @@ export default function App() {
                     transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
                     className="text-[68px] md:text-[88px] xl:text-[108px] font-black leading-[0.88] tracking-[-0.03em] uppercase text-[#111111] mb-8">
 
-                    {t('hero.title1')}<br />
-                    {t('hero.title2')}
+                    <span className="text-orange-500 italic">{t('hero.title1')}</span>
                   </motion.h1>
 
                   <motion.p
@@ -1482,7 +1481,12 @@ export default function App() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15, duration: 0.6 }}
                     className="text-[36px] md:text-[48px] lg:text-[56px] font-black leading-tight tracking-tight text-[#111] mb-10">
-                    {t('hero.slogan')}
+                    {t('hero.slogan').split(' — ').map((part, i, arr) => (
+                      <span key={i}>
+                        {part}
+                        {i < arr.length - 1 && <span className="text-orange-500"> — </span>}
+                      </span>
+                    ))}
                   </motion.h2>
 
                   <motion.div

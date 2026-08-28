@@ -16,8 +16,8 @@ export const vi: Record<string, string> = {
 
   // ── Hero ──
   'hero.badge': 'Nền tảng xác thực thông tin Việt Nam',
-  'hero.title1': 'BẢO VỆ',
-  'hero.title2': 'THÔNG TIN',
+  'hero.title1': 'Lá Chàn Số',
+  'hero.title2': '',
   'hero.subtitle': 'Kiểm tra tin giả, lừa đảo và trang web độc hại ngay lập tức. Công nghệ phân tích đa lớp bảo vệ bạn và cộng đồng.',
   'hero.slogan': 'Kiểm trước — Tin sau',
   'hero.cta': 'Kiểm tra ngay',
