@@ -563,30 +563,30 @@ export default function App() {
       type: checkType,
       url: searchQuery.trim(),
       score: 12,
-      confidence: "Đang phân tích nhiều lớp",
-      title: "Đang phân tích nội dung",
-      description: "Kết quả sẽ được đổ dần theo từng lớp kiểm tra nội bộ và đối chiếu ngoài.",
-      checkTypeLabel: checkType === "web" ? "Website / URL" : checkType === "message" ? "Tin nhắn / SMS lừa đảo" : "Đang phân loại nội dung...",
+      confidence: t('check.result.confidence'),
+      title: t('check.result.loading'),
+      description: t('check.result.description'),
+      checkTypeLabel: checkType === "web" ? t('check.result.label.web') : checkType === "message" ? t('check.result.label.msg') : t('check.result.label.classifying'),
       analysisReasons: [
         {
           id: "PIPELINE_LOADING",
-          name: "Đang khởi chạy pipeline kiểm tra",
-          detail: "LCS đang tải dần từng lớp phân tích. Mục nào xong trước sẽ hiển thị trước.",
+          name: t('check.result.analyzing'),
+          detail: t('check.result.pipeline'),
           status: "warning",
           icon: Loader2
         }],
 
       analysis: {
-        internal_verdict: "Đang khởi tạo phán quyết nội sinh của LCS...",
-        heuristics: "Đang phân tích cấu trúc văn bản...",
-        trust_analysis: "Đang chờ đối chiếu trust graph...",
-        url_verification: "Đang kiểm tra liên kết và nguồn...",
-        source_audit: "Đang dựng chuỗi nguồn...",
-        press_comparison: "Đang chuẩn bị đối chiếu đa báo...",
-        search_trace: "Đang mô phỏng truy vết tìm kiếm...",
-        live_fact_check: "Đang chờ phản hồi từ lớp fact API...",
-        live_press_scan: "Đang dò bài báo liên quan...",
-        open_knowledge_check: "Đang chờ đối chiếu tri thức mở."
+        internal_verdict: t('check.result.verdict'),
+        heuristics: t('check.result.heuristics'),
+        trust_analysis: t('check.result.trust'),
+        url_verification: t('check.result.url'),
+        source_audit: t('check.result.source'),
+        press_comparison: t('check.result.press'),
+        search_trace: t('check.result.search'),
+        live_fact_check: t('check.result.factcheck'),
+        live_press_scan: t('check.result.pressscan'),
+        open_knowledge_check: t('check.result.knowledge')
       },
       violated_rules: [],
       textContent: searchQuery,
@@ -729,7 +729,7 @@ export default function App() {
           type: "news",
           url: "",
           score,
-          confidence: isDanger ? "Độ rủi ro rất cao" : isSafe ? "Độ an toàn cao" : "Chưa đủ dữ liệu",
+          confidence: isDanger ? t('check.result.highRisk') : isSafe ? t('check.result.highSafety') : t('check.result.insufficientData'),
           title: finalTitle,
           description: finalDescription,
           analysis: analysisDetails,
@@ -738,7 +738,7 @@ export default function App() {
           usedAI,
           isMessageCheck: true,
           textContent: searchQuery.trim(),
-          checkTypeLabel: "Tin nhắn / SMS lừa đảo"
+          checkTypeLabel: t('check.result.label.msg')
         });
         setShowResults(true);
         setIsChecking(false);
@@ -746,8 +746,8 @@ export default function App() {
           setNewsAiSummary({
             summary: api.summary,
             key_points: [],
-            credibility_note: usedAI ? "" : "AI chưa khả dụng — kết quả bằng heuristic nội bộ.",
-            detection_note: isDanger ? "AI và hệ thống cùng đưa ra mức rủi ro cao." : "",
+            credibility_note: usedAI ? "" : t('check.result.aiUnavailable'),
+            detection_note: isDanger ? t('check.result.aiHighRisk') : "",
             loading: false,
             loaded: true
           });
@@ -764,14 +764,14 @@ export default function App() {
           scoreDelta: 0,
           reasons: [],
           summary: {
-            live_fact_check: "Chế độ Tin nhắn — không chạy đối chiếu fact-check nguồn ngoài.",
-            live_press_scan: "Chế độ Tin nhắn — không dò bài báo liên quan.",
-            open_knowledge_check: "Chế độ Tin nhắn — không đối chiếu tri thức mở.",
+            live_fact_check: t('check.result.messageModeFact'),
+            live_press_scan: t('check.result.messageModePress'),
+            open_knowledge_check: t('check.result.messageModeKnowledge'),
             headline_verification: undefined
           },
           verifiedExternally: false,
           pressArticles: [],
-          pressSourceLabel: "Không áp dụng"
+          pressSourceLabel: t('check.result.notApplicable')
         };
         const liveNewsCheckPromise = isMessage ? Promise.resolve(emptyLiveNewsCheck) : runLiveNewsCheck(text);
         const reasons: any[] = [];
@@ -797,16 +797,16 @@ export default function App() {
           violatedRules.splice(0, violatedRules.length, ...Array.from(violatedRuleIds));
         };
         const analysisDetails = {
-          internal_verdict: "LCS đang xây dựng phán quyết nội bộ...",
-          heuristics: "Đang phân tích cấu trúc văn bản...",
-          trust_analysis: "Chưa tìm thấy dữ liệu đối soát thực tế.",
-          url_verification: "Không phát hiện liên kết trong văn bản.",
-          source_audit: "Đang dựng chuỗi nguồn...",
-          press_comparison: "Đang chuẩn bị đối chiếu đa báo...",
-          search_trace: "Đang mô phỏng truy vết tìm kiếm...",
-          live_fact_check: "Live Fact Check API chưa được gọi.",
-          live_press_scan: "Live Press API chưa được gọi.",
-          open_knowledge_check: "Open Knowledge Check chưa được gọi."
+          internal_verdict: t('check.result.buildingVerdict'),
+          heuristics: t('check.result.analyzingStructure'),
+          trust_analysis: t('check.result.noTrustData'),
+          url_verification: t('check.result.noLinks'),
+          source_audit: t('check.result.buildingSource'),
+          press_comparison: t('check.result.preparingPress'),
+          search_trace: t('check.result.simulatingSearch'),
+          live_fact_check: t('check.result.factApiNotCalled'),
+          live_press_scan: t('check.result.pressApiNotCalled'),
+          open_knowledge_check: t('check.result.knowledgeNotCalled')
         };
 
         
@@ -1420,7 +1420,7 @@ export default function App() {
             handleInstallClick();
             setIsMenuOpen(false);
           }} className="w-full px-6 py-3 inline-flex items-center justify-center gap-2 bg-[#ff8904] text-white font-semibold rounded-full mt-2">
-            <Download className="h-4 w-4" /> Thêm vào màn hình chính
+            <Download className="h-4 w-4" /> {t('install.addToHome')}
           </button>}
         </motion.div>}
       </nav>
@@ -1584,18 +1584,18 @@ export default function App() {
 
                     <div className="flex items-center gap-2 mb-5">
                       <span className="w-2 h-2 bg-orange-500 rounded-full" />
-                      <p className="text-white/50 text-[11px] uppercase tracking-[0.22em] font-bold">Kiểm tra ngay</p>
+                      <p className="text-white/50 text-[11px] uppercase tracking-[0.22em] font-bold">{t('check.header')}</p>
                     </div>
 
                     <div className="flex gap-2 mb-5">
                       <button onClick={() => setCheckType("web")} className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${checkType === "web" ? "bg-orange-500 text-white" : "bg-white/10 text-gray-500 hover:bg-white/20"}`}>
-                        Website
+                        {t('check.tab1')}
                       </button>
                       <button onClick={() => setCheckType("news")} className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${checkType === "news" ? "bg-orange-500 text-white" : "bg-white/10 text-gray-500 hover:bg-white/20"}`}>
-                        Tin giả
+                        {t('check.tab2')}
                       </button>
                       <button onClick={() => setCheckType("message")} className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${checkType === "message" ? "bg-orange-500 text-white" : "bg-white/10 text-gray-500 hover:bg-white/20"}`}>
-                        Tin nhắn
+                        {t('check.tab3')}
                       </button>
                     </div>
 
