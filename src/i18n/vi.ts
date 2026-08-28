@@ -404,7 +404,7 @@ export const vi: Record<string, string> = {
   'resources.subtitle': 'Dữ liệu cảnh báo',
   'resources.desc': 'Danh sách các trang web lừa đảo được hệ thống Lá Chắn Số cập nhật liên tục.',
   'resources.table': 'Trang web lừa đảo',
-  'resources.autoUpdate': 'Cập nhật tự động 30 giây',
+  'resources.autoUpdate': 'Cập nhật tự động 60 giây',
   'resources.colNo': 'STT',
   'resources.colLink': 'Link trang',
   'resources.colSource': 'Nguồn',

@@ -1,7 +1,7 @@
 import { motion, AnimatePresence, animate, useMotionValue, useSpring, useTransform } from "motion/react";
 import { Analytics } from "@vercel/analytics/react";
 import GlobeViz from "./components/GlobeViz";
-import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users, Landmark, Scale, HeartPulse, Info, HelpCircle, Flag, LifeBuoy, ShieldAlert, Download, ListOrdered, MessageSquare, Newspaper, Lock, BookOpen, MousePointerClick, FileSearch } from "lucide-react";
+import { Shield, ChevronRight, Menu, X, Search, Command, CheckCircle2, AlertTriangle, Globe, ShieldCheck, Database, ExternalLink, Loader2, Sparkles, Zap, User, Heart, Target, Users, Landmark, Scale, HeartPulse, Info, HelpCircle, Flag, LifeBuoy, ShieldAlert, Download, ListOrdered, MessageSquare, Newspaper, Lock, BookOpen, MousePointerClick, FileSearch, RefreshCw } from "lucide-react";
 import OwnerVerifyModal from "./components/OwnerVerifyModal";
 import ReportIssueModal from "./components/ReportIssueModal";
 import NextStepsGuideModal from "./components/NextStepsGuideModal";
@@ -266,26 +266,33 @@ export default function App() {
   const RATE_LIMIT_WINDOW = 60000;
 
   const [liveScamSites, setLiveScamSites] = useState<any[]>([]);
+  const [scamSitesLoading, setScamSitesLoading] = useState(true);
+  const [scamSitesLastUpdated, setScamSitesLastUpdated] = useState<Date | null>(null);
   const [threatStats, setThreatStats] = useState({ today: 0, thisWeek: 0, thisMonth: 0, total: 0, trend: [] as { label: string; value: number }[] });
+
+  const loadScamSites = async () => {
+    try {
+      const scamRes = await fetch('/api/scam-domains?limit=50');
+      const scam = await scamRes.json();
+      setLiveScamSites(Array.isArray(scam) ? scam : []);
+      setScamSitesLastUpdated(new Date());
+    } catch (err) {
+      console.error("Error fetching scam domains:", err);
+    } finally {
+      setScamSitesLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (currentPage !== "resources" && currentPage !== "threats") return;
 
     let disposed = false;
     const loadEverything = async () => {
-      try {
-        const scamRes = await fetch('/api/scam-domains?limit=30');
-        const scam = await scamRes.json();
-        if (!disposed) {
-          setLiveScamSites(Array.isArray(scam) ? scam : []);
-        }
-      } catch (err) {
-        console.error("Error fetching resource data:", err);
-      }
+      if (!disposed) await loadScamSites();
     };
 
     loadEverything();
-    const timer = setInterval(loadEverything, 30000);
+    const timer = setInterval(loadEverything, 60000);
     return () => { disposed = true; clearInterval(timer); };
   }, [currentPage]);
 
@@ -482,13 +489,6 @@ export default function App() {
         }
       ]
     }];
-
-  const suspiciousSiteItems = [
-    { id: 1, link: "shopee-khuyenmai-2026.com", date: "02/04", description: "Tên miền giả mạo khuyến mãi của Shopee nhằm lừa người dùng nhập thông tin đăng nhập.", linkUrl: "https://shopee.vn/" },
-    { id: 2, link: "nganhang-abc-login.net", date: "01/04", description: "Trang giả mạo giao diện ngân hàng để thu thập mật khẩu và mã OTP.", linkUrl: "https://www.nganluong.vn/" },
-    { id: 3, link: "nhan-qua-mien-phi.org", date: "31/03", description: "Trang quảng bá chương trình tặng quà giả tạo để dụ người dùng click vào liên kết lừa đảo.", linkUrl: "https://www.facebook.com/" },
-    { id: 4, link: "facebook-verify-account.com", date: "30/03", description: "Tên miền giả mạo xác minh tài khoản Facebook để đánh cắp dữ liệu người dùng.", linkUrl: "https://www.facebook.com/" },
-    { id: 5, link: "crypto-invest-bonus.io", date: "29/03", description: "Cảnh báo về trang đầu tư tiền ảo lừa đảo dùng hình thức bonus hấp dẫn.", linkUrl: "https://www.binance.com/" }];
 
   const handleCheck = async (e?: FormEvent) => {
     if (e)
@@ -2743,32 +2743,56 @@ export default function App() {
                 </div>
                 <h3 className="text-xl font-bold text-black">{t('resources.table')}</h3>
                 <span className="ml-auto text-xs text-black/50">{t('resources.autoUpdate')}</span>
+                {scamSitesLastUpdated && (
+                  <span className="text-xs text-black/40">
+                    {lang === 'vi' ? 'Cập nhật lúc' : 'Updated at'}: {scamSitesLastUpdated.toLocaleTimeString(lang === 'vi' ? 'vi-VN' : 'en-US')}
+                  </span>
+                )}
+                <button 
+                  onClick={() => { setScamSitesLoading(true); loadScamSites(); }}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                  title={lang === 'vi' ? 'Làm mới' : 'Refresh'}
+                >
+                  <RefreshCw className={`w-4 h-4 text-gray-400 ${scamSitesLoading ? 'animate-spin' : ''}`} />
+                </button>
               </div>
               <div className="overflow-x-auto custom-scrollbar">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-red-50">
-                      <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest w-12">{t('resources.colNo')}</th>
-                      <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">{t('resources.colLink')}</th>
-                      <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">{t('resources.colSource')}</th>
-                      <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">{t('resources.colDate')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-red-50/30">
-                    {(liveScamSites.length > 0 ? liveScamSites.map((item, i) => ({
-                      id: i + 1,
-                      link: typeof item === 'string' ? item : (item.domain || item.url || ''),
-                      date: item.discoveredAt ? new Date(item.discoveredAt).toLocaleDateString('vi-VN') : (item.detectedDate || ''),
-                      description: item.description || t('resources.sourceWarning').replace('${source}', item.source || 'cảnh báo lừa đảo'),
-                      linkUrl: item.domain ? `https://${item.domain}` : '#'
-                    })) : suspiciousSiteItems).map((item: any) => <tr key={item.id} onClick={() => setSelectedInfoItem({ title: item.link, description: item.description, link: item.linkUrl, category: t('resources.category') })} className="group hover:bg-red-50/30 transition-colors cursor-pointer">
-                      <td className="py-4 font-medium text-black text-sm">{item.id}</td>
-                      <td className="py-4 text-black font-mono font-medium hover:underline cursor-pointer text-sm break-all">{item.link}</td>
-                      <td className="py-4 text-black/60 text-sm">{item.source || (liveScamSites.length > 0 ? 'feed' : '—')}</td>
-                      <td className="py-4 text-black/70 text-sm whitespace-nowrap">{item.date}</td>
-                    </tr>)}
-                  </tbody>
-                </table>
+                {scamSitesLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+                    <span className="ml-3 text-gray-500">{lang === 'vi' ? 'Đang tải dữ liệu...' : 'Loading data...'}</span>
+                  </div>
+                ) : liveScamSites.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400">
+                    {lang === 'vi' ? 'Không có dữ liệu' : 'No data available'}
+                  </div>
+                ) : (
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-red-50">
+                        <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest w-12">{t('resources.colNo')}</th>
+                        <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">{t('resources.colLink')}</th>
+                        <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">{t('resources.colSource')}</th>
+                        <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">{t('resources.colDate')}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-red-50/30">
+                      {liveScamSites.map((item, i) => ({
+                        id: i + 1,
+                        link: typeof item === 'string' ? item : (item.domain || item.url || ''),
+                        date: item.discoveredAt ? new Date(item.discoveredAt).toLocaleDateString('vi-VN') : (item.detectedDate || ''),
+                        description: item.description || t('resources.sourceWarning').replace('${source}', item.source || 'cảnh báo lừa đảo'),
+                        linkUrl: item.domain ? `https://${item.domain}` : '#',
+                        source: item.source || 'feed'
+                      })).map((item: any) => <tr key={item.id} onClick={() => setSelectedInfoItem({ title: item.link, description: item.description, link: item.linkUrl, category: t('resources.category') })} className="group hover:bg-red-50/30 transition-colors cursor-pointer">
+                        <td className="py-4 font-medium text-black text-sm">{item.id}</td>
+                        <td className="py-4 text-black font-mono font-medium hover:underline cursor-pointer text-sm break-all">{item.link}</td>
+                        <td className="py-4 text-black/60 text-sm">{item.source}</td>
+                        <td className="py-4 text-black/70 text-sm whitespace-nowrap">{item.date}</td>
+                      </tr>)}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
           </div>
@@ -3033,33 +3057,41 @@ export default function App() {
               <div className="mt-10 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
                 <div className="flex items-center justify-between border-b border-gray-100 px-8 py-5">
                   <h2 className="flex items-center gap-2 text-lg font-bold text-black"><ShieldAlert className="h-5 w-5 text-red-500" />{t('threats.recentTitle')}</h2>
-                  <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">{t('threats.newDomains').replace('${count}', liveScamSites.length.toString())}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">{t('threats.newDomains').replace('${count}', liveScamSites.length.toString())}</span>
+                    {scamSitesLastUpdated && (
+                      <span className="text-xs text-gray-400">
+                        {lang === 'vi' ? 'Cập nhật:' : 'Updated:'} {scamSitesLastUpdated.toLocaleTimeString(lang === 'vi' ? 'vi-VN' : 'en-US')}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-100 text-xs uppercase tracking-wider text-gray-400">
-                        <th className="px-8 py-3 font-semibold">Domain</th>
-                        <th className="px-6 py-3 font-semibold">{t('threats.colSource')}</th>
-                        <th className="px-6 py-3 font-semibold">{t('threats.colDetected')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(liveScamSites.length > 0 ? liveScamSites.slice(0, 12) : [
-                        { domain: "shopee-khuyenmai-2026.com", source: "manual", discoveredAt: "2026-04-02" },
-                        { domain: "nganhang-abc-login.net", source: "manual", discoveredAt: "2026-04-01" },
-                        { domain: "nhan-qua-mien-phi.org", source: "manual", discoveredAt: "2026-03-31" },
-                        { domain: "facebook-verify-account.com", source: "manual", discoveredAt: "2026-03-30" },
-                        { domain: "crypto-invest-bonus.io", source: "manual", discoveredAt: "2026-03-29" }
-                      ]).map((site: any) => (
-                        <tr key={site.domain} className="border-b border-gray-50 transition-colors hover:bg-red-50/30">
-                          <td className="px-8 py-3.5 font-mono font-medium text-red-600 break-all">{site.domain}</td>
-                          <td className="px-6 py-3.5 text-gray-500">{site.source || "feed"}</td>
-                          <td className="px-6 py-3.5 text-gray-500 whitespace-nowrap">{(site.discoveredAt || site.date || "").toString().slice(0, 10)}</td>
+                  {scamSitesLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+                      <span className="ml-3 text-gray-500">{lang === 'vi' ? 'Đang tải...' : 'Loading...'}</span>
+                    </div>
+                  ) : (
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100 text-xs uppercase tracking-wider text-gray-400">
+                          <th className="px-8 py-3 font-semibold">Domain</th>
+                          <th className="px-6 py-3 font-semibold">{t('threats.colSource')}</th>
+                          <th className="px-6 py-3 font-semibold">{t('threats.colDetected')}</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {liveScamSites.slice(0, 12).map((site: any) => (
+                          <tr key={site.domain || site.id} className="border-b border-gray-50 transition-colors hover:bg-red-50/30">
+                            <td className="px-8 py-3.5 font-mono font-medium text-red-600 break-all">{site.domain || site.url}</td>
+                            <td className="px-6 py-3.5 text-gray-500">{site.source || "feed"}</td>
+                            <td className="px-6 py-3.5 text-gray-500 whitespace-nowrap">{(site.discoveredAt || site.detectedDate || "").toString().slice(0, 10)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </div>
 

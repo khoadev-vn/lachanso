@@ -404,7 +404,7 @@ export const en: Record<string, string> = {
   'resources.subtitle': 'Warning Data',
   'resources.desc': 'List of scam websites continuously updated by the Lá Chắn Số system.',
   'resources.table': 'Scam Websites',
-  'resources.autoUpdate': 'Auto-update every 30 seconds',
+  'resources.autoUpdate': 'Auto-update every 60 seconds',
   'resources.colNo': 'No.',
   'resources.colLink': 'Website link',
   'resources.colSource': 'Source',
