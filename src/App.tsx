@@ -499,7 +499,7 @@ export default function App() {
     const now = Date.now();
     checkTimestamps.current = checkTimestamps.current.filter(t => now - t < RATE_LIMIT_WINDOW);
     if (checkTimestamps.current.length >= RATE_LIMIT_MAX) {
-      alert("Bạn đã kiểm tra quá nhiều lần. Vui lòng chờ 1 phút trước khi thử lại.");
+      alert(t('check.rateLimit'));
       return;
     }
     checkTimestamps.current.push(now);
@@ -1357,13 +1357,13 @@ export default function App() {
     }, 0);
   };
   const navLinks = [
-    { name: "Trang Chủ", id: "home" as PageId },
-    { name: "Hướng Dẫn", id: "guide" as PageId },
-    { name: "Mối Đe Dọa", id: "threats" as PageId },
-    { name: "Blog", id: "blog" as PageId },
-    { name: "Tài Nguyên", id: "resources" as PageId },
-    { name: "Đồng Hành", id: "partners" as PageId },
-    { name: "Sứ Mệnh", id: "mission" as PageId }];
+    { name: t('nav.home'), id: "home" as PageId },
+    { name: t('nav.guide'), id: "guide" as PageId },
+    { name: t('nav.threats'), id: "threats" as PageId },
+    { name: t('nav.blog'), id: "blog" as PageId },
+    { name: t('nav.resources'), id: "resources" as PageId },
+    { name: t('nav.partners'), id: "partners" as PageId },
+    { name: t('nav.mission'), id: "mission" as PageId }];
 
   return (
     <div className="min-h-screen text-[#111111] selection:bg-orange-200/50">
@@ -1372,7 +1372,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
           <button type="button" onClick={() => navigateToPage("home")} className="flex items-center">
             <img src="/logo.png" alt="Lá Chắn Số" className="w-14 h-14 -mr-1 -mt-1" />
-            <span className="font-bold text-[24px] tracking-tight text-[#ff8904]">Lá Chắn Số</span>
+            <span className="font-bold text-[24px] tracking-tight text-[#ff8904]">{t('brand')}</span>
           </button>
 
 
@@ -1386,7 +1386,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4">
-            <button onClick={() => setLang(lang === 'vi' ? 'en' : 'vi')} className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-full border border-gray-300 hover:border-gray-400 transition-colors bg-white/80">
+            <button onClick={() => setLang(lang === 'vi' ? 'en' : 'vi')} className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-full border border-gray-300 hover:border-gray-400 transition-colors bg-white/80">
               <Globe className="w-3.5 h-3.5" />
               {lang === 'vi' ? 'EN' : 'VI'}
             </button>
@@ -1628,9 +1628,9 @@ export default function App() {
             <div className="relative z-10 max-w-[1520px] mx-auto px-6 lg:px-10 pb-24">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
-                  { icon: Globe, title: "Chạy mọi nơi", desc: "Bảo mật, kết nối và kiểm tra diễn ra ngay tại điểm tiếp cận người dùng, trong thời gian thực." },
-                  { icon: ShieldCheck, title: "Kiểm tra nhanh", desc: "Công cụ kiểm tra ngay trên trang chủ giúp bạn xác định nguy cơ tin giả và lừa đảo chỉ với một lần nhập." },
-                  { icon: Scale, title: "Tối ưu dễ dùng", desc: "Giao diện đơn giản, trải nghiệm thẳng đến mục kiểm tra và kết quả rõ ràng ngay trên trang chủ." }].
+                  { icon: Globe, title: t('feat1.title'), desc: t('feat1.desc') },
+                  { icon: ShieldCheck, title: t('feat2.title'), desc: t('feat2.desc') },
+                  { icon: Scale, title: t('feat3.title'), desc: t('feat3.desc') }].
                   map((card, i) =>
                     <motion.div
                       key={card.title}
@@ -1785,13 +1785,13 @@ export default function App() {
             <div className="w-full relative">
               <div className="flex flex-col items-center text-center mb-8 relative z-10 px-6">
                 <motion.span initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-[#ff8904] font-mono text-sm tracking-[0.2em] uppercase mb-4">
-                  Mạng lưới giám sát toàn cầu
+                  {t('globe.title')}
                 </motion.span>
                 <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-white">
-                  Tin giả và lừa đảo có ở khắp mọi nơi
+                  {t('globe.subtitle')}
                 </motion.h2>
                 <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="text-gray-500 max-w-2xl text-lg">
-                  Lá Chắn Số kết nối với các trung tâm dữ liệu bảo mật trên toàn thế giới để cập nhật và ngăn chặn các mối đe dọa xuyên biên giới trong thời gian thực.
+                  {t('globe.desc')}
                 </motion.p>
               </div>
               <GlobeViz />
@@ -1801,7 +1801,7 @@ export default function App() {
 
           <section className="py-20 border-t border-black/10 overflow-hidden bg-[#ff8904]">
             <div className="max-w-[1600px] mx-auto px-6 mb-12 text-center">
-              <h3 className="font-bold uppercase tracking-[0.3em] mb-8 text-[20px] text-[#ffff]">Đồng hành cùng các đơn vị uy tín</h3>
+              <h3 className="font-bold uppercase tracking-[0.3em] mb-8 text-[20px] text-[#ffff]">{t('partners.title')}</h3>
             </div>
 
             <div className="relative flex overflow-x-hidden">
@@ -1903,10 +1903,10 @@ export default function App() {
 
                 <div className="space-y-6 max-w-md mx-auto">
                   {[
-                    { icon: Search, label: "Phân tích mã nguồn" },
-                    { icon: Database, label: "Kiểm tra cơ sở dữ liệu" },
-                    { icon: Globe, label: "LCS Behavioral Engine" },
-                    { icon: ShieldCheck, label: "Xác thực kết quả" }].
+                    { icon: Search, label: t('loading.step1') },
+                    { icon: Database, label: t('loading.step2') },
+                    { icon: Globe, label: t('loading.step3') },
+                    { icon: ShieldCheck, label: t('loading.step4') }].
                     map((step, idx) => <div key={idx} className={`flex items-center gap-4 transition-all duration-500 ${idx === loadingStep ? "opacity-100 scale-105" : idx < loadingStep ? "opacity-40" : "opacity-20"}`}>
                       <div className={`p-2 rounded-lg ${idx === loadingStep ? "bg-orange-100" : "bg-gray-100"}`}>
                         {idx === loadingStep ? <Loader2 className="w-5 h-5 text-orange-600 animate-spin" /> : idx < loadingStep ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <step.icon className="w-5 h-5 text-gray-500" />}
@@ -1920,7 +1920,7 @@ export default function App() {
 
                 <div className="mt-12">
                   <p className="text-sm text-orange-600 font-mono animate-pulse uppercase tracking-widest">
-                    LCS Engine · Đang xử lý 3 tầng phân tích
+                    {t('loading.engine')}
                   </p>
                 </div>
               </motion.div> : showResults && resultData ? <div className="space-y-8">
