@@ -1910,6 +1910,540 @@ If you hand over goods or assets before checking your actual balance — conside
 
 **Photos are easy to create; real money is hard to fake.** Only trust the balance in your own app.
     `
+  },
+  {
+    id: "17",
+    slug: "gia-danh-shipper-lua-cod",
+    title: "GIẢ DANH SHIPPER LỪA COD — KẺ GIAN BIẾT CHÍNH XÁC TÊN HÀNG, ĐỊA CHỈ CỦA BẠN",
+    description: "Kẻ gian không còn gọi điện đoán mò. Chúng nắm rõ tên sản phẩm, số tiền, địa chỉ — biến đơn hàng thật thành cái bẫy. Công an nhiều tỉnh đã cảnh báo về thủ đoạn giả shipper lừa COD ngày càng tinh vi.",
+    category: "Cảnh Báo Lừa Đảo",
+    categoryEn: "Scam Alerts",
+    titleEn: "FAKE SHIPPER COD SCAM — THE SCAMMER KNOWS YOUR EXACT ORDER DETAILS",
+    descriptionEn: "Scammers no longer guess randomly. They know your product name, amount, and address — turning real orders into traps. Police across provinces have warned about increasingly sophisticated fake shipper COD scams.",
+    tags: ["shipper", "COD", "lừa đảo", "mua sắm online", "cảnh báo"],
+    publishedAt: "2026-08-28",
+    readTime: 5,
+    author: "Lá Chắn Số",
+    content: `
+## Kẻ gian biết chính xác đơn hàng của bạn
+
+Đây không phải chuyện đùa. Ngày 18/8/2026, Công an tỉnh Quảng Trị ghi nhận trường hợp anh T.A.T nhận cuộc gọi từ số 0834784055, người tự xưng shipper đọc vanh vách tên mặt hàng và số tiền 730.000 đồng — đúng y chang đơn hàng anh vừa đặt trên Facebook một ngày trước đó.
+
+Điều đáng sợ? Kẻ gian không gọi ngẫu nhiên. Chúng **đã có sẵn dữ liệu đơn hàng** từ bình luận mua hàng trên mạng xã hội hoặc lỗ hổng bảo mật của người bán.
+
+## Kịch bản lừa đảo từng bước
+
+**Bước 1 — Tạo niềm tin:** Kẻ gian gọi đúng tên sản phẩm, đúng số tiền. Nạn nhân nghĩ "thế này thì đúng shipper thật rồi."
+
+**Bước 2 — Tạo áp lực:** Liên tục hối thúc chuyển tiền trước giờ cố định ("trước 17h nhé anh").心理 lý thúc ép khiến nạn nhân không kịp suy nghĩ.
+
+**Bước 3 — Đánh cắp:** Nhận tiền xong tắt máy, chặn liên lạc. Nạn nhân về nhà không thấy hàng.
+
+## Cách tự bảo vệ — Nguyên tắc "3 Không"
+
+1. **Không tin** dù kẻ gian đọc đúng tên hàng — vì thông tin đó đã bị rò rỉ.
+2. **Không chuyển tiền** vào tài khoản cá nhân khi chưa nhận và kiểm tra hàng.
+3. **Không cung cấp OTP**, mã xác nhận, mật khẩu ngân hàng cho bất kỳ ai qua điện thoại.
+
+## Làm gì khi nghi ngờ?
+
+- Kiểm tra đơn hàng **trên chính ứng dụng** đã đặt hàng (Shopee, TikTok Shop, v.v.).
+- Liên hệ shop qua kênh chính thức — **không gọi lại số do shipper gửi**.
+- Nếu đã chuyển tiền: gọi ngay hotline ngân hàng đề nghị phong tỏa giao dịch.
+- Trình báo công an và giữ lại bằng chứng (số điện thoại, tin nhắn, thông tin tài khoản nhận tiền).
+
+> **Nguyên tắc vàng:** Một shipper thật không bao giờ yêu cầu bạn chuyển tiền vào tài khoản cá nhân. Hàng COD là nhận hàng mới trả tiền — không phải chuyển tiền trước rồi mới nhận hàng.
+    `,
+    contentEn: `
+## The Scammer Already Knows Your Order
+
+This is not a joke. On August 18, 2026, Quang Tri Province Police recorded the case of Mr. T.A.T who received a call from 0834784055 — a person claiming to be a shipper who read out the exact product name and amount of 730,000 VND, matching his order placed on Facebook just one day earlier.
+
+The frightening part? The scammer didn't call randomly. They **already had the order data** from social media purchase comments or seller security vulnerabilities.
+
+## The Scam Script Step by Step
+
+**Step 1 — Build trust:** The scammer calls with the exact product name and amount. Victims think "this must be the real shipper."
+
+**Step 2 — Apply pressure:** Continuously urging transfer before a fixed time ("before 5 PM today, sir"). Psychological pressure prevents victims from thinking clearly.
+
+**Step 3 — Steal:** Take the money, hang up, block contact. Victim comes home to no package.
+
+## How to Protect Yourself — The "3 Don'ts" Rule
+
+1. **Don't trust** even if the scammer knows your product name — because that information has already leaked.
+2. **Don't transfer money** to personal accounts before receiving and inspecting the goods.
+3. **Don't provide OTP**, verification codes, or bank passwords to anyone over the phone.
+
+## What to Do If You Suspect a Scam
+
+- Check the order **on the original platform** (Shopee, TikTok Shop, etc.).
+- Contact the seller through official channels — **don't call back the number the "shipper" sent**.
+- If you've already transferred: call your bank hotline immediately to request transaction blocking.
+- Report to police and preserve evidence (phone numbers, messages, recipient account info).
+
+> **Golden rule:** A real shipper will never ask you to transfer money to a personal account. COD means you pay upon receiving the goods — not transfer money first and then receive goods.
+    `
+  },
+  {
+    id: "18",
+    slug: "ai-deepfake-lua-dao",
+    title: "AI DEEPFAKE GIẢ MẠO GƯƠNG MẶT, GIỌNG NÓI — LỪA ĐẠO ĐÃ ĐẠT TRÌNH ĐỘ MỚI",
+    description: "Năm 2026, kẻ gian dùng AI deepfake giả giọng nói người thân, video call giả. Lòng tin và cảm xúc trở thành 'điểm yếu' bị lợi dụng. Làm sao để nhận diện?",
+    category: "Cảnh Báo Lừa Đảo",
+    categoryEn: "Scam Alerts",
+    titleEn: "AI DEEPFAKE IMPERSONATING FACES AND VOICES — SCAMS REACH A NEW LEVEL",
+    descriptionEn: "In 2026, scammers use AI deepfake to mimic relatives' voices and fake video calls. Trust and emotions become exploited 'weaknesses.' How can you identify them?",
+    tags: ["AI", "deepfake", "lừa đảo", "giọng nói", "video call"],
+    publishedAt: "2026-08-27",
+    readTime: 4,
+    author: "Lá Chắn Số",
+    content: `
+## Lừa đảo đã có "bộ mặt mới"
+
+Theo chuyên gia an ninh mạng Vũ Ngọc Sơn, tội phạm mạng hiện sử dụng **AI và deepfake** để giả mạo gương mặt, giọng nói của người thân nhằm thao túng cảm xúc. Lòng tin, lòng tham và nỗi sợ hãi đều có thể bị biến thành "điểm yếu" trong một cuộc tấn công.
+
+Một cuộc gọi nghe rất thuyết phục hoặc một video có hình ảnh quen thuộc **không còn là bằng chứng đủ** để xác định người thật hay giả.
+
+## Deepfake hoạt động thế nào?
+
+Kẻ gian chỉ cần **một đoạn ghi âm ngắn** (30 giây) hoặc **một bức ảnh** của nạn nhân để训练 AI tạo ra giọng nói hoặc video giống hệt. Công nghệ này giờ đây miễn phí, dễ dùng và ai cũng có thể truy cập.
+
+**Kịch bản phổ biến:**
+- Giả giọng bố mẹ gọi điện báo "con ơi chuyển tiền gấp, bố bị tai nạn."
+- Giả video call của sếp yêu cầu chuyển khoản khẩn cấp.
+- Giả người yêu quen qua mạng, cần tiền gấp vì "khẩn cấp."
+
+## Dấu hiệu nhận biết
+
+1. **Giọng nói nghe hơi "đều đều"** hoặc thiếu cảm xúc tự nhiên.
+2. **Hình ảnh nhòe, chuyển động không mượt** ở vùng môi, cổ, tóc.
+3. **Yêu cầu chuyển tiền gấp** mà không cho thời gian kiểm tra.
+4. **Sử dụng số điện thoại lạ** thay vì số quen thuộc.
+
+## Cách tự bảo vệ
+
+- **Gọi lại số quen thuộc** (số của người thân) để xác nhận — không dùng số do người lạ cung cấp.
+- Đặt **câu hỏi riêng chỉ hai người biết** (ví dụ: "Hôm sinh nhật con là ngày nào?").
+- Nếu nhận video call lạ: **tạm dừng**, không quyết định ngay, kiểm tra qua kênh khác.
+- **Không chuyển tiền** khi chưa chắc chắn 100% người thật.
+
+> **Nguyên tắc:** Công nghệ có thể giả giọng nói, nhưng không thể giả được mối quan hệ thật. Luôn xác minh qua kênh độc lập.
+    `,
+    contentEn: `
+## Scams Now Have a "New Face"
+
+According to cybersecurity expert Vu Ngoc Son, cybercriminals now use **AI and deepfake** to impersonate relatives' faces and voices to manipulate emotions. Trust, greed, and fear can all be exploited as "weaknesses" in an attack.
+
+A convincing call or a video with familiar faces **is no longer sufficient proof** of whether the person is real or fake.
+
+## How Deepfake Works
+
+Scammers only need **a short audio recording** (30 seconds) or **a photo** to train AI to generate voices or videos that look and sound identical. This technology is now free, easy to use, and accessible to anyone.
+
+**Common scenarios:**
+- Fake parent's voice calling: "Son/Daughter, transfer money urgently, I had an accident."
+- Fake video call from boss requesting urgent transfer.
+- Fake online romantic partner needing money for an "emergency."
+
+## Signs to Watch For
+
+1. **Voice sounds slightly "monotone"** or lacks natural emotion.
+2. **Images are blurry, movements not smooth** around lips, neck, hair.
+3. **Urgent money transfer requests** without giving time to verify.
+4. **Uses unfamiliar phone numbers** instead of known contacts.
+
+## How to Protect Yourself
+
+- **Call back the known number** (relative's number) to confirm — don't use a number provided by a stranger.
+- Ask **a private question only the two of you would know** (e.g., "What's my birthday?").
+- If you receive a strange video call: **pause**, don't decide immediately, verify through another channel.
+- **Don't transfer money** unless you're 100% certain it's the real person.
+
+> **Rule:** Technology can fake a voice, but it can't fake a real relationship. Always verify through an independent channel.
+    `
+  },
+  {
+    id: "19",
+    slug: "gia-mao-co-quan-nha-nuoc",
+    title: "GIẢ MẠO CƠ QUAN NHÀ NƯỚC — THỦ ĐOẠN LỪA ĐẠO ĐANG NỞ RỘ TRÊN MẠNG",
+    description: "Công an, thuế, viện kiểm sát... tất cả đều có thể bị giả mạo qua cuộc gọi và tin nhắn. Kẻ gian tạo áp lực bằng lệnh triệu tập, truy nã để nạn nhân sợ hãi chuyển tiền.",
+    category: "Cảnh Báo Lừa Đảo",
+    categoryEn: "Scam Alerts",
+    titleEn: "IMPERSONATING GOVERNMENT AGENCIES — A RAMPANT SCAM TRICK",
+    descriptionEn: "Police, tax authorities, prosecutors — all can be impersonated through calls and messages. Scammers create pressure with summon orders and arrest warrants to frighten victims into transferring money.",
+    tags: ["giả mạo", "cơ quan nhà nước", "công an", "thuế", "lừa đảo"],
+    publishedAt: "2026-08-26",
+    readTime: 4,
+    author: "Lá Chắn Số",
+    content: `
+## Kẻ gian đóng vai "cán bộ"
+
+Thủ đoạn giả mạo cơ quan nhà nước không mới nhưng ngày càng tinh vi. Kẻ gian tự xưng là công an, điều tra viên, kiểm sát viên, nhân viên thuế... và gọi điện hoặc nhắn tin yêu cầu nạn nhân "phối hợp điều tra."
+
+**Kịch bản phổ biến:**
+- "Bạn có đơn hàng quốc tế chứa hàng cấm, cần xác minh tài khoản ngân hàng."
+- "Tài khoản của bạn liên quan đến vụ án洗钱, cần chuyển tiền vào tài khoản bảo vệ."
+- "Bạn có lệnh triệu tập, nếu không phối hợp sẽ bị bắt giữ."
+
+## Tại sao nhiều người sập bẫy?
+
+1. **Sợ hãi:** Kẻ gian dùng từ ngữ chuyên ngành, đọc đúng tên, CMND/CCCD của nạn nhân.
+2. **Áp lực thời gian:** "Phải chuyển trong 30 phút nếu không sẽ bị khởi tố."
+3. **Giả mạo số điện thoại:** Kẻ gian dùng phần mềm giả số hotline công an, thuế.
+
+## Cách nhận diện
+
+- **Cơ quan nhà nước không bao giờ** gọi điện yêu cầu chuyển tiền qua tài khoản cá nhân.
+- **Không có "lệnh triệu tập" qua điện thoại** — mọi giấy tờ phải có dấu đỏ, chữ ký thực.
+- **Không chuyển tiền** vào tài khoản do người lạ cung cấp để "bảo chứng" hay "xác minh."
+
+## Khi nhận cuộc gọi giả mạo
+
+1. **Hỏi lại thông tin:** Tên người gọi, cơ quan công tác, số hiệu cán bộ.
+2. **Tự liên hệ công an địa phương** qua số hotline chính thức (không dùng số do người gọi cung cấp).
+3. **Không cung cấp** mã OTP, mật khẩu, thông tin tài khoản ngân hàng.
+4. **Ghi âm cuộc gọi** và trình báo công an.
+
+> **Lưu ý:** Công an, viện kiểm sát, tòa án làm việc qua giấy tờ chính thức, không qua điện thoại. Nếu ai đó gọi điện yêu cầu chuyển tiền — đó là lừa đảo.
+    `,
+    contentEn: `
+## Scammers Posing as "Officials"
+
+The impersonation of government agencies is not new but increasingly sophisticated. Scammers pose as police officers, investigators, prosecutors, tax officers... and call or text victims requesting them to "cooperate with an investigation."
+
+**Common scenarios:**
+- "You have an international shipment containing prohibited items, need to verify your bank account."
+- "Your account is related to a money laundering case, need to transfer money to a protection account."
+- "You have a summons order, if you don't cooperate, you will be arrested."
+
+## Why So Many People Fall for It
+
+1. **Fear:** Scammers use professional terminology, read victims' correct names and ID numbers.
+2. **Time pressure:** "Must transfer within 30 minutes or you'll be prosecuted."
+3. **Phone number spoofing:** Scammers use software to fake hotline numbers of police and tax offices.
+
+## How to Identify
+
+- **Government agencies never** call requesting money transfers to personal accounts.
+- **There are no "summons orders" by phone** — all official documents must have a red stamp and real signature.
+- **Don't transfer money** to accounts provided by strangers for "guarantee" or "verification."
+
+## When You Receive an Impersonation Call
+
+1. **Ask for information:** Caller's name, agency, officer ID number.
+2. **Contact local police directly** through the official hotline (don't use the number the caller provided).
+3. **Don't provide** OTP codes, passwords, or bank account information.
+4. **Record the call** and report to police.
+
+> **Note:** Police, prosecutors, and courts work through official documents, not by phone. If someone calls requesting money transfer — it's a scam.
+    `
+  },
+  {
+    id: "20",
+    slug: "cho-vay-online-lai-suat-thap",
+    title: "CHO VAY ONLINE LÃI SUẤT THẤP — CÁI BẪY NHỮNG NGƯỜI ĐANG CẦN TIỀN",
+    description: "Vay 10 triệu nhận 7 triệu, phải trả 12 triệu. Thủ đoạn cho vay online lãi suất thấp đánh vào tâm lý急需要 tiền của nạn nhân. Mỗi ngày có hàng trăm đơn trình báo.",
+    category: "Cảnh Báo Lừa Đảo",
+    categoryEn: "Scam Alerts",
+    titleEn: "ONLINE LOANS WITH LOW INTEREST — A TRAP FOR THOSE IN NEED OF MONEY",
+    descriptionEn: "Borrow 10 million, receive 7 million, must repay 12 million. Online low-interest loan scams exploit victims' urgent need for money. Hundreds of reports are filed daily.",
+    tags: ["cho vay", "lãi suất thấp", "tín dụng đen", "lừa đảo", "vay online"],
+    publishedAt: "2026-08-25",
+    readTime: 4,
+    author: "Lá Chắn Số",
+    content: `
+## Lãi suất thấp — cái bẫy lãi cao
+
+Kẻ gian quảng cáo "cho vay không cần thế chấp, lãi suất 0.5%/thẩm định, giải ngân trong 10 phút." Nhưng thực tế?
+
+**Thực tế:**
+- Vay 10 triệu → nhận 7 triệu (bị trừ "phí hồ sơ," "phí bảo hiểm," "phí thẩm định").
+- Phải trả 12 triệu trong 30 ngày.
+- Nếu chậm trả: lãi suất "phạt" lên đến 5%/ngày.
+
+## Ai là nạn nhân?
+
+Những người đang **cần tiền gấp**: học sinh, sinh viên, người mất việc, người có lịch sử nợ xấu. Kẻ gian đánh vào **tâm lý急需要 tiền** khiến nạn nhân không đọc kỹ điều khoản.
+
+## Cách nhận diện cho vay lừa đảo
+
+1. **Không cần thẩm định** — cho vay thật luôn kiểm tra lịch sử tín dụng.
+2. **Yêu cầu nộp phí trước** — bất kỳ khoản phí nào trước khi nhận tiền đều là lừa đảo.
+3. **Không có hợp đồng rõ ràng** — chỉ có tin nhắn Zalo, Telegram.
+4. **Nhân viên tự xưng từ ngân hàng** nhưng không có thẻ nhân viên hay giấy ủy quyền.
+
+## Cách tự bảo vệ
+
+- **Không vay từ nguồn không rõ ràng** — chỉ vay từ ngân hàng, công ty tài chính có giấy phép.
+- **Đọc kỹ hợp đồng** trước khi ký, đặc biệt mục lãi suất và phí phạt.
+- **Không cung cấp** CMND/CCCD photo cho bên cho vay không uy tín.
+- Nếu đã vay và bị đòi nợ bất hợp pháp: **trình báo công an**.
+
+> **Lưu ý:** Cho vay lãi suất cao hơn 20%/năm (theo Bộ luật Dân sự) là vi phạm pháp luật. Nếu bị đe dọa, hãy trình báo công an ngay.
+    `,
+    contentEn: `
+## Low Interest — A High-Interest Trap
+
+Scammers advertise "unsecured loans, 0.5% monthly interest, disbursement in 10 minutes." But the reality?
+
+**The reality:**
+- Borrow 10 million → receive 7 million (deducted for "processing fees," "insurance fees," "appraisal fees").
+- Must repay 12 million in 30 days.
+- Late payment: "penalty" interest up to 5% per day.
+
+## Who Are the Victims?
+
+People who **need money urgently**: students, unemployed individuals, those with bad credit history. Scammers exploit the **desperation for money** so victims don't read the terms carefully.
+
+## How to Identify Loan Scams
+
+1. **No appraisal needed** — legitimate lenders always check credit history.
+2. **Requires upfront fees** — any fee before receiving money is a scam.
+3. **No clear contract** — only Zalo, Telegram messages.
+4. **Self-proclaimed bank staff** without employee cards or authorization letters.
+
+## How to Protect Yourself
+
+- **Don't borrow from unclear sources** — only borrow from banks and financial companies with proper licenses.
+- **Read the contract carefully** before signing, especially interest rates and penalty clauses.
+- **Don't provide** ID card photos to untrustworthy lenders.
+- If you've borrowed and face illegal debt collection: **report to police**.
+
+> **Note:** Loan interest rates exceeding 20% per year (under the Civil Code) are illegal. If threatened, report to police immediately.
+    `
+  },
+  {
+    id: "21",
+    slug: "lua-dao-qr-code",
+    title: "LỪA ĐẠO QUA QR CODE — CHỈ MỘT LẦT QUÉT, TÀI KHOẢN RỖNG",
+    description: "QR code giả mạo trên hóa đơn, phiếu gửi xe, tin nhắn Zalo. Kẻ gian lợi dụng thói quen quét QR để thanh toán, chiếm đoạt tài sản chỉ trong vài giây.",
+    category: "Cảnh Báo Lừa Đảo",
+    categoryEn: "Scam Alerts",
+    titleEn: "QR CODE SCAMS — ONE SCAN AND YOUR ACCOUNT IS EMPTY",
+    descriptionEn: "Fake QR codes on invoices, parking slips, and Zalo messages. Scammers exploit the habit of scanning QR for payment, stealing assets in just seconds.",
+    tags: ["QR code", "thanh toán", "lừa đảo", "ngân hàng", "scan"],
+    publishedAt: "2026-08-24",
+    readTime: 4,
+    author: "Lá Chắn Số",
+    content: `
+## QR code — tiện lợi nhưng đầy rủi ro
+
+QR code đã trở thành hình thức thanh toán phổ biến tại Việt Nam. Nhưng chính sự tiện lợi đó lại bị kẻ gian lợi dụng.
+
+**Các hình thức lừa đảo qua QR:**
+
+1. **QR giả trên hóa đơn:** Kẻ gian dán QR code của mình lên hóa đơn nhà hàng, quán cà phê. Khách quét nhầm → tiền vào tài khoản kẻ gian.
+2. **QR giả trong tin nhắn:** Gửi tin nhắn "Bạn có phiếu hoàn tiền 500K, quét QR để nhận." QR dẫn đến trang lừa đảo.
+3. **QR trên phiếu gửi xe:** Dán QR thay cho số tài khoản thật tại bãi giữ xe.
+4. **QR "thanh toán hộ":** Yêu cầu quét QR để "giúp bạn thanh toán hóa đơn" — thực chất là chuyển tiền vào tài khoản kẻ gian.
+
+## Tại sao nguy hiểm?
+
+- **Nhanh:** Chỉ cần quét là tiền đi, không cần nhập mật khẩu.
+- **Khó phát hiện:** QR code trông giống hệt QR thật.
+- **Khó hoàn tiền:** Ngân hàng thường khó hỗ trợ hoàn tiền nếu bạn đã tự nguyện quét.
+
+## Cách tự bảo vệ
+
+1. **Kiểm tra tên người nhận** trên màn hình xác nhận trước khi bấm "Xác nhận thanh toán."
+2. **Không quét QR** từ tin nhắn, email không rõ nguồn gốc.
+3. **Không dán QR thay cho số tài khoản** — đặc biệt tại nơi công cộng.
+4. **Sử dụng mã PIN/biometric** cho mọi giao dịch QR.
+5. **Nếu quét nhầm:** Liên hệ ngân hàng ngay lập tức để yêu cầu tra soát.
+
+> **Lưu ý:** Khi quét QR, luôn đối chiếu tên người nhận trên màn hình với người mà bạn muốn chuyển tiền. Nếu khác — dừng ngay.
+    `,
+    contentEn: `
+## QR Code — Convenient but Risky
+
+QR code has become a popular payment method in Vietnam. But that very convenience is exploited by scammers.
+
+**QR code scam methods:**
+
+1. **Fake QR on invoices:** Scammers paste their own QR code on restaurant and coffee shop bills. Customers scan wrong → money goes to scammer's account.
+2. **Fake QR in messages:** Send messages "You have a 500K refund voucher, scan QR to receive." QR leads to a phishing site.
+3. **QR on parking slips:** Paste QR instead of real account number at parking lots.
+4. **QR "payment help":** Request scan to "help pay a bill" — actually transferring money to scammer's account.
+
+## Why Is It Dangerous?
+
+- **Fast:** Just scan and money is gone, no password needed.
+- **Hard to detect:** Fake QR codes look identical to real ones.
+- **Hard to refund:** Banks usually struggle to refund if you voluntarily scanned.
+
+## How to Protect Yourself
+
+1. **Check the recipient's name** on the confirmation screen before pressing "Confirm payment."
+2. **Don't scan QR** from messages or emails of unknown origin.
+3. **Don't paste QR instead of account numbers** — especially in public places.
+4. **Use PIN/biometric** for all QR transactions.
+5. **If you scan wrong:** Contact your bank immediately to request a review.
+
+> **Note:** When scanning QR, always compare the recipient's name on screen with the person you intend to pay. If it's different — stop immediately.
+    `
+  },
+  {
+    id: "22",
+    slug: "the-cao-ma-otp",
+    title: "THẺ CÀO VÀ MÃ OTP — MẤY ĐỒNG MÀ MẤT CẢ TRIỆU",
+    description: "Yêu cầu mua thẻ cào để 'xác thực tài khoản,' dụ nạn nhân đọc mã OTP qua điện thoại. Thủ đoạn cũ nhưng vẫn còn hàng nghìn người sập bẫy mỗi năm.",
+    category: "Cảnh Báo Lừa Đảo",
+    categoryEn: "Scam Alerts",
+    titleEn: "SCRATCH CARDS AND OTP CODES — A FEW DONG THAT COSTS MILLIONS",
+    descriptionEn: "Requesting scratch cards to 'verify accounts,' tricking victims into reading OTP codes over the phone. An old trick but still traps thousands of people every year.",
+    tags: ["thẻ cào", "OTP", "mã xác nhận", "lừa đảo", "mật khẩu"],
+    publishedAt: "2026-08-23",
+    readTime: 3,
+    author: "Lá Chắn Số",
+    content: `
+## "Mua thẻ cào để xác thực" — không bao giờ có thật
+
+Đây là một trong những thủ đoạn lừa đảo cổ điển nhất nhưng **vẫn hiệu quả** đến lạ. Kẻ gian gọi điện hoặc nhắn tin yêu cầu nạn nhân mua thẻ cào (Vinaphone, Viettel, Mobifone) và cung cấp mã PIN để "xác thực tài khoản," "nhận thưởng," hoặc "hủy dịch vụ."
+
+**Thực tế:** Khi bạn cung cấp mã PIN, kẻ gian lập tức nạp tiền vào tài khoản của chúng. Bạn mất trắng.
+
+## Các biến thể phổ biến
+
+1. **Giả tổng đài:** "Bạn trúng thưởng 5 triệu, mua thẻ cào 200K để xác thực rồi nhận thưởng."
+2. **Giảm giá:** "Nhập mã thẻ cào vào link này để nhận voucher 1 triệu."
+3. **Giả công an:** "Bạn cần mua thẻ cào để nộp tiền phạt giao thông."
+4. **Giả nhân viên ngân hàng:** "Tài khoản của bạn cần xác thực bằng mã thẻ cào."
+
+## Tại sao vẫn có người sập bẫy?
+
+- Kẻ gian **dùng số hotline giả** giống hệt số tổng đài.
+- **Tạo cảm giác gấp rút:** "Phải làm trong 10 phút nếu không tài khoản bị khóa."
+- **Đánh vào lòng tham:** "Mua 200K nhận 5 triệu."
+
+## Cách tự bảo vệ
+
+1. **Không bao giờ** cung cấp mã PIN thẻ cào cho bất kỳ ai qua điện thoại.
+2. **Không mua thẻ cào** để "xác thực tài khoản" hay "nhận thưởng."
+3. **Mã OTP chỉ dùng để xác nhận giao dịch của bạn** — không phải để "đăng ký dịch vụ."
+4. **Nếu đã cung cấp mã thẻ:** Liên hệ nhà mạng ngay để khóa thẻ và trình báo công an.
+
+> **Nguyên tắc:** Không cơ quan nào yêu cầu bạn mua thẻ cào để xác thực. Nếu ai đó yêu cầu — đó là lừa đảo.
+    `,
+    contentEn: `
+## "Buy Scratch Cards to Verify" — This Is Never Real
+
+This is one of the oldest scam tricks but **still surprisingly effective**. Scammers call or text requesting victims to buy scratch cards (Vinaphone, Viettel, Mobifone) and provide the PIN code to "verify accounts," "receive prizes," or "cancel services."
+
+**Reality:** When you provide the PIN, the scammer immediately loads the money into their account. You lose everything.
+
+## Common Variants
+
+1. **Fake hotline:** "You won 5 million, buy a 200K scratch card to verify and receive your prize."
+2. **Fake discounts:** "Enter the card code on this link to receive a 1 million voucher."
+3. **Fake police:** "You need to buy a scratch card to pay a traffic fine."
+4. **Fake bank staff:** "Your account needs verification with a scratch card code."
+
+## Why Do People Still Fall for It?
+
+- Scammers **use fake hotline numbers** that look identical to real ones.
+- **Creates urgency:** "Must complete in 10 minutes or your account will be locked."
+- **Exploits greed:** "Buy 200K, receive 5 million."
+
+## How to Protect Yourself
+
+1. **Never** provide scratch card PIN codes to anyone over the phone.
+2. **Don't buy scratch cards** to "verify accounts" or "receive prizes."
+3. **OTP codes are only for confirming your own transactions** — not for "registering services."
+4. **If you've provided a card code:** Contact your carrier immediately to block the card and report to police.
+
+> **Rule:** No agency requires you to buy scratch cards for verification. If someone asks — it's a scam.
+    `
+  },
+  {
+    id: "23",
+    slug: "tai-chinh-cong-nghe-lua-dao",
+    title: "TÀI CHÍNH CÔNG NGHỆ — 4 DẤU HIỆU CỦA APP CHO VAY, ĐẦU TƯ GIẢ MẠO",
+    description: "App cho vay lãi suất 0%, đầu tư crypto lời 30%/tháng, platform staking... Những ứng dụng tài chính giả mạo ngày càng tinh vi. Làm sao để nhận biết?",
+    category: "Cảnh Báo Lừa Đảo",
+    categoryEn: "Scam Alerts",
+    titleEn: "FINTECH SCAMS — 4 SIGNS OF FAKE LOAN AND INVESTMENT APPS",
+    descriptionEn: "Loan apps with 0% interest, crypto investments returning 30%/month, staking platforms... Fake financial apps are increasingly sophisticated. How to identify them?",
+    tags: ["fintech", "app cho vay", "đầu tư", "crypto", "lừa đảo"],
+    publishedAt: "2026-08-22",
+    readTime: 5,
+    author: "Lá Chắn Số",
+    content: `
+## Finteck — nới tiền sinh tiền, nhưng cẩn thận bẫy
+
+Các ứng dụng tài chính công nghệ (fintech) đang phát triển mạnh tại Việt Nam. Nhưng bên cạnh những app chính hãng, có hàng trăm app giả mạo đánh vào **lòng tham và thiếu hiểu biết** của nạn nhân.
+
+## 4 Dấu hiệu nhận diện app fintech lừa đảo
+
+### 1. Lãi suất bất thường
+- Cho vay 0% lãi suất, không thẩm định.
+- Đầu tư lời 20-30%/tháng, cam kết lợi nhuận.
+- Staking crypto "bảo toàn vốn, lãi cố định."
+
+**Thực tế:** Không có đầu tư nào cam kết lợi nhuận cố định. Lãi suất 0% có nghĩa phí ẩn rất cao.
+
+### 2. Không có giấy phép
+- Không hiển thị số giấy phép hoạt động của Ngân hàng Nhà nước.
+- Thông tin công ty mờ nhạt, không có địa chỉ thực.
+- App không có trên Google Play hay Apple Store chính thức.
+
+### 3. Yêu cầu nạp tiền trước
+- "Nạp 1 triệu để kích hoạt tài khoản."
+- "Đặt cọc 500K để được vay ưu đãi."
+- "Chuyển khoản phí hồ sơ trước khi giải ngân."
+
+### 4. Đánh giá và giải thưởng giả
+- App giả mạo giải thưởng "Fintech xuất sắc 2026."
+- Đánh giá 5 sao giả trên store.
+- Celebrity giả mạo quảng cáo.
+
+## Cách tự bảo vệ
+
+1. **Kiểm tra giấy phép** trên website Ngân hàng Nhà nước (sbv.gov.vn).
+2. **Tải app từ store chính thức** — không qua link Zalo, Telegram.
+3. **Không nạp tiền trước** khi xác minh uy tín app.
+4. **Đọc kỹ điều khoản** — đặc biệt phí, lãi suất, hình thức phạt.
+
+> **Lưu ý:** Fintech chính hãng sẽ không bao giờ yêu cầu bạn nạp tiền trước để được vay. Nếu có — đó là lừa đảo.
+    `,
+    contentEn: `
+## Fintech — Where Money Grows, But Watch Out for Traps
+
+Financial technology apps (fintech) are booming in Vietnam. But alongside legitimate apps, there are hundreds of fake ones exploiting **greed and lack of knowledge**.
+
+## 4 Signs of Fake Fintech Apps
+
+### 1. Abnormal Interest Rates
+- Loans at 0% interest, no appraisal.
+- Investments returning 20-30%/month, guaranteed profits.
+- Crypto staking "capital protected, fixed interest."
+
+**Reality:** No investment guarantees fixed returns. 0% interest means very high hidden fees.
+
+### 2. No Operating License
+- Doesn't display a State Bank license number.
+- Company information is vague, no physical address.
+- App not on official Google Play or Apple Store.
+
+### 3. Requires Upfront Payment
+- "Deposit 1 million to activate your account."
+- "Pay 500K deposit for a priority loan."
+- "Transfer processing fees before disbursement."
+
+### 4. Fake Reviews and Awards
+- Fake awards "Excellent Fintech 2026."
+- Fake 5-star reviews on stores.
+- Fake celebrity endorsements.
+
+## How to Protect Yourself
+
+1. **Check the license** on the State Bank website (sbv.gov.vn).
+2. **Download apps from official stores** — not through Zalo or Telegram links.
+3. **Don't deposit money** before verifying the app's credibility.
+4. **Read the terms carefully** — especially fees, interest rates, and penalties.
+
+> **Note:** Legitimate fintech will never ask you to deposit money before getting a loan. If they do — it's a scam.
+    `
   }
 ];
 
