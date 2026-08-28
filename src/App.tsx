@@ -2677,10 +2677,11 @@ export default function App() {
 {currentPage === "partners" && <motion.div key="partners" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="pt-32 pb-20 px-6 min-h-screen bg-white">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-[#111111] text-orange-600">Đối tác đồng hành</h1>
+              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-[#111111] text-orange-600">{t('partners.pageTitle')}</h1>
               <p className="mx-auto mt-6 max-w-3xl text-center text-[15px] leading-7 text-gray-600">
-                Lá Chắn Số là nền tảng phi lợi nhuận chuyên kiểm tra tin giả, lừa đảo và bảo vệ người dùng trên không gian mạng.
-                Chúng tôi xin gửi lời tri ân sâu sắc đến tất cả đối tác đồng hành. Sự hỗ trợ quý báu của các bạn là nền tảng
+                {t('partners.intro')}
+                {t('partners.thanks')}
+                Sự hỗ trợ quý báu của các bạn là nền tảng
                 vững chắc giúp chúng tôi phát triển giải pháp sáng tạo, nâng cao nhận thức về an toàn thông tin và trang bị
                 cho người dùng khả năng tự bảo vệ trước các thủ đoạn lừa đảo tinh vi. Chúng tôi mong muốn tiếp tục đồng hành
                 cùng các bạn trong tương lai!
@@ -2694,7 +2695,7 @@ export default function App() {
                   <div className="my-5 h-px w-full bg-gray-200" />
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {group.items.map((item) =>
-<button key={item.name} type="button" onClick={() => setSelectedInfoItem({ title: item.name, description: item.description, link: item.link, category: "Thương hiệu & đối tác" })} className="group flex h-60 flex-col items-center justify-center gap-4 rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg cursor-pointer">
+<button key={item.name} type="button" onClick={() => setSelectedInfoItem({ title: item.name, description: item.description, link: item.link, category: t('partners.category') })} className="group flex h-60 flex-col items-center justify-center gap-4 rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg cursor-pointer">
                         <div className="flex h-40 w-full items-center justify-center">
                           {item.logo ? (
                             <img src={item.logo} alt={item.name} loading="lazy" className="max-h-40 max-w-[360px] w-auto object-contain" />
@@ -2727,11 +2728,11 @@ export default function App() {
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-20">
               <motion.span initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-black font-mono text-sm tracking-[0.3em] uppercase mb-4 block">
-                Trung tâm tài nguyên
+                {t('resources.title')}
               </motion.span>
-              <h2 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 text-black">Dữ liệu cảnh báo</h2>
+              <h2 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 text-black">{t('resources.subtitle')}</h2>
               <p className="text-black max-w-2xl mx-auto text-lg">
-                Danh sách các trang web lừa đảo được hệ thống Lá Chắn Số cập nhật liên tục để bảo vệ người dùng.
+                {t('resources.desc')}
               </p>
             </div>
 
@@ -2740,17 +2741,17 @@ export default function App() {
                 <div className="p-2 bg-red-50 rounded-xl">
                   <AlertTriangle className="w-6 h-6 text-red-600" />
                 </div>
-                <h3 className="text-xl font-bold text-black">Trang web lừa đảo</h3>
-                <span className="ml-auto text-xs text-black/50">Cập nhật tự động 30 giây</span>
+                <h3 className="text-xl font-bold text-black">{t('resources.table')}</h3>
+                <span className="ml-auto text-xs text-black/50">{t('resources.autoUpdate')}</span>
               </div>
               <div className="overflow-x-auto custom-scrollbar">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-red-50">
-                      <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest w-12">STT</th>
-                      <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">Link trang</th>
-                      <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">Nguồn</th>
-                      <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">Ngày</th>
+                      <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest w-12">{t('resources.colNo')}</th>
+                      <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">{t('resources.colLink')}</th>
+                      <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">{t('resources.colSource')}</th>
+                      <th className="pb-4 font-bold text-black/70 uppercase text-[10px] tracking-widest">{t('resources.colDate')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-red-50/30">
@@ -2758,9 +2759,9 @@ export default function App() {
                       id: i + 1,
                       link: typeof item === 'string' ? item : (item.domain || item.url || ''),
                       date: item.discoveredAt ? new Date(item.discoveredAt).toLocaleDateString('vi-VN') : (item.detectedDate || ''),
-                      description: item.description || `Phát hiện bởi nguồn ${item.source || 'cảnh báo lừa đảo'}. Hãy cẩn trọng, không đăng nhập hoặc thanh toán.`,
+                      description: item.description || t('resources.sourceWarning').replace('${source}', item.source || 'cảnh báo lừa đảo'),
                       linkUrl: item.domain ? `https://${item.domain}` : '#'
-                    })) : suspiciousSiteItems).map((item: any) => <tr key={item.id} onClick={() => setSelectedInfoItem({ title: item.link, description: item.description, link: item.linkUrl, category: "Trang web lừa đảo" })} className="group hover:bg-red-50/30 transition-colors cursor-pointer">
+                    })) : suspiciousSiteItems).map((item: any) => <tr key={item.id} onClick={() => setSelectedInfoItem({ title: item.link, description: item.description, link: item.linkUrl, category: t('resources.category') })} className="group hover:bg-red-50/30 transition-colors cursor-pointer">
                       <td className="py-4 font-medium text-black text-sm">{item.id}</td>
                       <td className="py-4 text-black font-mono font-medium hover:underline cursor-pointer text-sm break-all">{item.link}</td>
                       <td className="py-4 text-black/60 text-sm">{item.source || (liveScamSites.length > 0 ? 'feed' : '—')}</td>
@@ -2786,13 +2787,13 @@ export default function App() {
             <div className="text-center py-24">
               <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm uppercase tracking-[0.25em] text-white/80 shadow-sm shadow-black/20">
                 <Zap className="w-4 h-4 text-orange-400" />
-                Sứ mệnh của chúng tôi
+                {t('mission.title')}
               </motion.div>
               <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mx-auto mt-10 max-w-4xl text-5xl md:text-6xl font-bold tracking-tight leading-tight">
-                Xây dựng một thế giới số an toàn, đáng tin cậy và minh bạch cho mọi người.
+                {t('mission.vision')}
               </motion.h1>
               <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mx-auto mt-8 max-w-2xl text-lg leading-8 text-slate-300">
-                Lá Chắn Số mang lại trải nghiệm kiểm tra tin giả, bảo vệ website độc hại và hỗ trợ nhận diện lừa đảo bằng công nghệ phân tích dữ liệu thông minh, dễ dùng, phù hợp cho người Việt Nam.
+                {t('mission.desc')}
               </motion.p>
             </div>
 
@@ -2800,18 +2801,18 @@ export default function App() {
               {[
                 {
                   icon: Globe,
-                  title: "Giám sát toàn cầu",
-                  description: "Kết nối dữ liệu từ nguồn tin uy tín để cảnh báo sớm các mối nguy trên mạng."
+                  title: t('mission.pillar1'),
+                  description: t('mission.pillar1Desc')
                 },
                 {
                   icon: Shield,
-                  title: "Bảo mật ưu tiên",
-                  description: "Đưa ra cảnh báo rõ ràng, giúp người dùng quyết định nhanh chóng và an tâm hơn."
+                  title: t('mission.pillar2'),
+                  description: t('mission.pillar2Desc')
                 },
                 {
                   icon: User,
-                  title: "Trải nghiệm đơn giản",
-                  description: "Giao diện trực quan, dễ sử dụng, giúp mọi người kiểm tra ngay lập tức."
+                  title: t('mission.pillar3'),
+                  description: t('mission.pillar3Desc')
                 }].
                 map((item) =>
                   <motion.div key={item.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="rounded-[30px] border border-white/10 bg-white/5 p-10 shadow-sm shadow-black/10 transition hover:-translate-y-1 hover:shadow-lg">
@@ -2828,16 +2829,16 @@ export default function App() {
               <div className="grid gap-6">
                 {[
                   {
-                    heading: "Thông minh",
-                    text: "Hệ thống phân tích đa lớp đánh giá thông tin và liên kết theo nhiều tiêu chí."
+                    heading: t('mission.value1'),
+                    text: t('mission.value1Desc')
                   },
                   {
-                    heading: "Minh bạch",
-                    text: "Kết quả hiển thị rõ ràng, giúp người dùng hiểu nguyên nhân cảnh báo."
+                    heading: t('mission.value2'),
+                    text: t('mission.value2Desc')
                   },
                   {
-                    heading: "Hỗ trợ cộng đồng",
-                    text: "Lan tỏa nhận diện lừa đảo và xây dựng mạng lưới bảo vệ số chung."
+                    heading: t('mission.value3'),
+                    text: t('mission.value3Desc')
                   }].
                   map((item) =>
                     <div key={item.heading} className="rounded-[28px] border border-white/10 bg-slate-900/85 p-6 shadow-sm">
@@ -2854,15 +2855,15 @@ export default function App() {
                     <div className="inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-orange-500/10 text-orange-300 mb-6">
                       <Globe className="h-6 w-6" />
                     </div>
-                    <h3 className="text-2xl font-semibold mb-2">Giám sát thông tin</h3>
-                    <p className="text-slate-300 leading-7">Theo dõi các nguồn tin và đối chiếu nhanh để xác định dấu hiệu lừa đảo xuyên biên giới.</p>
+                    <h3 className="text-2xl font-semibold mb-2">{t('mission.action1')}</h3>
+                    <p className="text-slate-300 leading-7">{t('mission.action1Desc')}</p>
                   </div>
                   <div className="rounded-[32px] border border-white/10 bg-slate-900/85 p-6">
                     <div className="inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-orange-500/10 text-orange-300 mb-6">
                       <Shield className="h-6 w-6" />
                     </div>
-                    <h3 className="text-2xl font-semibold mb-2">Bảo vệ ngay tức thì</h3>
-                    <p className="text-slate-300 leading-7">Cảnh báo nhanh và gợi ý hành động giúp người dùng tránh được rủi ro kịp thời.</p>
+                    <h3 className="text-2xl font-semibold mb-2">{t('mission.action2')}</h3>
+                    <p className="text-slate-300 leading-7">{t('mission.action2Desc')}</p>
                   </div>
                 </div>
               </motion.div>
@@ -2870,9 +2871,9 @@ export default function App() {
 
             <div className="mt-16">
               <div className="text-center">
-                <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Dự án độc lập</h2>
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight">{t('mission.independent')}</h2>
                 <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-300 leading-8">
-                  Lá Chắn Số tại lachansovn.com là dự án độc lập, phi lợi nhuận do hai học sinh Gen Z Việt Nam sáng lập.
+                  {t('mission.independentDesc')}
                   Dự án không liên quan và không trực thuộc Viettel, Viettel Cyber Security hay bất kỳ tập đoàn, cơ quan nhà nước nào.
                   Đây là sản phẩm web độc lập, khác với các phần mềm cùng tên "Lá Chắn Số" của các tổ chức khác tại Việt Nam.
                 </p>
@@ -2881,22 +2882,22 @@ export default function App() {
 
             <div className="mt-16">
               <div className="text-center">
-                <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Đội ngũ sáng lập</h2>
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight">{t('mission.founders')}</h2>
                 <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-300 leading-8">
-                  Lá Chắn Số được xây dựng bởi hai học sinh Gen Z người Việt Nam, với mong muốn dùng công nghệ bảo vệ cộng đồng trước tin giả và lừa đảo trực tuyến.
+                  {t('mission.foundersDesc')}
                 </p>
               </div>
               <div className="mt-10 grid gap-6 md:grid-cols-2">
                 {[
                   {
                     name: "Nguyễn Võ Anh Khoa",
-                    role: "Đồng sáng lập",
-                    bio: "Phụ trách kỹ thuật và kiến trúc hệ thống Lá Chắn Số - từ phân tích rủi ro đa tầng, cơ sở dữ liệu nguồn tin đến hạ tầng triển khai."
+                    role: t('mission.coFounder'),
+                    bio: t('mission.khoaBio')
                   },
                   {
                     name: "Nguyễn Lĩnh Nam",
-                    role: "Đồng sáng lập",
-                    bio: "Đồng sáng lập Lá Chắn Số, cùng xây dựng định hướng sản phẩm và lan tỏa sứ mệnh bảo vệ người dùng Việt trên không gian mạng."
+                    role: t('mission.coFounder'),
+                    bio: t('mission.namBio')
                   }
                 ].map((member) =>
                   <motion.div key={member.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="rounded-[30px] border border-white/10 bg-white/5 p-8">
@@ -2942,31 +2943,31 @@ export default function App() {
           <motion.div key="threats" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="pt-28 pb-20 px-6 min-h-screen bg-white">
             <div className="max-w-[1200px] mx-auto">
               <div className="inline-flex items-center gap-2 rounded-full bg-red-50 border border-red-100 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.25em] text-red-600">
-                <ShieldAlert className="w-3.5 h-3.5" /> Trung tâm tình báo mối đe dọa
+                <ShieldAlert className="w-3.5 h-3.5" /> {t('threats.title')}
               </div>
-              <h1 className="mt-6 text-4xl md:text-5xl font-black tracking-tight text-black">Website đã kiểm tra hôm nay</h1>
-              <p className="mt-4 text-lg text-gray-500 leading-8">Số lượt kiểm tra website qua hệ thống Lá Chắn Số — phát hiện lừa đảo, phishing và tin giả.</p>
+              <h1 className="mt-6 text-4xl md:text-5xl font-black tracking-tight text-black">{t('threats.subtitle')}</h1>
+              <p className="mt-4 text-lg text-gray-500 leading-8">{t('threats.desc')}</p>
 
               <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 {[
-                  { label: "LƯỢT KIỂM TRA HÔM NAY", value: threatStats.today, accent: "from-red-500 to-orange-500" },
-                  { label: "LƯỢT KIỂM TRA TUẦN NÀY", value: threatStats.thisWeek, accent: "from-orange-500 to-amber-500" },
-                  { label: "LƯỢT KIỂM TRA THÁNG NÀY", value: threatStats.thisMonth, accent: "from-amber-500 to-yellow-500" },
-                  { label: "TỔNG LƯỢT KIỂM TRA", value: threatStats.total, accent: "from-red-600 to-red-400" }
+                  { label: t('threats.today'), value: threatStats.today, accent: "from-red-500 to-orange-500" },
+                  { label: t('threats.week'), value: threatStats.thisWeek, accent: "from-orange-500 to-amber-500" },
+                  { label: t('threats.month'), value: threatStats.thisMonth, accent: "from-amber-500 to-yellow-500" },
+                  { label: t('threats.total'), value: threatStats.total, accent: "from-red-600 to-red-400" }
                 ].map(({ label, value, accent }) => (
                   <div key={label} className="relative overflow-hidden rounded-3xl border border-gray-100 bg-gray-50/70 p-6">
                     <div className={`absolute -top-8 -right-8 h-24 w-24 rounded-full bg-gradient-to-br ${accent} opacity-20 blur-2xl`} />
                     <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-400">{label}</p>
                     <p className="mt-3 text-2xl md:text-3xl font-black tracking-tight text-black tabular-nums">{value.toLocaleString("vi-VN")}</p>
-                    <p className="mt-1 text-xs text-gray-400">Qua hệ thống Lá Chắn Số</p>
+                    <p className="mt-1 text-xs text-gray-400">{t('threats.systemNote')}</p>
                   </div>
                 ))}
               </div>
 
               <div className="mt-10 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
                 <div className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
-                  <h2 className="text-xl font-bold text-black">Phân bố tên miền cấp cao (TLD)</h2>
-                  <p className="mt-2 text-sm text-gray-500">Tỷ lệ tên miền bị lạm dụng trong các website độc hại năm 2026.</p>
+                  <h2 className="text-xl font-bold text-black">{t('threats.tldTitle')}</h2>
+                  <p className="mt-2 text-sm text-gray-500">{t('threats.tldDesc')}</p>
                   <div className="mt-6 h-[340px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={[
@@ -2984,7 +2985,7 @@ export default function App() {
                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f1f1" />
                         <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} unit="%" />
-                        <Tooltip formatter={(value: any) => [`${value}%`, "Tỷ lệ"]} contentStyle={{ borderRadius: 12, border: "1px solid #f1f1f1", fontSize: 13 }} />
+                        <Tooltip formatter={(value: any) => [`${value}%`, t('threats.tldTooltip')]} contentStyle={{ borderRadius: 12, border: "1px solid #f1f1f1", fontSize: 13 }} />
                         <Bar dataKey="value" radius={[8, 8, 0, 0]}>
                           {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((_, i) => <Cell key={i} fill={([
                             "#ef4444", "#f97316", "#f59e0b", "#eab308", "#84cc16",
@@ -3002,8 +3003,8 @@ export default function App() {
                 </div>
 
                 <div className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
-                  <h2 className="text-xl font-bold text-black">Xu hướng mối đe dọa</h2>
-                  <p className="mt-2 text-sm text-gray-500">Tổng số website độc hại tích lũy theo tháng.</p>
+                  <h2 className="text-xl font-bold text-black">{t('threats.trendTitle')}</h2>
+                  <p className="mt-2 text-sm text-gray-500">{t('threats.trendDesc')}</p>
                   <div className="mt-6 h-[200px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={threatStats.trend.length > 0 ? threatStats.trend : [
@@ -3018,29 +3019,29 @@ export default function App() {
                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f1f1" />
                         <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} tickFormatter={(v: any) => `${(v / 1e6).toFixed(0)}M`} />
-                        <Tooltip formatter={(value: any) => [value.toLocaleString("vi-VN"), "Mối đe dọa"]} contentStyle={{ borderRadius: 12, border: "1px solid #f1f1f1", fontSize: 13 }} />
+                        <Tooltip formatter={(value: any) => [value.toLocaleString("vi-VN"), t('threats.trendTooltip')]} contentStyle={{ borderRadius: 12, border: "1px solid #f1f1f1", fontSize: 13 }} />
                         <Area type="monotone" dataKey="value" stroke="#ef4444" strokeWidth={2.5} fill="url(#threatGradient)" />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
                   <div className="mt-4 rounded-2xl bg-red-50/70 border border-red-100 p-4 text-sm leading-6 text-red-700">
-                    <strong>Đen đỏ tăng trưởng ~2%/tháng.</strong> AI đang giúp tội phạm tạo website giả hàng loạt (xem bài "Outsider Enterprise" trong Blog).
+                    {t('threats.trendNote')}
                   </div>
                 </div>
               </div>
 
               <div className="mt-10 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
                 <div className="flex items-center justify-between border-b border-gray-100 px-8 py-5">
-                  <h2 className="flex items-center gap-2 text-lg font-bold text-black"><ShieldAlert className="h-5 w-5 text-red-500" />Mối đe dọa gần đây</h2>
-                  <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">{liveScamSites.length} domain mới phát hiện</span>
+                  <h2 className="flex items-center gap-2 text-lg font-bold text-black"><ShieldAlert className="h-5 w-5 text-red-500" />{t('threats.recentTitle')}</h2>
+                  <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">{t('threats.newDomains').replace('${count}', liveScamSites.length.toString())}</span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
                       <tr className="border-b border-gray-100 text-xs uppercase tracking-wider text-gray-400">
                         <th className="px-8 py-3 font-semibold">Domain</th>
-                        <th className="px-6 py-3 font-semibold">Nguồn</th>
-                        <th className="px-6 py-3 font-semibold">Phát hiện</th>
+                        <th className="px-6 py-3 font-semibold">{t('threats.colSource')}</th>
+                        <th className="px-6 py-3 font-semibold">{t('threats.colDetected')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -3062,9 +3063,9 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="mt-8 rounded-2xl bg-gray-50 border border-gray-100 p-5 text-center text-sm text-gray-500">
-                Số liệu thống kê mang tính tham khảo, tổng hợp từ các nguồn cảnh báo công khai và hệ thống giám sát của Lá Chắn Số. Không dùng để định giá bảo hiểm hoặc quyết định kinh doanh.
-              </div>
+                <div className="mt-8 rounded-2xl bg-gray-50 border border-gray-100 p-5 text-center text-sm text-gray-500">
+                  {t('threats.disclaimer')}
+                </div>
             </div>
           </motion.div>
         )}
@@ -3072,16 +3073,16 @@ export default function App() {
           <motion.div key="guide" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="pt-28 pb-20 px-6 min-h-screen bg-white">
             <div className="max-w-4xl mx-auto">
               <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 border border-orange-100 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.25em] text-[#ff8904]">
-                <BookOpen className="w-3.5 h-3.5" /> Hướng dẫn
+                <BookOpen className="w-3.5 h-3.5" /> {t('guide.title')}
               </div>
-              <h1 className="mt-6 text-4xl md:text-5xl font-black tracking-tight text-black">Cách Dùng Lá Chắn Số trong 30 Giây</h1>
-              <p className="mt-4 text-lg text-gray-500 leading-8">Dán bất kỳ đường link hoặc đoạn tin nhắn nào bạn nghi ngờ vào ô kiểm tra — hệ thống sẽ phân tích và chấm điểm tin cậy cho bạn. Dưới đây là chi tiết 3 bước:</p>
+              <h1 className="mt-6 text-4xl md:text-5xl font-black tracking-tight text-black">{t('guide.subtitle')}</h1>
+              <p className="mt-4 text-lg text-gray-500 leading-8">{t('guide.intro')}</p>
 
               <div className="mt-10 grid gap-6 md:grid-cols-3">
                 {[
-                  { step: 1, icon: MousePointerClick, title: "Dán nội dung cần kiểm tra", desc: "Copy URL website, bài báo hoặc đoạn tin nhắn Zalo/Facebook nghi ngờ, dán vào ô tìm kiếm." },
-                  { step: 2, icon: LifeBuoy, title: "Bấm \"Kiểm Tra Ngay\"", desc: "Hệ thống quét cấu trúc, tên miền, nguồn tin, đối chiếu báo chí và sự kiện thực tế." },
-                  { step: 3, icon: ShieldCheck, title: "Đọc kết quả và hành động", desc: "Màu xanh = an toàn, vàng = cần xác minh, đỏ = nguy hiểm. Có ghi chú lý do chi tiết cho từng kết luận." }
+                  { step: 1, icon: MousePointerClick, title: t('guide.step1Title'), desc: t('guide.step1Desc') },
+                  { step: 2, icon: LifeBuoy, title: t('guide.step2Title'), desc: t('guide.step2Desc') },
+                  { step: 3, icon: ShieldCheck, title: t('guide.step3Title'), desc: t('guide.step3Desc') }
                 ].map(({ step, icon: Icon, title, desc }) => (
                   <div key={step} className="rounded-3xl border border-gray-100 bg-gray-50/70 p-6 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-100/60 transition-all">
                     <div className="flex items-center gap-3">
@@ -3095,35 +3096,35 @@ export default function App() {
               </div>
 
               <div className="mt-10 rounded-3xl border border-emerald-100 bg-emerald-50/60 p-8">
-                <h2 className="flex items-center gap-2 text-xl font-bold text-emerald-800"><CheckCircle2 className="h-5 w-5" /> Cách đọc biểu tượng màu sắc</h2>
+                <h2 className="flex items-center gap-2 text-xl font-bold text-emerald-800"><CheckCircle2 className="h-5 w-5" /> {t('guide.colorTitle')}</h2>
                 <div className="mt-4 grid gap-4 sm:grid-cols-3">
                   <div className="rounded-2xl bg-white border border-emerald-200 p-4">
-                    <p className="font-bold text-emerald-700">🟢 Xanh lá — AN TOÀN</p>
-                    <p className="mt-1 text-sm text-gray-600">Nội dung đáng tin cậy từ 75 điểm trở lên, có nguồn đối chiếu rõ ràng.</p>
+                    <p className="font-bold text-emerald-700">{t('guide.green')}</p>
+                    <p className="mt-1 text-sm text-gray-600">{t('guide.greenDesc')}</p>
                   </div>
                   <div className="rounded-2xl bg-white border border-amber-200 p-4">
-                    <p className="font-bold text-amber-700">🟡 Vàng — CẦN XÁC MINH</p>
-                    <p className="mt-1 text-sm text-gray-600">Từ 50-74 điểm, chưa đủ bằng chứng. Hãy kiểm tra thêm trước khi chia sẻ.</p>
+                    <p className="font-bold text-amber-700">{t('guide.yellow')}</p>
+                    <p className="mt-1 text-sm text-gray-600">{t('guide.yellowDesc')}</p>
                   </div>
                   <div className="rounded-2xl bg-white border border-red-200 p-4">
-                    <p className="font-bold text-red-700">🔴 Đỏ — NGUY HIỂM</p>
-                    <p className="mt-1 text-sm text-gray-600">Dưới 50 điểm, mang dấu hiệu đặc trưng của tin giả hoặc lừa đảo.</p>
+                    <p className="font-bold text-red-700">{t('guide.red')}</p>
+                    <p className="mt-1 text-sm text-gray-600">{t('guide.redDesc')}</p>
                   </div>
                 </div>
               </div>
 
               <div className="mt-10 grid gap-6 md:grid-cols-2">
                 <div className="rounded-3xl bg-[#0a0a0a] text-white p-8">
-                  <h2 className="text-lg font-bold">💡 Ví dụ thực tế</h2>
-                  <p className="mt-3 text-sm leading-7 text-gray-300">Bạn nhận được tin nhắn: <em className="text-white">"Tài khoản ngân hàng của bạn sắp bị khóa. Bấm link sau để xác thực: bit.ly/xxx"</em></p>
-                  <p className="mt-3 text-sm leading-7 text-gray-300">→ Dán link và đoạn tin vào ô kiểm tra. Hệ thống sẽ phát hiện: tên miền rút gọn, mạo danh ngân hàng, tạo áp lực gấp gáp — và chấm điểm đỏ.</p>
+                  <h2 className="text-lg font-bold">{t('misc.eduTip')}</h2>
+                  <p className="mt-3 text-sm leading-7 text-gray-300">{t('misc.eduExample')}</p>
+                  <p className="mt-3 text-sm leading-7 text-gray-300">{t('misc.eduAction')}</p>
                 </div>
                 <div className="rounded-3xl border border-orange-100 bg-orange-50/50 p-8">
-                  <h2 className="flex items-center gap-2 text-lg font-bold text-orange-800"><HelpCircle className="h-5 w-5" /> Cần hỗ trợ thêm?</h2>
-                  <p className="mt-3 text-sm leading-7 text-gray-700">Tham gia fanpage chính thức của Lá Chắn Số hoặc đọc thêm các bài viết về thủ đoạn lừa đảo trong mục Blog. Chúng tôi luôn cập nhật theo cảnh báo mới nhất từ các trang báo uy tín.</p>
+                  <h2 className="flex items-center gap-2 text-lg font-bold text-orange-800"><HelpCircle className="h-5 w-5" /> {t('guide.support')}</h2>
+                  <p className="mt-3 text-sm leading-7 text-gray-700">{t('guide.supportDesc')}</p>
                   <div className="mt-4 flex flex-wrap gap-3">
-                    <button type="button" onClick={() => navigateToPage("blog")} className="rounded-full bg-white border border-orange-200 px-5 py-2.5 text-sm font-semibold text-orange-700 hover:bg-orange-50 transition-colors">Đọc Blog cảnh báo</button>
-                    <button type="button" onClick={() => navigateToPage("check")} className="rounded-full bg-[#ff8904] px-5 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition-colors">Kiểm tra ngay</button>
+                    <button type="button" onClick={() => navigateToPage("blog")} className="rounded-full bg-white border border-orange-200 px-5 py-2.5 text-sm font-semibold text-orange-700 hover:bg-orange-50 transition-colors">{t('guide.blogCta')}</button>
+                    <button type="button" onClick={() => navigateToPage("check")} className="rounded-full bg-[#ff8904] px-5 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition-colors">{t('guide.checkCta')}</button>
                   </div>
                 </div>
               </div>
@@ -3134,34 +3135,34 @@ export default function App() {
           <motion.div key="terms" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="pt-32 pb-20 px-6 min-h-screen bg-white">
             <div className="max-w-3xl mx-auto">
               <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 border border-orange-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.25em] text-[#ff8904]">
-                <ShieldCheck className="w-3.5 h-3.5" /> Pháp lý
+                <ShieldCheck className="w-3.5 h-3.5" /> {t('terms.badge')}
               </div>
-              <h1 className="mt-6 text-4xl md:text-5xl font-black tracking-tight text-black">Điều Khoản Sử Dụng</h1>
-              <p className="mt-4 text-gray-500">Cập nhật lần cuối: 09/08/2026. Bằng cách sử dụng Lá Chắn Số, bạn đồng ý với các điều khoản dưới đây.</p>
+              <h1 className="mt-6 text-4xl md:text-5xl font-black tracking-tight text-black">{t('terms.title')}</h1>
+              <p className="mt-4 text-gray-500">{t('terms.updated')}</p>
               <div className="mt-10 space-y-8 text-sm leading-7 text-gray-700">
                 <section>
-                  <h2 className="text-xl font-bold text-black">1. Chấp nhận điều khoản</h2>
-                  <p className="mt-3">Khi truy cập hoặc sử dụng website Lá Chắn Số, bạn mặc định đồng ý tuân thủ các điều khoản sử dụng này cùng mọi quy định pháp luật hiện hành của Việt Nam và quốc tế có liên quan.</p>
+                  <h2 className="text-xl font-bold text-black">{t('terms.s1Title')}</h2>
+                  <p className="mt-3">{t('terms.s1Desc')}</p>
                 </section>
                 <section>
-                  <h2 className="text-xl font-bold text-black">2. Mục đích phục vụ</h2>
-                  <p className="mt-3">Lá Chắn Số cung cấp công cụ hỗ trợ phân tích, nhận diện tin giả, website độc hại và các dấu hiệu lừa đảo. Kết quả kiểm tra mang tính tham khảo, hỗ trợ quyết định và <strong>không thay thế</strong> tư vấn pháp lý, quan điểm của cơ quan nhà nước hoặc phán quyết của toà án.</p>
+                  <h2 className="text-xl font-bold text-black">{t('terms.s2Title')}</h2>
+                  <p className="mt-3">{t('terms.s2Desc')}</p>
                 </section>
                 <section>
-                  <h2 className="text-xl font-bold text-black">3. Trách nhiệm người dùng</h2>
-                  <p className="mt-3">Bạn cam kết không lợi dụng hệ thống để: xâm nhập trái phép, làm gián đoạn dịch vụ, quét khối lượng bất thường gây quá tải, hoặc đưa vào hệ thống các nội dung vi phạm pháp luật. Bạn chịu trách nhiệm với chính nội dung bạn đưa vào kiểm tra.</p>
+                  <h2 className="text-xl font-bold text-black">{t('terms.s3Title')}</h2>
+                  <p className="mt-3">{t('terms.s3Desc')}</p>
                 </section>
                 <section>
-                  <h2 className="text-xl font-bold text-black">4. Miễn trừ trách nhiệm</h2>
-                  <p className="mt-3">Dù hệ thống được xây dựng với tiêu chuẩn cao nhất, Lá Chắn Số không bảo đảm kết quả phân tích là tuyệt đối chính xác trong mọi trường hợp. Chúng tôi không chịu trách nhiệm đối với thiệt hại phát sinh từ quyết định của người dùng dựa trên kết quả kiểm tra.</p>
+                  <h2 className="text-xl font-bold text-black">{t('terms.s4Title')}</h2>
+                  <p className="mt-3">{t('terms.s4Desc')}</p>
                 </section>
                 <section>
-                  <h2 className="text-xl font-bold text-black">5. Sở hữu trí tuệ</h2>
-                  <p className="mt-3">Toàn bộ thương hiệu, giao diện và tài liệu của Lá Chắn Số thuộc quyền sở hữu của chúng tôi. Việc sao chép, tái sản xuất hoặc khai thác thương mại chưa có sự cho phép bằng văn bản đều bị cấm.</p>
+                  <h2 className="text-xl font-bold text-black">{t('terms.s5Title')}</h2>
+                  <p className="mt-3">{t('terms.s5Desc')}</p>
                 </section>
                 <section>
-                  <h2 className="text-xl font-bold text-black">6. Liên hệ</h2>
-                  <p className="mt-3">Mọi thắc mắc về điều khoản vui lòng liên hệ qua fanpage chính thức của Lá Chắn Số hoặc email hỗ trợ tại footer.</p>
+                  <h2 className="text-xl font-bold text-black">{t('terms.s6Title')}</h2>
+                  <p className="mt-3">{t('terms.s6Desc')}</p>
                 </section>
               </div>
             </div>
@@ -3171,30 +3172,30 @@ export default function App() {
           <motion.div key="privacy" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="pt-32 pb-20 px-6 min-h-screen bg-white">
             <div className="max-w-3xl mx-auto">
               <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.25em] text-emerald-600">
-                <Lock className="w-3.5 h-3.5" /> Quyền riêng tư
+                <Lock className="w-3.5 h-3.5" /> {t('privacy.badge')}
               </div>
-              <h1 className="mt-6 text-4xl md:text-5xl font-black tracking-tight text-black">Chính Sách Bảo Mật</h1>
-              <p className="mt-4 text-gray-500">Cập nhật lần cuối: 09/08/2026. Chúng tôi tiến hành bảo vệ thông tin của bạn.</p>
+              <h1 className="mt-6 text-4xl md:text-5xl font-black tracking-tight text-black">{t('privacy.title')}</h1>
+              <p className="mt-4 text-gray-500">{t('privacy.updated')}</p>
               <div className="mt-10 space-y-8 text-sm leading-7 text-gray-700">
                 <section>
-                  <h2 className="text-xl font-bold text-black">1. Thông tin chúng tôi thu thập</h2>
-                  <p className="mt-3">Khi bạn sử dụng công cụ kiểm tra, hệ thống xử lý nội dung văn bản hoặc URL bạn cung cấp. Chúng tôi không chủ động thu thập danh tính, không ghi mật khẩu, không bán dữ liệu cho bên thứ ba.</p>
+                  <h2 className="text-xl font-bold text-black">{t('privacy.s1Title')}</h2>
+                  <p className="mt-3">{t('privacy.s1Desc')}</p>
                 </section>
                 <section>
-                  <h2 className="text-xl font-bold text-black">2. Mục đích xử lý dữ liệu</h2>
-                  <p className="mt-3">Dữ liệu chỉ được dùng vào mục đích phân tích rủi ro, cải thiện độ chính xác của mô hình và phòng chống lạm dụng hệ thống (chống quá tải, spam).</p>
+                  <h2 className="text-xl font-bold text-black">{t('privacy.s2Title')}</h2>
+                  <p className="mt-3">{t('privacy.s2Desc')}</p>
                 </section>
                 <section>
-                  <h2 className="text-xl font-bold text-black">3. Lưu trữ và bảo mật</h2>
-                  <p className="mt-3">Chúng tôi áp dụng các biện phát kỹ thuật — mã hoá trên đường truyền (TLS), giới hạn đơn truy cập, kiểm soát truy cập nội bộ — để bảo vệ dữ liệu khỏi truy nhập trái phép.</p>
+                  <h2 className="text-xl font-bold text-black">{t('privacy.s3Title')}</h2>
+                  <p className="mt-3">{t('privacy.s3Desc')}</p>
                 </section>
                 <section>
-                  <h2 className="text-xl font-bold text-black">4. Chia sẻ dữ liệu</h2>
-                  <p className="mt-3">Chúng tôi không chia sẻ dữ liệu người dùng với bên thứ ba vì mục đích thương mại, trừ khi bắt buộc bởi cơ quan chức năng có thẩm quyền theo quy định pháp luật.</p>
+                  <h2 className="text-xl font-bold text-black">{t('privacy.s4Title')}</h2>
+                  <p className="mt-3">{t('privacy.s4Desc')}</p>
                 </section>
                 <section>
-                  <h2 className="text-xl font-bold text-black">5. Quyền của bạn</h2>
-                  <p className="mt-3">Bạn có quyền yêu cầu xoá hoặc chỉnh sửa dữ liệu của mình trong phạm vi hệ thống cho phép bằng cách liên hệ qua kênh hỗ trợ chính thông của Lá Chắn Số.</p>
+                  <h2 className="text-xl font-bold text-black">{t('privacy.s5Title')}</h2>
+                  <p className="mt-3">{t('privacy.s5Desc')}</p>
                 </section>
               </div>
             </div>
@@ -3317,8 +3318,8 @@ export default function App() {
               <div className="flex items-center gap-3">
                 <img src="/logo.png" alt="Lá Chắn Số" className="h-12 w-12 rounded-xl" />
                 <div>
-                  <h3 className="text-lg font-black text-gray-900">Thêm Lá Chắn Số vào màn hình chính</h3>
-                  <p className="text-sm text-gray-500">Dùng như một ứng dụng riêng, mở nhanh hơn.</p>
+                  <h3 className="text-lg font-black text-gray-900">{t('install.title')}</h3>
+                  <p className="text-sm text-gray-500">{t('install.desc')}</p>
                 </div>
               </div>
               <button type="button" onClick={() => setInstallBannerOpen(false)} className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100">
@@ -3328,31 +3329,31 @@ export default function App() {
 
             {installPromptEvt ? (
               <button type="button" onClick={handleInstallClick} className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#ff8904] px-5 py-3 font-bold text-white transition-colors hover:bg-orange-600">
-                <Download className="h-5 w-5" /> Cài đặt ngay
+                <Download className="h-5 w-5" /> {t('install.cta')}
               </button>
             ) : (
               <div className="mt-5 space-y-3">
                 {/iPhone|iPad|iPod/i.test(navigator.userAgent) ? (
                   <>
-                    <p className="text-sm font-semibold text-gray-700">Trên iPhone/iPad:</p>
+                    <p className="text-sm font-semibold text-gray-700">{t('install.iphone')}</p>
                     <ol className="list-decimal pl-5 text-sm leading-7 text-gray-600">
-                      <li>Mở trang này bằng trình duyệt <strong>Safari</strong>.</li>
-                      <li>Chạm nút <strong>Chia sẻ</strong> (hộp có mũi tên lên) dưới trình duyệt.</li>
-                      <li>Chạm <strong>"Thêm vào Màn hình chính"</strong>.</li>
+                      <li dangerouslySetInnerHTML={{ __html: t('install.iphoneStep1') }} />
+                      <li dangerouslySetInnerHTML={{ __html: t('install.iphoneStep2') }} />
+                      <li dangerouslySetInnerHTML={{ __html: t('install.iphoneStep3') }} />
                     </ol>
                   </>
                 ) : (
                   <>
-                    <p className="text-sm font-semibold text-gray-700">Trên Android:</p>
+                    <p className="text-sm font-semibold text-gray-700">{t('install.android')}</p>
                     <ol className="list-decimal space-y-3 pl-5 text-sm text-gray-600">
-                      <li>Mở trình duyệt <strong>Chrome</strong>.</li>
-                      <li>Chạm biểu tượng <strong>⋮</strong> (menu) trên góc phải.</li>
-                      <li>Chọn <strong>"Thêm vào màn hình chính"</strong> hoặc <strong>"Cài đặt ứng dụng"</strong>.</li>
+                      <li dangerouslySetInnerHTML={{ __html: t('install.androidStep1') }} />
+                      <li dangerouslySetInnerHTML={{ __html: t('install.androidStep2') }} />
+                      <li dangerouslySetInnerHTML={{ __html: t('install.androidStep3') }} />
                     </ol>
                   </>
                 )}
                 <p className="rounded-xl bg-gray-50 p-3 text-xs leading-relaxed text-gray-500">
-                  Mẹo: nếu Chromium đã mặc định ẩn nút, hãy tìm mục "Cài đặt ứng dụng" trong menu ⋮ của trình duyệt.
+                  {t('install.tip')}
                 </p>
               </div>
             )}

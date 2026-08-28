@@ -1,7 +1,7 @@
-// English translations — brand name "Lá Chàn Số" kept with diacritics
+// English translations — brand name "Lá Chắn Số" kept with diacritics
 export const en: Record<string, string> = {
   // ── Brand ──
-  'brand': 'Lá Chàn Số',
+  'brand': 'Lá Chắn Số',
 
   // ── Nav ──
   'nav.home': 'Home',
@@ -16,7 +16,7 @@ export const en: Record<string, string> = {
 
   // ── Hero ──
   'hero.badge': 'Vietnam Information Verification Platform',
-  'hero.title1': 'Lá Chàn Số',
+  'hero.title1': 'Lá Chắn Số',
   'hero.title2': '',
   'hero.subtitle': 'Instantly check for fake news, scams and malicious websites. Multi-layer analysis technology protects you and your community.',
   'hero.slogan': 'Verify first — Trust after',
@@ -74,11 +74,11 @@ export const en: Record<string, string> = {
   'cat.referenceDesc': 'Reference notes and further verification guidance.',
 
   // ── What is section ──
-  'what.title': 'What is Lá Chàn Số?',
+  'what.title': 'What is Lá Chắn Số?',
   'what.more': 'Learn More',
-  'what.desc': 'Lá Chàn Số: Redefining online safety. Combining AI technology, real-time data and community networks to protect you from fake news and scams.',
+  'what.desc': 'Lá Chắn Số: Redefining online safety. Combining AI technology, real-time data and community networks to protect you from fake news and scams.',
   'what.card1.title': 'DEEP VERIFICATION TECHNOLOGY',
-  'what.card1.desc': 'Lá Chàn Số operates on a multi-layer analysis platform, combining AI, domain checking, WHOIS, SSL, and press cross-referencing.',
+  'what.card1.desc': 'Lá Chắn Số operates on a multi-layer analysis platform, combining AI, domain checking, WHOIS, SSL, and press cross-referencing.',
   'what.card2.title': 'STANDARDS & OWN PLATFORM',
   'what.card2.desc': 'Establishing independent evaluation rules, not dependent on third parties.',
   'what.card3.title': 'ENFORCEMENT DATA',
@@ -91,7 +91,7 @@ export const en: Record<string, string> = {
   // ── Globe section ──
   'globe.title': 'Global Monitoring Network',
   'globe.subtitle': 'Fake news and scams are everywhere',
-  'globe.desc': 'Lá Chàn Số connects with security data centers worldwide, providing continuous monitoring and alerts.',
+  'globe.desc': 'Lá Chắn Số connects with security data centers worldwide, providing continuous monitoring and alerts.',
 
   // ── Partners ──
   'partners.title': 'Partnered with trusted organizations',
@@ -301,7 +301,7 @@ export const en: Record<string, string> = {
   'scam.gamblingTitle': 'WARNING: SCAM GAMBLING',
   'scam.gamblingDesc': 'System detected this is a domain in the scam gambling list.',
   'scam.gamblingName': 'Scam gambling/betting website',
-  'scam.gamblingDetail': 'Domain is on Lá Chàn Số\'s scam gambling blacklist.',
+  'scam.gamblingDetail': 'Domain is on Lá Chắn Số\'s scam gambling blacklist.',
 
   // ── Numeric verification ──
   'num.modifiedTitle': 'Modified data detected',
@@ -336,11 +336,11 @@ export const en: Record<string, string> = {
   'footer.terms': 'Terms of Service',
   'footer.privacy': 'Privacy Policy',
   'footer.report': 'Report Security Vulnerability',
-  'footer.copyright': 'Copyright © 2026 Lá Chàn Số. All rights reserved.',
+  'footer.copyright': 'Copyright © 2026 Lá Chắn Số. All rights reserved.',
 
   // ── Guide page ──
   'guide.title': 'Guide',
-  'guide.subtitle': 'How to Use Lá Chàn Số in 30 Seconds',
+  'guide.subtitle': 'How to Use Lá Chắn Số in 30 Seconds',
   'guide.intro': 'Paste any suspicious link or message into the check field...',
   'guide.step1Title': 'Paste content to check',
   'guide.step1Desc': 'Copy website URL, article or suspicious Zalo/Facebook message, paste into the search field.',
@@ -356,14 +356,14 @@ export const en: Record<string, string> = {
   'guide.red': '🔴 Red — DANGEROUS',
   'guide.redDesc': 'Below 50 points, shows typical fake news or scam indicators.',
   'guide.support': 'Need more help?',
-  'guide.supportDesc': 'Join the official Lá Chàn Số fanpage or read more articles...',
+  'guide.supportDesc': 'Join the official Lá Chắn Số fanpage or read more articles...',
   'guide.blogCta': 'Read Warning Blog',
   'guide.checkCta': 'Check Now',
 
   // ── Resources page ──
   'resources.title': 'Resource Center',
   'resources.subtitle': 'Warning Data',
-  'resources.desc': 'List of scam websites continuously updated by the Lá Chàn Số system.',
+  'resources.desc': 'List of scam websites continuously updated by the Lá Chắn Số system.',
   'resources.table': 'Scam Websites',
   'resources.autoUpdate': 'Auto-update every 30 seconds',
   'resources.colNo': 'No.',
@@ -376,7 +376,7 @@ export const en: Record<string, string> = {
   // ── Mission page ──
   'mission.title': 'Our Mission',
   'mission.vision': 'Building a safe, trustworthy and transparent digital world for everyone.',
-  'mission.desc': 'Lá Chàn Số delivers fake news verification and malicious website protection.',
+  'mission.desc': 'Lá Chắn Số delivers fake news verification and malicious website protection.',
   'mission.pillar1': 'Global Monitoring',
   'mission.pillar1Desc': 'Connecting data from trusted sources for early warning.',
   'mission.pillar2': 'Security First',
@@ -394,22 +394,22 @@ export const en: Record<string, string> = {
   'mission.action2': 'Instant Protection',
   'mission.action2Desc': 'Fast warnings and action suggestions help users avoid risks in time.',
   'mission.independent': 'Independent Project',
-  'mission.independentDesc': 'Lá Chàn Số at lachansovn.com is an independent, non-profit project founded by two Vietnamese Gen Z students.',
+  'mission.independentDesc': 'Lá Chắn Số at lachansovn.com is an independent, non-profit project founded by two Vietnamese Gen Z students.',
   'mission.founders': 'Founding Team',
-  'mission.foundersDesc': 'Lá Chàn Số is built by two Vietnamese Gen Z students.',
+  'mission.foundersDesc': 'Lá Chắn Số is built by two Vietnamese Gen Z students.',
   'mission.coFounder': 'Co-founder',
-  'mission.khoaBio': 'Responsible for technical and system architecture of Lá Chàn Số.',
-  'mission.namBio': 'Co-founder of Lá Chàn Số, building product direction together.',
+  'mission.khoaBio': 'Responsible for technical and system architecture of Lá Chắn Số.',
+  'mission.namBio': 'Co-founder of Lá Chắn Số, building product direction together.',
 
   // ── Threats page ──
   'threats.title': 'Threat Intelligence Center',
   'threats.subtitle': 'Websites checked today',
-  'threats.desc': 'Website checks through the Lá Chàn Số system — detecting scams, phishing and fake news.',
+  'threats.desc': 'Website checks through the Lá Chắn Số system — detecting scams, phishing and fake news.',
   'threats.today': 'CHECKS TODAY',
   'threats.week': 'CHECKS THIS WEEK',
   'threats.month': 'CHECKS THIS MONTH',
   'threats.total': 'TOTAL CHECKS',
-  'threats.systemNote': 'Through the Lá Chàn Số system',
+  'threats.systemNote': 'Through the Lá Chắn Số system',
   'threats.tldTitle': 'Top-Level Domain (TLD) Distribution',
   'threats.tldDesc': 'Ratio of domains abused in malicious websites in 2026.',
   'threats.tldTooltip': 'Ratio',
@@ -427,24 +427,24 @@ export const en: Record<string, string> = {
 
   // ── Partners page ──
   'partners.pageTitle': 'Partner Organizations',
-  'partners.intro': 'Lá Chàn Số is a non-profit platform specializing in fake news verification, scam detection and user protection online.',
+  'partners.intro': 'Lá Chắn Số is a non-profit platform specializing in fake news verification, scam detection and user protection online.',
   'partners.thanks': 'We extend our deepest gratitude to all partner organizations.',
   'partners.category': 'Brands & Partners',
 
   // ── Terms of Service ──
   'terms.badge': 'Legal',
   'terms.title': 'Terms of Service',
-  'terms.updated': 'Last updated: 09/08/2026. By using Lá Chàn Số, you agree to the following terms.',
+  'terms.updated': 'Last updated: 09/08/2026. By using Lá Chắn Số, you agree to the following terms.',
   'terms.s1Title': '1. Accept terms',
-  'terms.s1Desc': 'By accessing and using Lá Chàn Số, you acknowledge that you have read, understood and agreed to all terms stated in this document.',
+  'terms.s1Desc': 'By accessing and using Lá Chắn Số, you acknowledge that you have read, understood and agreed to all terms stated in this document.',
   'terms.s2Title': '2. Purpose of service',
-  'terms.s2Desc': 'Lá Chàn Số provides free tools to verify URLs, news and text content, helping users identify online fake news and scams.',
+  'terms.s2Desc': 'Lá Chắn Số provides free tools to verify URLs, news and text content, helping users identify online fake news and scams.',
   'terms.s3Title': '3. User responsibility',
-  'terms.s3Desc': 'Users are responsible for thoroughly verifying before performing any transactions or sharing information. Results from Lá Chàn Số are for reference only.',
+  'terms.s3Desc': 'Users are responsible for thoroughly verifying before performing any transactions or sharing information. Results from Lá Chắn Số are for reference only.',
   'terms.s4Title': '4. Disclaimer',
-  'terms.s4Desc': 'Lá Chàn Số is not responsible for any direct or indirect damages arising from the use or inability to use the service.',
+  'terms.s4Desc': 'Lá Chắn Số is not responsible for any direct or indirect damages arising from the use or inability to use the service.',
   'terms.s5Title': '5. Intellectual property',
-  'terms.s5Desc': 'All content, source code and interface design are owned by Lá Chàn Số and protected by intellectual property law.',
+  'terms.s5Desc': 'All content, source code and interface design are owned by Lá Chắn Số and protected by intellectual property law.',
   'terms.s6Title': '6. Contact',
   'terms.s6Desc': 'If you have questions about the terms of service, please contact via email: kanh05113@gmail.com',
 
@@ -453,7 +453,7 @@ export const en: Record<string, string> = {
   'privacy.title': 'Privacy Policy',
   'privacy.updated': 'Last updated: 09/08/2026. We protect your information.',
   'privacy.s1Title': '1. Information we collect',
-  'privacy.s1Desc': 'Lá Chàn Số collects anonymous usage data (analytics) and content you enter in the check field. We DO NOT collect names, emails or mandatory personal information.',
+  'privacy.s1Desc': 'Lá Chắn Số collects anonymous usage data (analytics) and content you enter in the check field. We DO NOT collect names, emails or mandatory personal information.',
   'privacy.s2Title': '2. Data processing purpose',
   'privacy.s2Desc': 'Data is used to improve service quality, analyze threat trends and display check results.',
   'privacy.s3Title': '3. Storage and security',
@@ -464,7 +464,7 @@ export const en: Record<string, string> = {
   'privacy.s5Desc': 'You have the right to request deletion of personal data or stop using the service at any time.',
 
   // ── PWA Install ──
-  'install.title': 'Add Lá Chàn Số to Home Screen',
+  'install.title': 'Add Lá Chắn Số to Home Screen',
   'install.desc': 'Use as a standalone app, opens faster.',
   'install.cta': 'Install Now',
   'install.iphone': 'On iPhone/iPad:',
