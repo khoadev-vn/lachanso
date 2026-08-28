@@ -9,20 +9,25 @@ interface BlogListProps {
 }
 
 export default function BlogList({ onArticleClick }: BlogListProps) {
-  const { t } = useLang();
+  const { lang, t } = useLang();
+  const isEn = lang === 'en';
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   
   const categories = getBlogCategories();
   
   const filteredArticles = BLOG_ARTICLES.filter(article => {
+    const title = isEn ? (article.titleEn || article.title) : article.title;
+    const desc = isEn ? (article.descriptionEn || article.description) : article.description;
+    const cat = isEn ? (article.categoryEn || article.category) : article.category;
+    
     const matchesSearch = 
-      article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
       article.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesCategory = 
-      !selectedCategory || article.category === selectedCategory;
+      !selectedCategory || cat === selectedCategory;
     
     return matchesSearch && matchesCategory;
   }).sort((a, b) => Number(b.pinned) - Number(a.pinned));
@@ -59,9 +64,11 @@ export default function BlogList({ onArticleClick }: BlogListProps) {
               className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 focus:border-[#ff8904] focus:ring-2 focus:ring-[#ff8904]/20 outline-none transition-all"
             >
               <option value="">{t('blog.allCategories')}</option>
-              {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
+              {categories.map(category => {
+                const articles = BLOG_ARTICLES.filter(a => isEn ? (a.categoryEn || a.category) === category : a.category === category);
+                const displayCat = isEn && articles[0] ? (articles[0].categoryEn || category) : category;
+                return <option key={category} value={category}>{displayCat}</option>;
+              })}
             </select>
           </div>
         </div>

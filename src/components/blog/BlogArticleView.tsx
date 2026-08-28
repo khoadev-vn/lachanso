@@ -8,9 +8,14 @@ interface BlogArticleViewProps {
 }
 
 export default function BlogArticleView({ article, onBack }: BlogArticleViewProps) {
-  const { t } = useLang();
+  const { lang, t } = useLang();
+  const isEn = lang === 'en';
+  const title = isEn ? (article.titleEn || article.title) : article.title;
+  const description = isEn ? (article.descriptionEn || article.description) : article.description;
+  const content = isEn ? (article.contentEn || article.content) : article.content;
+  const category = isEn ? (article.categoryEn || article.category) : article.category;
   const shareUrl = `https://lachansovn.com/blog/${article.slug}`;
-  const shareText = `${article.title} - ${article.description}`;
+  const shareText = `${title} - ${description}`;
 
   const renderContent = (content: string) => {
     const lines = content.split("\n").filter(line => line.trim());
@@ -80,7 +85,7 @@ export default function BlogArticleView({ article, onBack }: BlogArticleViewProp
         <header className="mb-8">
           <div className="flex items-center gap-3 text-sm text-gray-500 mb-4">
             <span className="rounded-full bg-[#ff8904]/10 px-4 py-1.5 font-semibold text-[#ff8904]">
-              {article.category}
+              {category}
             </span>
             <span className="flex items-center gap-1">
               <Clock className="h-4 w-4" />
@@ -88,16 +93,16 @@ export default function BlogArticleView({ article, onBack }: BlogArticleViewProp
             </span>
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
-              {new Date(article.publishedAt).toLocaleDateString("vi-VN")}
+              {new Date(article.publishedAt).toLocaleDateString(isEn ? "en-US" : "vi-VN")}
             </span>
           </div>
 
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            {article.title}
+            {title}
           </h1>
 
           <p className="text-lg text-gray-600 mb-4">
-            {article.description}
+            {description}
           </p>
 
           <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -110,7 +115,7 @@ export default function BlogArticleView({ article, onBack }: BlogArticleViewProp
 
         <div className="rounded-3xl bg-white p-8 shadow-sm border border-gray-100">
           <div className="prose prose-lg max-w-none">
-            {renderContent(article.content)}
+            {renderContent(content)}
           </div>
         </div>
 
@@ -141,7 +146,7 @@ export default function BlogArticleView({ article, onBack }: BlogArticleViewProp
               Facebook
             </a>
             <a
-              href={`mailto:?subject=${encodeURIComponent(article.title)}&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}`}
+              href={`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}`}
               className="flex items-center gap-2 rounded-full bg-gray-600 px-4 py-2 text-white hover:bg-gray-700 transition-colors"
             >
               <Mail className="h-4 w-4" />

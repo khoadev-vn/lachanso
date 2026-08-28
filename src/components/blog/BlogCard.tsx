@@ -8,7 +8,8 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ article, onClick }: BlogCardProps) {
-  const { t } = useLang();
+  const { lang, t } = useLang();
+  const isEn = lang === 'en';
   return (
     <div 
       className="group cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 transition-all hover:border-[#ff8904]/20 hover:shadow-lg hover:shadow-[#ff8904]/5"
@@ -16,7 +17,7 @@ export default function BlogCard({ article, onClick }: BlogCardProps) {
     >
       <div className="flex items-center gap-2 text-xs text-gray-500">
         <span className="rounded-full bg-[#ff8904]/10 px-3 py-1 font-semibold text-[#ff8904]">
-          {article.category}
+          {isEn ? (article.categoryEn || article.category) : article.category}
         </span>
         <span className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
@@ -30,17 +31,17 @@ export default function BlogCard({ article, onClick }: BlogCardProps) {
       </div>
       
       <h3 className="mt-4 text-xl font-bold text-gray-900 group-hover:text-[#ff8904] transition-colors">
-        {article.title}
+        {isEn ? (article.titleEn || article.title) : article.title}
       </h3>
       
       <p className="mt-3 text-sm text-gray-600 line-clamp-2">
-        {article.description}
+        {isEn ? (article.descriptionEn || article.description) : article.description}
       </p>
       
       <div className="mt-4 flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs text-gray-500">
           <Calendar className="h-3 w-3" />
-          {new Date(article.publishedAt).toLocaleDateString("vi-VN")}
+          {new Date(article.publishedAt).toLocaleDateString(isEn ? "en-US" : "vi-VN")}
         </div>
         
         <span className="flex items-center gap-1 text-sm font-semibold text-[#ff8904] group-hover:gap-2 transition-all">
