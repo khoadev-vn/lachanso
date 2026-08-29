@@ -983,16 +983,22 @@ export async function analyzeWebsite(input: string, t?: (key: string, params?: R
  * Hiển thị trên khung "AI Tóm Tắt Nội Dung Web".
  */
 export const WEB_AI_CATEGORY_LABEL: Record<string, { label: string; desc: string }> = {
-  legit_business: { label: "Doanh nghiệp thật", desc: "Web doanh nghiệp · phân loại bản chất" },
-  ecommerce: { label: "Bán hàng / TMĐT", desc: "Đọc trang qua GPT · phân loại bản chất" },
-  news: { label: "Trang tin tức", desc: "Đọc trang qua GPT · phân loại bản chất" },
-  blog: { label: "Blog / nội dung", desc: "Đọc trang qua GPT · phân loại bản chất" },
-  gov_edu: { label: "Chính phủ / giáo dục", desc: "Đọc trang qua GPT · phân loại bản chất" },
-  parked: { label: "Tên miền đứng tên (parked)", desc: "Cảnh báo: web có thể không hoạt động" },
-  redirect: { label: "Chuyển hướng", desc: "Cảnh báo: web chuyển hướng đi nơi khác" },
-  gambling: { label: "Cờ bạc / cá cược", desc: "Cảnh báo: cờ bạc lừa đảo" },
-  adult: { label: "Nội dung người lớn", desc: "Cảnh báo: không phù hợp" },
-  scam: { label: "Lừa đảo", desc: "Cảnh báo: dấu hiệu lừa đảo" },
-  phishing: { label: "Lừa đảo chiếm đoạt", desc: "Cảnh báo cao: phishing" },
-  unknown: { label: "Không xác định", desc: "Đọc trang qua GPT · phân loại bản chất" }
+  legit_business: { label: "legit_business", desc: "legit_business_desc" },
+  ecommerce: { label: "ecommerce", desc: "ecommerce_desc" },
+  news: { label: "news", desc: "news_desc" },
+  blog: { label: "blog", desc: "blog_desc" },
+  gov_edu: { label: "gov_edu", desc: "gov_edu_desc" },
+  parked: { label: "parked", desc: "parked_desc" },
+  redirect: { label: "redirect", desc: "redirect_desc" },
+  gambling: { label: "gambling", desc: "gambling_desc" },
+  adult: { label: "adult", desc: "adult_desc" },
+  scam: { label: "scam", desc: "scam_desc" },
+  phishing: { label: "phishing", desc: "phishing_desc" },
+  unknown: { label: "unknown", desc: "unknown_desc" }
 };
+
+export function getWebAiCategoryLabel(category: string, t: (key: string) => string): { label: string; desc: string } {
+  const key = category || "unknown";
+  const entry = WEB_AI_CATEGORY_LABEL[key] || WEB_AI_CATEGORY_LABEL.unknown;
+  return { label: t(`aiCategory.${entry.label}`), desc: t(`aiCategory.${entry.desc}`) };
+}

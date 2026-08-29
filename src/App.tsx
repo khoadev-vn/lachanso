@@ -20,7 +20,7 @@ import { runLiveNewsCheck, enrichLiveNewsWithAI, summarizeNewsWithAI } from "./c
 import { runNewsVerificationLayers } from "./constants/newsVerification";
 import { isDomainTrusted, isGovVnDomain, isSuspiciousTLD, extractLinksFromText } from "./constants/trustedDomains";
 import { runLCSEngine, lcsEngineToAnalysisDetails } from "./constants/lcsScoreEngine";
-import { analyzeWebsite, WEB_AI_CATEGORY_LABEL } from "./constants/webVerification";
+import { analyzeWebsite, WEB_AI_CATEGORY_LABEL, getWebAiCategoryLabel } from "./constants/webVerification";
 import shieldImg from "./imgs/shield-3d-nobg.png";
 import XAIHeatmap from "./components/XAIHeatmap";
 import FactCheckBanner from "./components/FactCheckBanner";
@@ -2124,7 +2124,7 @@ export default function App() {
                     <div className="relative flex items-start justify-between gap-4">
                       <div>
                         <p className="text-xl font-black tracking-tight text-white sm:text-2xl">{t('ai.summaryWeb')}</p>
-                        <p className="mt-0.5 text-xs font-semibold text-orange-100">{WEB_AI_CATEGORY_LABEL[resultData.aiAnalysis.category || "unknown"]?.label || "Đọc trang qua GPT · phân loại bản chất"}</p>
+                        <p className="mt-0.5 text-xs font-semibold text-orange-100">{getWebAiCategoryLabel(resultData.aiAnalysis.category || "unknown", t).label}</p>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         <span className={`rounded-full px-3 py-1 text-xs font-black uppercase ${resultData.aiAnalysis.risk >= 45 ? "bg-white text-red-700" : resultData.aiAnalysis.risk >= 20 ? "bg-orange-200 text-orange-900" : "bg-white text-emerald-700"}`}>
