@@ -58,6 +58,19 @@ const getPageFromPath = (pathname: string): PageId => {
   return PATH_TO_PAGE[pathname] ?? "home";
 };
 
+// Helper to translate reason names and details
+const translateReason = (res: any, t: (key: string) => string): any => {
+  const nameKey = `reason.${res.id}`;
+  const detailKey = `reason.${res.id}_detail`;
+  const translatedName = t(nameKey);
+  const translatedDetail = t(detailKey);
+  return {
+    ...res,
+    name: translatedName !== nameKey ? translatedName : res.name,
+    detail: translatedDetail !== detailKey ? translatedDetail : res.detail
+  };
+};
+
 const WEB_CATEGORY_GROUPS: { key: string; label: string; icon: any; description: string; accent: string }[] = [
   { key: "security", label: "Tín hiệu Lừa đảo & Bảo mật", icon: AlertTriangle, description: "Dấu hiệu phishing, lừa đảo và mối đe dọa đã được ghi nhận.", accent: "text-red-600 bg-red-50 border-red-100" },
   { key: "technology", label: "Công nghệ & Tên miền", icon: Globe, description: "Đánh giá hosting, tên miền, HTTPS và cấu trúc URL.", accent: "text-sky-600 bg-sky-50 border-sky-100" },
@@ -90,7 +103,7 @@ const STATE_UI: Record<WebStateKey, { stroke: string; badge: string; icon: any; 
   danger: { stroke: "#ef4444", badge: "bg-red-50 text-red-700", icon: X, label: "NGUY HIỂM", badgeLong: "Nguy hiểm", bar: "bg-red-500" }
 };
 
-function WebReasonGroupCard({ group, reasons }: { group: { key: string; label: string; icon: any; description: string; accent: string }; reasons: any[] }) {
+function WebReasonGroupCard({ group, reasons, t }: { group: { key: string; label: string; icon: any; description: string; accent: string }; reasons: any[]; t: (key: string) => string }) {
   if (reasons.length === 0) return null;
   return <div className="overflow-hidden rounded-2xl border border-gray-100 bg-gray-50/60">
     <div className={`flex items-center gap-2.5 border-b px-4 py-3 ${group.accent} border-transparent`}>
@@ -104,7 +117,9 @@ function WebReasonGroupCard({ group, reasons }: { group: { key: string; label: s
       <span className="rounded-full bg-white px-2.5 py-0.5 text-[10px] font-black text-gray-500">{reasons.length}</span>
     </div>
     <div className="space-y-2 p-3">
-      {reasons.map((res: any, idx: number) => <div key={idx} className={`rounded-xl border p-3 ${WEB_REASON_STATUS_CARD(res.status)}`}>
+      {reasons.map((res: any, idx: number) => {
+        const translatedRes = translateReason(res, t);
+        return <div key={idx} className={`rounded-xl border p-3 ${WEB_REASON_STATUS_CARD(res.status)}`}>
         <div className="flex items-start gap-2.5">
           <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${WEB_REASON_STATUS_ICON(res.status)}`}>
             <res.icon className="h-4 w-4" />
@@ -112,15 +127,16 @@ function WebReasonGroupCard({ group, reasons }: { group: { key: string; label: s
           <div className="min-w-0 flex-1">
             <div className="mb-0.5 flex flex-wrap items-center gap-2">
               {res.id && <span className="rounded bg-white/80 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-gray-500">{res.id}</span>}
-              <span className="text-sm font-black text-gray-950">{res.name}</span>
+              <span className="text-sm font-black text-gray-950">{translatedRes.name}</span>
               {typeof res.scoreDelta === "number" && res.scoreDelta !== 0 && <span className={`rounded px-1.5 py-0.5 text-[10px] font-black ${res.scoreDelta > 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
                 {res.scoreDelta > 0 ? `+${res.scoreDelta}` : res.scoreDelta}
               </span>}
             </div>
-            <p className="text-xs font-medium leading-5 text-gray-700">{res.detail}</p>
+            <p className="text-xs font-medium leading-5 text-gray-700">{translatedRes.detail}</p>
           </div>
         </div>
-      </div>)}
+      </div>;
+      })}
     </div>
   </div>;
 }
@@ -2261,57 +2277,30 @@ export default function App() {
                         {WEB_CATEGORY_GROUPS.map((group) => {
                           const groupReasons = (resultData.analysisReasons ?? []).filter((r: any) => (r.category ?? "reference") === group.key);
                           if (groupReasons.length === 0) return null;
-                          return <div key={group.key} className="overflow-hidden rounded-2xl border border-gray-100 bg-gray-50/60">
-                            <div className={`flex items-center gap-2.5 border-b px-4 py-3 ${group.accent} border-transparent`}>
-                              <div className={`flex h-7 w-7 items-center justify-center rounded-lg border ${group.accent}`}>
-                                <group.icon className="h-4 w-4" />
+                          return <WebReasonGroupCard key={group.key} group={group} reasons={groupReasons} t={t} />;
+                        })}
+                      </div> : <div className="max-h-[690px] space-y-3 overflow-y-auto pr-1 custom-scrollbar">
+                        {resultData.analysisReasons.map((res: any, idx: number) => {
+                          const translatedRes = translateReason(res, t);
+                          return <div key={idx} className={`rounded-2xl border p-4 ${res.status === "danger" ? "border-red-200 bg-red-50/70" :
+                            res.status === "warning" ? "border-amber-200 bg-amber-50/70" :
+                              "border-emerald-200 bg-emerald-50/70"}`}>
+                            <div className="flex items-start gap-3">
+                              <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${res.status === "danger" ? "bg-red-100 text-red-700" :
+                                res.status === "warning" ? "bg-amber-100 text-amber-700" :
+                                  "bg-emerald-100 text-emerald-700"}`}>
+                                <res.icon className="h-4 w-4" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-xs font-black uppercase tracking-wide text-gray-800">{group.label}</p>
-                                <p className="truncate text-[10px] font-medium text-gray-500">{group.description}</p>
-                              </div>
-                              <span className="rounded-full bg-white px-2.5 py-0.5 text-[10px] font-black text-gray-500">{groupReasons.length}</span>
-                            </div>
-                            <div className="grid grid-cols-1 gap-2 p-3 md:grid-cols-2">
-                              {groupReasons.map((res: any, idx: number) => <div key={idx} className={`rounded-xl border p-3 ${WEB_REASON_STATUS_CARD(res.status)}`}>
-                                <div className="flex items-start gap-2.5">
-                                  <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${WEB_REASON_STATUS_ICON(res.status)}`}>
-                                    <res.icon className="h-4 w-4" />
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <div className="mb-0.5 flex flex-wrap items-center gap-2">
-                                      {res.id && <span className="rounded bg-white/80 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-gray-500">{res.id}</span>}
-                                      <span className="text-sm font-black text-gray-950">{res.name}</span>
-                                      {typeof res.scoreDelta === "number" && res.scoreDelta !== 0 && <span className={`rounded px-1.5 py-0.5 text-[10px] font-black ${res.scoreDelta > 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
-                                        {res.scoreDelta > 0 ? `+${res.scoreDelta}` : res.scoreDelta}
-                                      </span>}
-                                    </div>
-                                    <p className="text-xs font-medium leading-5 text-gray-700">{res.detail}</p>
-                                  </div>
+                                <div className="mb-1 flex flex-wrap items-center gap-2">
+                                  {res.id && <span className="rounded bg-white/80 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-gray-500">{res.id}</span>}
+                                  <span className="text-sm font-black text-gray-950">{translatedRes.name}</span>
                                 </div>
-                              </div>)}
+                                <p className="text-xs font-medium leading-5 text-gray-700">{translatedRes.detail}</p>
+                              </div>
                             </div>
                           </div>;
                         })}
-                      </div> : <div className="max-h-[690px] space-y-3 overflow-y-auto pr-1 custom-scrollbar">
-                        {resultData.analysisReasons.map((res: any, idx: number) => <div key={idx} className={`rounded-2xl border p-4 ${res.status === "danger" ? "border-red-200 bg-red-50/70" :
-                          res.status === "warning" ? "border-amber-200 bg-amber-50/70" :
-                            "border-emerald-200 bg-emerald-50/70"}`}>
-                          <div className="flex items-start gap-3">
-                            <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${res.status === "danger" ? "bg-red-100 text-red-700" :
-                              res.status === "warning" ? "bg-amber-100 text-amber-700" :
-                                "bg-emerald-100 text-emerald-700"}`}>
-                              <res.icon className="h-4 w-4" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="mb-1 flex flex-wrap items-center gap-2">
-                                {res.id && <span className="rounded bg-white/80 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-gray-500">{res.id}</span>}
-                                <span className="text-sm font-black text-gray-950">{res.name}</span>
-                              </div>
-                              <p className="text-xs font-medium leading-5 text-gray-700">{res.detail}</p>
-                            </div>
-                          </div>
-                        </div>)}
                       </div>}
                     </motion.div>
                   </div>
@@ -2576,24 +2565,27 @@ export default function App() {
                     </div>
 
                     <div className="space-y-4 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar">
-                      {resultData.analysisReasons.map((res: any, idx: number) => <div key={idx} className="flex items-start gap-4 p-5 rounded-3xl border border-gray-50 bg-white hover:border-orange-200 hover:shadow-[0_8px_30px_rgb(255,137,4,0.1)] transition-all group cursor-default">
-                        <div className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center ${res.status === "danger" ? "bg-red-50 text-red-500" :
-                          res.status === "warning" ? "bg-amber-50 text-amber-500" :
-                            "bg-green-50 text-green-500"}`}>
-                          <res.icon className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            {res.id && <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded font-bold font-mono tracking-tighter uppercase">{res.id}</span>}
-                            <span className="text-[15px] font-bold text-gray-900 truncate tracking-tight">{res.name}</span>
+                      {resultData.analysisReasons.map((res: any, idx: number) => {
+                        const translatedRes = translateReason(res, t);
+                        return <div key={idx} className="flex items-start gap-4 p-5 rounded-3xl border border-gray-50 bg-white hover:border-orange-200 hover:shadow-[0_8px_30px_rgb(255,137,4,0.1)] transition-all group cursor-default">
+                          <div className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center ${res.status === "danger" ? "bg-red-50 text-red-500" :
+                            res.status === "warning" ? "bg-amber-50 text-amber-500" :
+                              "bg-green-50 text-green-500"}`}>
+                            <res.icon className="w-5 h-5" />
                           </div>
-                          <p className={`text-[12px] leading-relaxed line-clamp-3 font-medium ${res.status === "danger" ? "text-red-600/80" :
-                            res.status === "warning" ? "text-amber-600/80" :
-                              "text-green-700/80"}`}>
-                            {res.detail}
-                          </p>
-                        </div>
-                      </div>)}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              {res.id && <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded font-bold font-mono tracking-tighter uppercase">{res.id}</span>}
+                              <span className="text-[15px] font-bold text-gray-900 truncate tracking-tight">{translatedRes.name}</span>
+                            </div>
+                            <p className={`text-[12px] leading-relaxed line-clamp-3 font-medium ${res.status === "danger" ? "text-red-600/80" :
+                              res.status === "warning" ? "text-amber-600/80" :
+                                "text-green-700/80"}`}>
+                              {translatedRes.detail}
+                            </p>
+                          </div>
+                        </div>;
+                      })}
                     </div>
                   </motion.div>
 
