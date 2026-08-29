@@ -2116,14 +2116,14 @@ export default function App() {
                   {resultData.type === "web" && resultData.aiAnalysis?.available && resultData.aiAnalysis.summary ? <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }} className="relative overflow-hidden rounded-3xl border-2 border-orange-200 bg-gradient-to-br from-orange-500 via-orange-400 to-amber-400 p-6 shadow-xl shadow-orange-200/50 sm:p-8">
                     {resultData.aiAnalysis.risk >= 45 || ["gambling", "scam", "phishing", "adult", "parked", "redirect"].includes((resultData.aiAnalysis.category || "").toLowerCase()) ? <div className="relative mb-5 flex items-start gap-3 rounded-2xl border border-red-300/40 bg-red-500/20 px-4 py-3 backdrop-blur-sm">
                       <div>
-                        <p className="text-sm font-black uppercase tracking-wide text-white">Cảnh báo AI: nội dung có dấu hiệu nguy hiểm</p>
-                        <p className="mt-0.5 text-xs font-medium text-red-50">Hệ thống phân loại web này là "{resultData.aiAnalysis.category}" (rủi ro {resultData.aiAnalysis.risk}/100). Cân nhắc rất kỹ trước khi tin tưởng.</p>
+                        <p className="text-sm font-black uppercase tracking-wide text-white">{t('ai.warning')}</p>
+                        <p className="mt-0.5 text-xs font-medium text-red-50">{t('ai.warningDesc').replace('${category}', resultData.aiAnalysis.category || 'unknown').replace('${risk}', String(resultData.aiAnalysis.risk))}</p>
                       </div>
                     </div> : null}
 
                     <div className="relative flex items-start justify-between gap-4">
                       <div>
-                        <p className="text-xl font-black tracking-tight text-white sm:text-2xl">AI Tóm Tắt Nội Dung Web</p>
+                        <p className="text-xl font-black tracking-tight text-white sm:text-2xl">{t('ai.summaryWeb')}</p>
                         <p className="mt-0.5 text-xs font-semibold text-orange-100">{WEB_AI_CATEGORY_LABEL[resultData.aiAnalysis.category || "unknown"]?.label || "Đọc trang qua GPT · phân loại bản chất"}</p>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
@@ -2167,15 +2167,15 @@ export default function App() {
                       <div className="mt-4 flex flex-wrap items-center gap-3">
                         <button type="button" onClick={() => setReportIssueOpen(true)} className="inline-flex items-center gap-2 rounded-xl border-2 border-gray-300 bg-white px-4 py-2.5 text-sm font-bold text-gray-800 shadow-sm transition-colors hover:border-orange-400 hover:bg-orange-50 hover:text-orange-700">
                           <Flag className="h-4 w-4" />
-                          Báo kết quả sai (khiếu nại)
+                          {t('buttons.reportWrong')}
                         </button>
                         <button type="button" onClick={() => setColorLegendOpen(true)} className="inline-flex items-center gap-2 rounded-xl border-2 border-gray-300 bg-white px-4 py-2.5 text-sm font-bold text-gray-800 shadow-sm transition-colors hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700">
                           <HelpCircle className="h-4 w-4" />
-                          Giải thích kết quả
+                          {t('buttons.explainResult')}
                         </button>
                         <button type="button" onClick={() => setNextStepsOpen(true)} className="inline-flex items-center gap-2 rounded-xl border-2 border-orange-300 bg-orange-50 px-4 py-2.5 text-sm font-bold text-orange-700 shadow-sm transition-colors hover:bg-orange-100">
                           <LifeBuoy className="h-4 w-4" />
-                          Tôi nên làm gì tiếp?
+                          {t('buttons.nextSteps')}
                         </button>
                       </div>
                     </motion.div>;
@@ -2184,12 +2184,12 @@ export default function App() {
                   {resultData.type === "news" && <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="relative overflow-hidden rounded-3xl border-2 border-orange-200 bg-gradient-to-br from-orange-500 via-orange-400 to-amber-400 p-6 shadow-xl shadow-orange-200/50 sm:p-8">
                     <div className="relative flex items-start justify-between gap-4">
                       <div>
-                        <p className="text-xl font-black tracking-tight text-white sm:text-2xl">AI Tóm Tắt Nội Dung Tin</p>
+                        <p className="text-xl font-black tracking-tight text-white sm:text-2xl">{t('ai.summaryNews')}</p>
                         <p className="mt-0.5 text-xs font-semibold text-orange-100">Đọc nội dung qua LLM · tổng hợp khách quan, không thay thế kết luận điểm số</p>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-black text-white ring-1 ring-white/40">
-                          {newsAiSummary.loading ? "Đang tóm tắt..." : newsAiSummary.loaded ? "Hoàn tất" : "Chưa có"}
+                          {newsAiSummary.loading ? t('ai.loadingSummary') : newsAiSummary.loaded ? t('ai.done') : t('ai.noSummary')}
                         </span>
                       </div>
                     </div>
@@ -2197,12 +2197,12 @@ export default function App() {
                     <div className="relative mt-5 rounded-2xl bg-white/95 p-5 shadow-lg sm:p-6">
                       {newsAiSummary.loading ? <div className="flex items-center gap-3 text-gray-500">
                         <Loader2 className="h-5 w-5 animate-spin text-orange-500" />
-                        <p className="text-sm font-medium">AI đang đọc và tóm tắt nội dung tin tức...</p>
+                        <p className="text-sm font-medium">{t('ai.readingContent')}</p>
                       </div> : newsAiSummary.summary ? <>
                         <p className="text-[15px] font-medium leading-7 text-gray-900 sm:text-base">{newsAiSummary.summary}</p>
 
                         {newsAiSummary.key_points.length > 0 && <div className="mt-5">
-                          <p className="mb-2.5 text-xs font-black uppercase tracking-[0.18em] text-orange-600">Điểm chính</p>
+                          <p className="mb-2.5 text-xs font-black uppercase tracking-[0.18em] text-orange-600">{t('ai.keyPoints')}</p>
                           <ul className="space-y-2">
                             {newsAiSummary.key_points.map((point, idx) => <li key={idx} className="flex items-start gap-2.5 text-sm leading-relaxed text-gray-800">
                               <span className="mt-1.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-orange-100 text-[10px] font-black text-orange-700">{idx + 1}</span>
@@ -2214,16 +2214,16 @@ export default function App() {
                         <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
                           {(newsAiSummary.credibility_note || newsAiSummary.detection_note) && <>
                             {newsAiSummary.credibility_note ? <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-4">
-                              <p className="mb-1 text-[11px] font-black uppercase tracking-[0.15em] text-gray-500">Ghi chú thông tin</p>
+                              <p className="mb-1 text-[11px] font-black uppercase tracking-[0.15em] text-gray-500">{t('ai.infoNote')}</p>
                               <p className="text-sm leading-6 text-gray-800">{newsAiSummary.credibility_note}</p>
                             </div> : null}
                             {newsAiSummary.detection_note ? <div className="rounded-xl border border-amber-100 bg-amber-50/70 p-4">
-                              <p className="mb-1 text-[11px] font-black uppercase tracking-[0.15em] text-amber-700">Ghi chú dấu hiệu</p>
+                              <p className="mb-1 text-[11px] font-black uppercase tracking-[0.15em] text-amber-700">{t('ai.detectionNote')}</p>
                               <p className="text-sm leading-6 text-amber-900">{newsAiSummary.detection_note}</p>
                             </div> : null}
                           </>}
                         </div>
-                      </> : <p className="text-sm font-medium text-gray-500">{newsAiSummary.loaded ? "AI không tạo được bản tóm tắt cho nội dung này." : "Tóm tắt sẽ hiển thị sau khi kiểm tra hoàn tất."}</p>}
+                      </> : <p className="text-sm font-medium text-gray-500">{newsAiSummary.loaded ? t('ai.noSummaryAvailable') : t('ai.summaryWillAppear')}</p>}
                     </div>
                   </motion.div>}
 
@@ -2271,13 +2271,13 @@ export default function App() {
                         </h3>
                         <div className="flex items-center gap-2">
                           {resultData.type === "web" && resultData.thirdParty?.length ? <button type="button" onClick={() => setThirdPartyOpen(true)} className="rounded-full bg-sky-50 px-3 py-1 text-xs font-black text-sky-700 hover:bg-sky-100 transition-colors">
-                            Bên thứ 3 ({resultData.thirdParty.length})
+                            {t('signals.thirdParty')} ({resultData.thirdParty.length})
                           </button> : null}
                           {resultData.type === "web" && resultData.ipInfo?.detail?.ips?.length ? <button type="button" onClick={() => setThirdPartyOpen(true)} className="rounded-full bg-violet-50 px-3 py-1 text-xs font-black text-violet-700 hover:bg-violet-100 transition-colors">
-                            IP ({resultData.ipInfo.detail.ips.length})
+                            {t('signals.ip')} ({resultData.ipInfo.detail.ips.length})
                           </button> : null}
                           <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-black uppercase text-gray-500">
-                            {resultData.analysisReasons.length} tín hiệu
+                            {resultData.analysisReasons.length} {t('signals.signalCount')}
                           </span>
                         </div>
                       </div>
@@ -2327,35 +2327,35 @@ export default function App() {
                           <Sparkles className="w-6 h-6 text-orange-600" />
                         </div>
                         <div className="font-analysis-heading">
-                          <h3 className="text-2xl font-bold tracking-tight text-gray-900">Thẩm Định Chuyên Gia Phân Tích</h3>
+                          <h3 className="text-2xl font-bold tracking-tight text-gray-900">{t('expert.title')}</h3>
                           <div className="flex items-center gap-2 mt-2">
                             <span className="px-3 py-1 rounded-full bg-orange-50 border border-orange-100 text-orange-700 text-xs font-bold whitespace-nowrap">
-                              {resultData.checkTypeLabel || "Tin tức chung"}
+                              {resultData.checkTypeLabel || t('expert.newsType')}
                             </span>
-                            <p className="text-gray-500 text-sm hidden sm:block">· LCS Engine · 3 tầng phân tích độc lập</p>
+                            <p className="text-gray-500 text-sm hidden sm:block">· {t('expert.lcsEngine')}</p>
                             <span className="px-2 py-0.5 rounded bg-orange-100 text-orange-700 text-[10px] font-black font-mono tracking-widest hidden sm:block">v1.0</span>
                           </div>
                         </div>
                         <button type="button" onClick={() => setAnalysisExpanded((current) => !current)} className="px-4 py-2 rounded-xl bg-white border border-gray-200 shadow-sm text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
                           <ChevronRight className={`w-4 h-4 transition-transform ${analysisExpanded ? "rotate-90" : ""}`} />
-                          {analysisExpanded ? "Thu gọn" : "Xem chi tiết"}
+                          {analysisExpanded ? t('expert.collapse') : t('expert.expand')}
                         </button>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className={`px-5 py-2 rounded-xl text-sm font-bold border ${resultData.isSafe ? "bg-green-50 border-green-200 text-green-700" :
                           resultData.isDanger ? "bg-red-50 border-red-200 text-red-700" :
                             "bg-amber-50 border-amber-200 text-amber-700"}`}>
-                          {resultData.isSafe ? "AN TOÀN" : resultData.isDanger ? "NGUY HIỂM" : "CHƯA ĐỦ DỮ LIỆU"}
+                          {resultData.isSafe ? t('expert.safe') : resultData.isDanger ? t('expert.danger') : t('expert.insufficient')}
                         </div>
                         <div className="px-5 py-2 rounded-xl bg-gray-50 border border-gray-200 text-sm font-bold flex items-center gap-2 text-gray-700">
                           <Target className="w-4 h-4 text-orange-600" />
-                          {resultData.score}% Tin cậy
+                          {resultData.score}% {t('expert.confidence')}
                         </div>
                       </div>
                     </div>
 
                     <div className="py-5">
-                      <p className="text-xs font-black uppercase tracking-[0.2em] text-[#ff8904] mb-2">Tóm tắt nội sinh</p>
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-[#ff8904] mb-2">{t('expert.internalSummary')}</p>
                       <p className="text-[15px] text-[#111111] leading-relaxed font-analysis-body max-w-4xl">
                         {resultData.analysis.internal_verdict}
                       </p>
