@@ -472,7 +472,6 @@ export const en: Record<string, string> = {
   'reason.SAFE_REPLY': 'Casual conversation',
   'reason.SAFE_REPLY_detail': 'Context appears to be casual personal conversation.',
   'reason.LLM_ANALYSIS': 'AI Analysis',
-  'reason.SCAM_DOMAIN_detail': 'This domain is in our scam database. DO NOT visit.',
   'reason.GENERIC_DANGER': 'High risk indicator',
   'reason.GENERIC_WARNING': 'Caution advised',
 
@@ -688,16 +687,6 @@ export const en: Record<string, string> = {
   'reason.KG_FAKE_UTILITY': 'Impersonating utility/network staff.',
   'reason.KG_CRYPTO': 'Cryptocurrency scam.',
   'reason.KG_PHONE_EXTRACTION': 'Forcing victim to switch to private contact channel.',
-  'reason.MSG_LINK': 'Contains suspicious links.',
-  'reason.MSG_OTP': 'Message asking for OTP/password.',
-  'reason.MSG_TRANSFER': 'Requesting money transfer or upfront payment.',
-  'reason.MSG_JOB': 'Offering easy high-paying or online jobs.',
-  'reason.MSG_PRIZE': 'Prize/gift notification requiring upfront fees.',
-  'reason.MSG_URGENCY': 'Creating time pressure or threats.',
-  'reason.MSG_LOAN': 'Offering fast loans/gambling/money increase.',
-  'reason.MSG_PERSONAL_INFO': 'Asking for sensitive personal information.',
-  'reason.MSG_URL': 'Contains unverifiable origin links.',
-  'reason.MSG_CONTACT_PHONE': 'Unknown phone number with sensitive content.',
   'reason.ENTITY_MISMATCH': 'Mismatch detected between your keywords and actual sources.',
 
   // ── Build plain summary ──

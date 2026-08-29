@@ -472,7 +472,6 @@ export const vi: Record<string, string> = {
   'reason.SAFE_REPLY': 'Trò chuyện cá nhân',
   'reason.SAFE_REPLY_detail': 'Ngữ cảnh có vẻ là trò chuyện cá nhân bình thường.',
   'reason.LLM_ANALYSIS': 'Phân tích AI',
-  'reason.SCAM_DOMAIN_detail': 'Tên miền này có trong cơ sở dữ liệu lừa đảo. KHÔNG truy cập.',
   'reason.GENERIC_DANGER': 'Dấu hiệu rủi ro cao',
   'reason.GENERIC_WARNING': 'Cần thận trọng',
 
@@ -688,16 +687,6 @@ export const vi: Record<string, string> = {
   'reason.KG_FAKE_UTILITY': 'Giả mạo nhân viên điện/nước/mạng.',
   'reason.KG_CRYPTO': 'Lừa đảo tiền mã hóa.',
   'reason.KG_PHONE_EXTRACTION': 'Ép nạn nhân chuyển kênh liên hệ riêng.',
-  'reason.MSG_LINK': 'Chứa đường dẫn lạ.',
-  'reason.MSG_OTP': 'Tin nhắn hỏi mã OTP/mật khẩu.',
-  'reason.MSG_TRANSFER': 'Yêu cầu chuyển/nạp tiền hoặc thanh toán trước.',
-  'reason.MSG_JOB': 'Mời việc nhẹ lương cao hoặc làm việc online.',
-  'reason.MSG_PRIZE': 'Trúng thưởng/quà tặng nhưng phải nạp phí trước.',
-  'reason.MSG_URGENCY': 'Gây áp lực thời gian/đe dọa.',
-  'reason.MSG_LOAN': 'Mời vay vốn nhanh/nổ hũ/tăng tiền.',
-  'reason.MSG_PERSONAL_INFO': 'Dò hỏi thông tin cá nhân nhạy cảm.',
-  'reason.MSG_URL': 'Chứa liên kết không xác minh được nguồn gốc.',
-  'reason.MSG_CONTACT_PHONE': 'Số điện thoại lạ kèm nội dung nhạy cảm.',
   'reason.ENTITY_MISMATCH': 'Phát hiện sự không khớp giữa từ khóa bạn nhập và nguồn tin thực tế.',
 
   // ── Build plain summary ──
