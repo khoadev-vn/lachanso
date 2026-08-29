@@ -622,7 +622,7 @@ export const en: Record<string, string> = {
   'result.SignalLuanDam': 'Scam & Security Signals',
   'result.SignalLuanDam_desc': 'Phishing, scam and threat indicators have been recorded.',
   'result.DestroylistClear': 'Destroylist not recorded',
-  'result.DestroylistClear_detail': 'Domain not found in Destroylist (raw GitHub feed). This is not absolute safety guarantee.',
+  'result.DestroylistClear_detail': 'Domain not found in Destroylist at time of check. This is not absolute safety guarantee.',
   'result.CongNgheTenMien': 'Technology & Domain',
   'result.CongNgheTenMien_desc': 'Hosting, domain, HTTPS and URL structure evaluation.',
   'result.HTTP': 'Not using HTTPS',
@@ -631,6 +631,9 @@ export const en: Record<string, string> = {
   'result.DanhTieng_desc': 'Cross-reference with trusted sources and official brands.',
   'result.UnknownDomain': 'Domain not in trusted list',
   'result.UnknownDomain_detail': 'Domain not in verified source list, verify carefully before logging in or paying.',
+  'result.lcsSignals': 'LCS Signals',
+  'result.analyzedContent': 'Analyzed Content',
+  'result.textSource': 'Text or article submitted to verification pipeline.',
 
   // ── Mission page ──
   'mission.title': 'Our Mission',

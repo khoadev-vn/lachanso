@@ -103,6 +103,15 @@ const STATE_UI: Record<WebStateKey, { stroke: string; badge: string; icon: any; 
   danger: { stroke: "#ef4444", badge: "bg-red-50 text-red-700", icon: X, label: "NGUY HIỂM", badgeLong: "Nguy hiểm", bar: "bg-red-500" }
 };
 
+const getStateUILabel = (state: WebStateKey, t: (key: string) => string): string => {
+  const keys: Record<WebStateKey, string> = {
+    safe: 'result.safe',
+    insufficient: 'result.insufficient',
+    danger: 'result.danger'
+  };
+  return t(keys[state]);
+};
+
 function WebReasonGroupCard({ group, reasons, t }: { group: { key: string; label: string; icon: any; description: string; accent: string }; reasons: any[]; t: (key: string) => string }) {
   if (reasons.length === 0) return null;
   return <div className="overflow-hidden rounded-2xl border border-gray-100 bg-gray-50/60">
@@ -2004,7 +2013,7 @@ export default function App() {
                     <div className="grid gap-6 p-6 lg:grid-cols-[220px_1fr_auto] lg:items-center">
                       <div className="flex flex-col items-center justify-center">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">
-                          {resultData.type === "news" ? "Độ tin cậy" : "Mức an toàn"}
+                          {resultData.type === "news" ? t('result.trust') : t('result.safetyScore')}
                         </p>
 
                         <div className="relative w-28 h-28 flex items-center justify-center">
@@ -2029,7 +2038,7 @@ export default function App() {
                           </div>
                         </div>
                         <button type="button" onClick={() => setWhyScoreOpen(true)} className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3.5 py-1.5 text-xs font-bold text-orange-700 transition-colors hover:border-orange-400 hover:bg-orange-100">
-                          <ListOrdered className="h-3.5 w-3.5" /> Vì sao điểm này?
+                          <ListOrdered className="h-3.5 w-3.5" /> {t('result.whyThisScore')}
                         </button>
                       </div>
 
@@ -2041,21 +2050,21 @@ export default function App() {
                           return <>
                             <div className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black uppercase ${meta.badge}`}>
                               <Icon className="h-4 w-4" />
-                              {meta.badgeLong}
+                              {getStateUILabel(st, t)}
                             </div>
                             {typeof resultData.riskScore === "number" && <span className="mb-3 ml-1 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-bold text-gray-600">
-                              Rủi ro {resultData.riskScore}/100 · Phủ {Math.round((resultData.coverage ?? 0) * 100)}%
+                              {t('result.riskScore')} {resultData.riskScore}/100 · {t('result.coverage')} {Math.round((resultData.coverage ?? 0) * 100)}%
                             </span>}
                           </>;
                         })()}
                         {resultData.type !== "web" && <div className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black uppercase ${resultData.isSafe ? "bg-green-50 text-green-700" : resultData.isDanger ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700"}`}>
                           {resultData.isSafe ? <ShieldCheck className="h-4 w-4" /> : resultData.isDanger ? <X className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
-                          {resultData.isSafe ? "An toàn" : resultData.isDanger ? "Nguy hiểm" : "Chưa đủ dữ liệu"}
+                          {resultData.isSafe ? t('result.safe') : resultData.isDanger ? t('result.danger') : t('result.insufficient')}
                         </div>}
                         {resultData.isEducational && (
                           <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-black uppercase text-blue-700 ml-2">
                             <Info className="h-4 w-4" />
-                            Nội dung giáo dục
+                            {t('result.eduContent')}
                           </div>
                         )}
                         <h3 className="truncate text-2xl font-black tracking-tight text-gray-950">{resultData.title}</h3>
@@ -2065,7 +2074,7 @@ export default function App() {
                       <div className="rounded-2xl bg-gray-50 p-4 lg:min-w-[260px]">
                         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500">
                           <Globe className="h-4 w-4" />
-                          Đối tượng
+                          {t('result.subject')}
                         </div>
                         <p className="mt-2 break-all text-sm font-bold text-gray-900">{resultData.url}</p>
                       </div>
@@ -2077,28 +2086,28 @@ export default function App() {
                         <div className="flex flex-wrap items-center gap-3">
                           {st === "insufficient" && <button type="button" onClick={() => setOwnerVerifyOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl bg-blue-600 px-6 py-3.5 text-[15px] font-bold text-white shadow-md transition-colors hover:bg-blue-700">
                             <ShieldCheck className="h-5 w-5" />
-                            Tôi là chủ website — Yêu cầu xác minh
+                            {t('check.verifyOwner')}
                           </button>}
                           <button type="button" onClick={() => setReportIssueOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-gray-300 bg-white px-6 py-3.5 text-[15px] font-bold text-gray-800 shadow-md transition-colors hover:border-orange-400 hover:bg-orange-50 hover:text-orange-700">
                             <Flag className="h-5 w-5" />
-                            Báo kết quả sai (khiếu nại)
+                            {t('result.reportFalse')}
                           </button>
                           <button type="button" onClick={() => setWhyScoreOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-orange-300 bg-orange-50 px-6 py-3.5 text-[15px] font-bold text-orange-700 shadow-md transition-colors hover:bg-orange-100">
                             <ListOrdered className="h-5 w-5" />
-                            Vì sao điểm này?
+                            {t('result.whyThisScore')}
                           </button>
                           <button type="button" onClick={() => setColorLegendOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-gray-300 bg-white px-6 py-3.5 text-[15px] font-bold text-gray-800 shadow-md transition-colors hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700">
                             <HelpCircle className="h-5 w-5" />
-                            Giải thích 3 mức
+                            {t('result.explain3levels')}
                           </button>
                           <button type="button" onClick={() => setNextStepsOpen(true)} className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-orange-300 bg-orange-50 px-6 py-3.5 text-[15px] font-bold text-orange-700 shadow-md transition-colors hover:bg-orange-100">
                             <LifeBuoy className="h-5 w-5" />
-                            Tôi nên làm gì tiếp?
+                            {t('result.whatShouldIDo')}
                           </button>
                         </div>
                         <div className="inline-flex w-full items-center justify-center gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
                           <AlertTriangle className="h-5 w-5 shrink-0" />
-                          Kết quả chỉ mang tính tham khảo — luôn kiểm tra kỹ địa chỉ website trước khi đăng nhập hoặc thanh toán.
+                          {t('result.onlyReference')}
                         </div>
                       </div>;
                     })()}
@@ -2223,15 +2232,15 @@ export default function App() {
                       <div className="flex flex-col gap-4 border-b border-gray-100 p-5 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <h3 className="text-lg font-black tracking-tight text-gray-950">
-                            {resultData.type === "news" ? "Nội dung đã phân tích" : "Preview an toàn"}
+                            {resultData.type === "news" ? t('result.analyzedContent') : t('result.safePreview')}
                           </h3>
                           <p className="mt-1 text-sm text-gray-500">
-                            {resultData.type === "news" ? "Văn bản hoặc bài viết được đưa vào pipeline kiểm chứng." : "Ảnh chụp được render qua dịch vụ trung gian, không nhúng website trực tiếp."}
+                            {resultData.type === "news" ? t('result.textSource') : t('result.previewRendered')}
                           </p>
                         </div>
                         <span className="inline-flex w-fit items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-xs font-black uppercase text-[#ff8904]">
                           <Shield className="h-4 w-4" />
-                          {resultData.type === "news" ? "Text source" : "Safe preview"}
+                          {resultData.type === "news" ? "TEXT QUANTUM" : "SAFE PREVIEW"}
                         </span>
                       </div>
 
@@ -2258,7 +2267,7 @@ export default function App() {
                       <div className="mb-5 flex items-center justify-between gap-3">
                           <h3 className="flex items-center gap-2 text-lg font-black tracking-tight text-gray-950">
                           <Database className="h-5 w-5 text-gray-700" />
-                          Tín Hiệu LCS
+                          {t('result.lcsSignals')}
                         </h3>
                         <div className="flex items-center gap-2">
                           {resultData.type === "web" && resultData.thirdParty?.length ? <button type="button" onClick={() => setThirdPartyOpen(true)} className="rounded-full bg-sky-50 px-3 py-1 text-xs font-black text-sky-700 hover:bg-sky-100 transition-colors">

@@ -622,7 +622,7 @@ export const vi: Record<string, string> = {
   'result.SignalLuanDam': 'Tín hiệu Lừa đảo & Bảo mật',
   'result.SignalLuanDam_desc': 'Dấu hiệu phishing, lừa đảo và mối đe dọa đã được ghi nhận.',
   'result.DestroylistClear': 'Destroylist chưa ghi nhận',
-  'result.DestroylistClear_detail': 'Domain chưa xuất hiện trong Destroylist tại thời điểm kiểm tra (raw feed GitHub). Đây không phải bảo chứng an toàn tuyệt đối.',
+  'result.DestroylistClear_detail': 'Domain chưa xuất hiện trong Destroylist tại thời điểm kiểm tra. Đây không phải bảo chứng an toàn tuyệt đối.',
   'result.CongNgheTenMien': 'Công nghệ & Tên miền',
   'result.CongNgheTenMien_desc': 'Đánh giá hosting, tên miền, HTTPS và cấu trúc URL.',
   'result.HTTP': 'Không dùng HTTPS',
@@ -631,6 +631,9 @@ export const vi: Record<string, string> = {
   'result.DanhTieng_desc': 'Đối chiếu với nguồn tin cậy và thương hiệu chính thống.',
   'result.UnknownDomain': 'Domain chưa có trong danh sách tin cậy',
   'result.UnknownDomain_detail': 'Tên miền chưa nằm trong tập nguồn đã xác minh, cần kiểm tra kỹ trước khi đăng nhập hoặc thanh toán.',
+  'result.lcsSignals': 'Tín Hiệu LCS',
+  'result.analyzedContent': 'Nội dung đã phân tích',
+  'result.textSource': 'Văn bản hoặc bài viết được đưa vào pipeline kiểm chứng.',
 
   // ── Mission page ──
   'mission.title': 'Sứ mệnh của chúng tôi',
