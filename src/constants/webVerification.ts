@@ -574,7 +574,7 @@ interface BackendWebResult {
   coreCriteriaOk: boolean;
 }
 
-export async function analyzeWebsite(input: string): Promise<WebVerificationResult> {
+export async function analyzeWebsite(input: string, t?: (key: string, params?: Record<string, string | number>) => string): Promise<WebVerificationResult> {
   const reasons: WebVerificationReason[] = [];
   let score = 70;
   let normalizedUrl = normalizeUrl(input);
@@ -919,8 +919,8 @@ export async function analyzeWebsite(input: string): Promise<WebVerificationResu
       normalizedUrl,
       displayUrl: hostname,
       score: safetyScore,
-      title: backendV2.blacklisted ? `Cảnh báo ${hostname}` : `Đánh giá website ${hostname}`,
-      description: `Hệ thống Zero-Trust 9 tiêu chí đã phân tích (điểm rủi ro ${R}/100, độ phủ dữ liệu ${Math.round(C * 100)}%, ${backendV2.collectedCriteria}/9 tiêu chí thu thập được).`,
+      title: t ? (backendV2.blacklisted ? t('result.warningTitle', { hostname }) : t('result.evalTitle', { hostname })) : (backendV2.blacklisted ? `Cảnh báo ${hostname}` : `Đánh giá website ${hostname}`),
+      description: t ? t('result.zeroTrustDesc', { risk: R, coverage: Math.round(C * 100), criteria: backendV2.collectedCriteria }) : `Hệ thống Zero-Trust 9 tiêu chí đã phân tích (điểm rủi ro ${R}/100, độ phủ dữ liệu ${Math.round(C * 100)}%, ${backendV2.collectedCriteria}/9 tiêu chí thu thập được).`,
       screenshot: previewCandidates[0] ?? "",
       previewCandidates,
       reasons: v2reasons

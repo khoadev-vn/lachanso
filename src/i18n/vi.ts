@@ -411,6 +411,10 @@ export const vi: Record<string, string> = {
   'resources.colDate': 'Ngày',
   'resources.sourceWarning': 'Phát hiện bởi nguồn ${source}. Hãy cẩn trọng, không đăng nhập hoặc thanh toán.',
   'resources.category': 'Trang web lừa đảo',
+  'check.verifyOwner': 'Tôi là chủ website — Yêu cầu xác minh',
+  'result.evalTitle': 'Đánh giá website ${hostname}',
+  'result.warningTitle': 'Cảnh báo ${hostname}',
+  'result.zeroTrustDesc': 'Hệ thống Zero-Trust đã phân tích 9 tiêu chí (điểm rủi ro ${risk}/100, độ phủ dữ liệu ${coverage}%, ${criteria}/9 tiêu chí thu thập được).',
 
   // Result reasons translations
   'reason.MSG_LINK': 'Đường dẫn nghi vấn',

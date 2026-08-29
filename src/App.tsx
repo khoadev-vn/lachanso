@@ -642,7 +642,7 @@ export default function App() {
         if ((window as any).__LCS_JOB_ID__ !== jobId)
           return;
         if (checkType === "web") {
-          const webCheck = await analyzeWebsite(searchQuery);
+          const webCheck = await analyzeWebsite(searchQuery, t);
           setResultData({
             state: webCheck.state,
             isSafe: webCheck.isSafe,

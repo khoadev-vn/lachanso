@@ -411,6 +411,10 @@ export const en: Record<string, string> = {
   'resources.colDate': 'Date',
   'resources.sourceWarning': 'Detected by source ${source}. Be cautious, do not log in or make payments.',
   'resources.category': 'Scam Websites',
+  'check.verifyOwner': 'I am the website owner — Request verification',
+  'result.evalTitle': 'Evaluation of website ${hostname}',
+  'result.warningTitle': 'Warning: ${hostname}',
+  'result.zeroTrustDesc': 'Zero-Trust system has analyzed 9 criteria (risk score ${risk}/100, data coverage ${coverage}%, ${criteria}/9 criteria collected).',
 
   // Result reasons translations
   'reason.MSG_LINK': 'Suspicious link',
