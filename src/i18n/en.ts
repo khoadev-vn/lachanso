@@ -631,9 +631,6 @@ export const en: Record<string, string> = {
   'result.DanhTieng_desc': 'Cross-reference with trusted sources and official brands.',
   'result.UnknownDomain': 'Domain not in trusted list',
   'result.UnknownDomain_detail': 'Domain not in verified source list, verify carefully before logging in or paying.',
-  'result.lcsSignals': 'LCS Signals',
-  'result.analyzedContent': 'Analyzed Content',
-  'result.textSource': 'Text or article submitted to verification pipeline.',
 
   // ── Mission page ──
   'mission.title': 'Our Mission',

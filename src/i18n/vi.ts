@@ -631,9 +631,6 @@ export const vi: Record<string, string> = {
   'result.DanhTieng_desc': 'Đối chiếu với nguồn tin cậy và thương hiệu chính thống.',
   'result.UnknownDomain': 'Domain chưa có trong danh sách tin cậy',
   'result.UnknownDomain_detail': 'Tên miền chưa nằm trong tập nguồn đã xác minh, cần kiểm tra kỹ trước khi đăng nhập hoặc thanh toán.',
-  'result.lcsSignals': 'Tín Hiệu LCS',
-  'result.analyzedContent': 'Nội dung đã phân tích',
-  'result.textSource': 'Văn bản hoặc bài viết được đưa vào pipeline kiểm chứng.',
 
   // ── Mission page ──
   'mission.title': 'Sứ mệnh của chúng tôi',
