@@ -478,11 +478,7 @@ export const vi: Record<string, string> = {
   // Result section translations
   'result.safetyScore': 'Mức an toàn',
   'result.whyThisScore': 'Vì sao điểm này?',
-  'result.danger': 'Nguy hiểm',
-  'result.safe': 'An toàn',
-  'result.insufficient': 'Chưa đủ dữ liệu',
   'result.riskScore': 'Rủi ro',
-  'result.coverage': 'Phủ',
   'result.whyThisScore_explain': 'Điểm được tính dựa trên phân tích URL, bảo mật HTTPS, các chỉ báo phishing và dữ liệu danh tiếng.',
   'result.evaluation': 'Đánh giá',
   'result.QuickAnalysis': 'PHÂN TÍCH NHANH TẠI MÁY BẠN (backend AI chưa phản hồi kịp)',

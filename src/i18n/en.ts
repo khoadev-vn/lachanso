@@ -478,11 +478,7 @@ export const en: Record<string, string> = {
   // Result section translations
   'result.safetyScore': 'Safety Score',
   'result.whyThisScore': 'Why this score?',
-  'result.danger': 'Dangerous',
-  'result.safe': 'Safe',
-  'result.insufficient': 'Insufficient Data',
   'result.riskScore': 'Risk Score',
-  'result.coverage': 'Coverage',
   'result.whyThisScore_explain': 'The score is calculated based on URL analysis, HTTPS security, phishing indicators, and reputation data.',
   'result.evaluation': 'Evaluation',
   'result.QuickAnalysis': 'QUICK ANALYSIS AT YOUR DEVICE (AI has not responded yet)',
