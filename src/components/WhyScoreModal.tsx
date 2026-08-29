@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 import { ShieldCheck, AlertTriangle, X, Info, ListOrdered } from "lucide-react";
+import { useLang } from "../contexts/LangContext";
 
 interface WhyReason {
   name?: string;
@@ -17,6 +18,7 @@ interface WhyScoreModalProps {
 }
 
 export default function WhyScoreModal({ open, onOpenChange, title, score, reasons = [] }: WhyScoreModalProps) {
+  const { t } = useLang();
   const list = reasons ?? [];
   const dangerCount = list.filter((r) => r.status === "danger").length;
   const warningCount = list.filter((r) => r.status === "warning").length;
@@ -32,10 +34,10 @@ export default function WhyScoreModal({ open, onOpenChange, title, score, reason
             </div>
             <div>
               <DialogTitle className="text-lg font-black tracking-tight text-gray-950">
-                Vì sao được {Math.round(score ?? 0)}%?
+                {t('why.title')} {Math.round(score ?? 0)}%?
               </DialogTitle>
               <DialogDescription className="text-sm text-gray-500">
-                Hệ thống đối chiếu theo từng tín hiệu dưới đây để chấm điểm {title ? `"${title}"` : "nội dung"}.
+                {t('why.description')} {title ? `"${title}"` : t('why.content')}
               </DialogDescription>
             </div>
           </div>
@@ -43,22 +45,22 @@ export default function WhyScoreModal({ open, onOpenChange, title, score, reason
 
         {dangerCount + warningCount + cleanCount === 0 ? (
           <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4 text-sm leading-relaxed text-gray-600">
-            Không có tín hiệu cụ thể nào được phát hiện. Kết quả dựa trên mức độ phủ dữ liệu hiện có.
+            {t('why.noSignals')}
           </div>
         ) : (
           <>
             <div className="mb-4 grid grid-cols-3 gap-2">
               <div className="rounded-xl bg-red-50 px-3 py-2 text-center">
                 <p className="text-lg font-black text-red-600">{dangerCount}</p>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-red-500">Dấu hiệu xấu</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-red-500">{t('why.badSignals')}</p>
               </div>
               <div className="rounded-xl bg-amber-50 px-3 py-2 text-center">
                 <p className="text-lg font-black text-amber-600">{warningCount}</p>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-amber-500">Cần lưu ý</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-amber-500">{t('why.warningSignals')}</p>
               </div>
               <div className="rounded-xl bg-emerald-50 px-3 py-2 text-center">
                 <p className="text-lg font-black text-emerald-600">{cleanCount}</p>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-500">Tín hiệu tốt</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-500">{t('why.goodSignals')}</p>
               </div>
             </div>
 
@@ -74,7 +76,7 @@ export default function WhyScoreModal({ open, onOpenChange, title, score, reason
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="mb-0.5 flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-black text-gray-950">{reason.name ?? `Tín hiệu ${idx + 1}`}</span>
+                        <span className="text-sm font-black text-gray-950">{reason.name ?? `${t('why.signal')} ${idx + 1}`}</span>
                         {typeof reason.scoreDelta === "number" && reason.scoreDelta !== 0 && (
                           <span className={`rounded px-1.5 py-0.5 text-[10px] font-black ${reason.scoreDelta > 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
                             {reason.scoreDelta > 0 ? `+${reason.scoreDelta}` : reason.scoreDelta}
@@ -93,8 +95,7 @@ export default function WhyScoreModal({ open, onOpenChange, title, score, reason
         <div className="flex items-start gap-2.5 rounded-2xl border border-gray-100 bg-gray-50 p-4 text-sm leading-relaxed text-gray-600">
           {dangerCount > 0 ? <X className="mt-0.5 h-4 w-4 shrink-0 text-red-400" /> : warningCount > 0 ? <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" /> : <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />}
           <p>
-            Kết quả chỉ mang tính <strong>tham khảo</strong>. Luôn kiểm tra kỹ nguồn thông tin, địa chỉ website trước khi
-            đăng nhập, nhập mật khẩu hay thanh toán.
+            {t('why.disclaimer')}
           </p>
         </div>
       </DialogContent>
