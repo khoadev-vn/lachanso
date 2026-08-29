@@ -37,7 +37,7 @@ const PSYCH_MANIPULATION = [
   // URGENCY TACTICS
   { id: 'PSY_URGENCY_TIME', name: 'Time pressure manipulation', weight: 0.35, 
     re: /(ngay lập tức|right now|immediately|urgent|至急|立即|즉시|ด่วน|срочно|ahora|immediately|within \d+ (?:minutes?|hours?|days?)|before it's too late|last chance|final notice|expires? (?:today|soon|in \d+))/i,
-    category: 'psychological', subcategory: 'urgency' },
+    category: 'psychological', subcategory: 'urgency',
     explanation: 'Scammers create artificial urgency to prevent rational thinking' },
   
   { id: 'PSY_FEAR', name: 'Fear-based coercion', weight: 0.40,

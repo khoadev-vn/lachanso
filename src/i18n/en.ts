@@ -688,6 +688,30 @@ export const en: Record<string, string> = {
   'result.analyzedContent': 'Analyzed Content',
   'result.textSource': 'Text or article submitted to verification pipeline.',
 
+  // Category group translations
+  'category.security': 'Scam & Security Signals',
+  'category.securityDesc': 'Phishing, scam and threat indicators have been recorded.',
+  'category.technology': 'Technology & Domain',
+  'category.technologyDesc': 'Hosting, domain, HTTPS and URL structure evaluation.',
+  'category.reputation': 'Reputation & Brand',
+  'category.reputationDesc': 'Cross-reference with trusted sources and official brands.',
+  'category.reference': 'Reference & Notes',
+  'category.referenceDesc': 'Reference notes and additional verification instructions.',
+
+  // Summary translations
+  'summary.insufficient': 'System lacks sufficient data to evaluate this content. Exercise caution before using.',
+  'summary.eduGuide': 'This is educational content about identifying scams via messages.',
+  'summary.msgDanger': 'This is very likely a SCAM MESSAGE. Do not transfer money, click links, or provide OTP/passwords to anyone.',
+  'summary.msgWarning': 'Clear danger indicators in the message. Stop and verify the sender before acting.',
+  'summary.msgSafe': 'Content matches familiar/known context — appears safe. Still be cautious with financial requests.',
+  'summary.msgInsufficient': 'System lacks sufficient data to evaluate this message. Exercise caution before interacting.',
+  'summary.eduNews': 'This is an educational article about identifying fake news and scams. Content is informational — NOT fake news.',
+  'summary.newsDanger': 'This is very likely fake news or a scam. Do not trust, share or transfer money per the content instructions.',
+  'summary.newsWarning': 'Clear danger indicators present. Stop and verify from official sources before trusting.',
+  'summary.newsSafe': 'All indicators are positive — content matches official information standards.',
+  'summary.newsInsufficient': 'System lacks sufficient data to evaluate this content. Exercise caution before using.',
+  'result.conclusion': 'Plain language conclusion',
+
   // NextStepsGuideModal translations
   'nextsteps.titleWebDanger': 'Scam link — what should you do?',
   'nextsteps.titleWebInsufficient': 'Suspicious link — what should you do?',

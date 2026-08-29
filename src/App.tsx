@@ -71,11 +71,11 @@ const translateReason = (res: any, t: (key: string) => string): any => {
   };
 };
 
-const WEB_CATEGORY_GROUPS: { key: string; label: string; icon: any; description: string; accent: string }[] = [
-  { key: "security", label: "Tín hiệu Lừa đảo & Bảo mật", icon: AlertTriangle, description: "Dấu hiệu phishing, lừa đảo và mối đe dọa đã được ghi nhận.", accent: "text-red-600 bg-red-50 border-red-100" },
-  { key: "technology", label: "Công nghệ & Tên miền", icon: Globe, description: "Đánh giá hosting, tên miền, HTTPS và cấu trúc URL.", accent: "text-sky-600 bg-sky-50 border-sky-100" },
-  { key: "reputation", label: "Danh tiếng & Thương hiệu", icon: ShieldCheck, description: "Đối chiếu với nguồn tin cậy và thương hiệu chính thống.", accent: "text-emerald-600 bg-emerald-50 border-emerald-100" },
-  { key: "reference", label: "Đối chiếu & Tham khảo", icon: Info, description: "Ghi chú tham khảo và hướng dẫn kiểm tra thêm.", accent: "text-gray-600 bg-gray-50 border-gray-100" }
+const getWebCategoryGroups = (t: (key: string) => string): { key: string; label: string; icon: any; description: string; accent: string }[] => [
+  { key: "security", label: t('category.security'), icon: AlertTriangle, description: t('category.securityDesc'), accent: "text-red-600 bg-red-50 border-red-100" },
+  { key: "technology", label: t('category.technology'), icon: Globe, description: t('category.technologyDesc'), accent: "text-sky-600 bg-sky-50 border-sky-100" },
+  { key: "reputation", label: t('category.reputation'), icon: ShieldCheck, description: t('category.reputationDesc'), accent: "text-emerald-600 bg-emerald-50 border-emerald-100" },
+  { key: "reference", label: t('category.reference'), icon: Info, description: t('category.referenceDesc'), accent: "text-gray-600 bg-gray-50 border-gray-100" }
 ];
 
 const WEB_REASON_STATUS_CARD = (status: string) =>
@@ -238,7 +238,7 @@ const PLAIN_REASON_TEXT: Record<string, string> = {
   MSG_CONTACT_PHONE: "Số điện thoại lạ kèm nội dung nhạy cảm."
 };
 
-function buildPlainSummary(reasons: any[], input: any): { items: string[]; verdict: string; } {
+function buildPlainSummary(reasons: any[], input: any, t: (key: string) => string): { items: string[]; verdict: string; } {
   const safe = Boolean(input?.isSafe ?? input);
   const educational = Boolean(input?.isEducational);
   const isMessage = Boolean(input?.isMessageCheck);
@@ -247,31 +247,31 @@ function buildPlainSummary(reasons: any[], input: any): { items: string[]; verdi
   const success = reasons.filter((r) => r?.status === "success");
   const picked = educational ? (success.length > 0 ? success : warning) : danger.length > 0 ? danger : safe ? success : warning;
   const items = picked.slice(0, 4).map((r) => PLAIN_REASON_TEXT[r?.id] ?? (r?.detail ? (r.detail as string).split(".")[0] + "." : r?.name ?? ""));
-  let verdict = "Hệ thống chưa đủ dữ liệu để đánh giá nội dung này. Bạn cần cảnh giác kỹ trước khi sử dụng.";
+  let verdict = t('summary.insufficient');
   if (isMessage) {
     if (educational) {
-      verdict = "Đây là nội dung hướng dẫn/giáo dục về cách nhận biết lừa đảo qua tin nhắn.";
+      verdict = t('summary.eduGuide');
     } else if (danger.length >= 2 || input?.isDanger) {
-      verdict = "Đây rất có khả năng là TIN NHẮN LỪA ĐẢO. Không chuyển tiền, không nhấn link, không cung cấp OTP/mật khẩu cho bất kỳ ai.";
+      verdict = t('summary.msgDanger');
     } else if (danger.length === 1) {
-      verdict = "Có dấu hiệu nguy hiểm rõ rệt trong tin nhắn. Dừng lại và kiểm chứng người gửi trước khi hành động.";
+      verdict = t('summary.msgWarning');
     } else if (safe || success.length > 0) {
-      verdict = "Nội dung phù hợp với ngữ cảnh xác nhận/quen biết — dường như an toàn. Vẫn cẩn trọng nếu có yêu cầu tài chính.";
+      verdict = t('summary.msgSafe');
     } else {
-      verdict = "Hệ thống chưa đủ dữ liệu để đánh giá tin nhắn này. Bạn cần cảnh giác kỹ trước khi tương tác.";
+      verdict = t('summary.msgInsufficient');
     }
     return { items, verdict };
   }
   if (educational) {
-    verdict = "Đây là bài viết hướng dẫn/giáo dục về cách nhận biết tin giả và lừa đảo. Nội dung mang tính cảnh báo — KHÔNG phải là tin giả. Bạn có thể yên tâm đọc và áp dụng để bảo vệ bản thân.";
+    verdict = t('summary.eduNews');
   } else if (danger.length >= 2) {
-    verdict = "Đây rất có khả năng là tin giả hoặc lừa đảo. Không nên tin, chia sẻ hoặc chuyển tiền theo hướng dẫn trong nội dung.";
+    verdict = t('summary.newsDanger');
   } else if (danger.length === 1) {
-    verdict = "Có dấu hiệu nguy hiểm rõ rệt. Bạn nên dừng lại và kiểm chứng từ nguồn chính thống trước khi tin.";
+    verdict = t('summary.newsWarning');
   } else if (safe) {
-    verdict = "Các dấu hiệu đều tích cực — nội dung phù hợp với quy chuẩn thông tin chính thống.";
+    verdict = t('summary.newsSafe');
   } else {
-    verdict = "Hệ thống chưa đủ dữ liệu để đánh giá nội dung này. Bạn cần cảnh giác kỹ trước khi sử dụng.";
+    verdict = t('summary.newsInsufficient');
   }
   return { items, verdict };
 }
@@ -2149,11 +2149,11 @@ export default function App() {
                   {resultData.type === "web" && (resultData.thirdParty?.length || resultData.ipInfo?.detail?.ips?.length) ? <ThirdPartyResultsPanel thirdParty={resultData.thirdParty} ipInfo={resultData.ipInfo} /> : null}
 
                   {resultData.type === "news" && (() => {
-                    const plain = buildPlainSummary(resultData.analysisReasons ?? [], resultData);
+                    const plain = buildPlainSummary(resultData.analysisReasons ?? [], resultData, t);
                     return <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className={`overflow-hidden rounded-3xl border p-6 ${resultData.isSafe ? "border-emerald-200 bg-emerald-50/60" : resultData.isDanger ? "border-red-200 bg-red-50/70" : "border-amber-200 bg-amber-50/60"}`}>
                       <div className="flex items-center gap-2 mb-3">
                         {resultData.isSafe ? <ShieldCheck className="h-5 w-5 text-emerald-600" /> : resultData.isDanger ? <X className="h-5 w-5 text-red-600" /> : <AlertTriangle className="h-5 w-5 text-amber-600" />}
-                          <h3 className="text-base font-black tracking-tight text-gray-950">Kết luận bằng lời đơn giản</h3>
+                          <h3 className="text-base font-black tracking-tight text-gray-950">{t('result.conclusion')}</h3>
                       </div>
                       <p className={`text-[15px] leading-relaxed font-medium ${resultData.isSafe ? "text-emerald-900" : resultData.isDanger ? "text-red-900" : "text-amber-900"}`}>
                         {plain.verdict}
@@ -2283,7 +2283,7 @@ export default function App() {
                       </div>
 
                       {resultData.type === "web" ? <div className="space-y-4">
-                        {WEB_CATEGORY_GROUPS.map((group) => {
+                        {getWebCategoryGroups(t).map((group) => {
                           const groupReasons = (resultData.analysisReasons ?? []).filter((r: any) => (r.category ?? "reference") === group.key);
                           if (groupReasons.length === 0) return null;
                           return <WebReasonGroupCard key={group.key} group={group} reasons={groupReasons} t={t} />;
