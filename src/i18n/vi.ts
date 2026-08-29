@@ -698,20 +698,6 @@ export const vi: Record<string, string> = {
   'category.reference': 'Đối chiếu & Tham khảo',
   'category.referenceDesc': 'Ghi chú tham khảo và hướng dẫn kiểm tra thêm.',
 
-  // Summary translations
-  'summary.insufficient': 'Hệ thống chưa đủ dữ liệu để đánh giá nội dung này. Bạn cần cảnh giác kỹ trước khi sử dụng.',
-  'summary.eduGuide': 'Đây là nội dung hướng dẫn/giáo dục về cách nhận biết lừa đảo qua tin nhắn.',
-  'summary.msgDanger': 'Đây rất có khả năng là TIN NHẮN LỪA ĐẢO. Không chuyển tiền, không nhấn link, không cung cấp OTP/mật khẩu cho bất kỳ ai.',
-  'summary.msgWarning': 'Có dấu hiệu nguy hiểm rõ rệt trong tin nhắn. Dừng lại và kiểm chứng người gửi trước khi hành động.',
-  'summary.msgSafe': 'Nội dung phù hợp với ngữ cảnh xác nhận/quen biết — dường như an toàn. Vẫn cẩn trọng nếu có yêu cầu tài chính.',
-  'summary.msgInsufficient': 'Hệ thống chưa đủ dữ liệu để đánh giá tin nhắn này. Bạn cần cảnh giác kỹ trước khi tương tác.',
-  'summary.eduNews': 'Đây là bài viết hướng dẫn/giáo dục về cách nhận biết tin giả và lừa đảo. Nội dung mang tính cảnh báo — KHÔNG phải là tin giả.',
-  'summary.newsDanger': 'Đây rất có khả năng là tin giả hoặc lừa đảo. Không nên tin, chia sẻ hoặc chuyển tiền theo hướng dẫn trong nội dung.',
-  'summary.newsWarning': 'Có dấu hiệu nguy hiểm rõ rệt. Bạn nên dừng lại và kiểm chứng từ nguồn chính thống trước khi tin.',
-  'summary.newsSafe': 'Các dấu hiệu đều tích cực — nội dung phù hợp với quy chuẩn thông tin chính thống.',
-  'summary.newsInsufficient': 'Hệ thống chưa đủ dữ liệu để đánh giá nội dung này. Bạn cần cảnh giác kỹ trước khi sử dụng.',
-  'result.conclusion': 'Kết luận bằng lời đơn giản',
-
   // NextStepsGuideModal translations
   'nextsteps.titleWebDanger': 'Link lừa đảo — bạn nên làm gì?',
   'nextsteps.titleWebInsufficient': 'Nghi ngờ link lừa đảo — bạn nên làm gì?',
