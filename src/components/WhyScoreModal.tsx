@@ -2,6 +2,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { ShieldCheck, AlertTriangle, X, Info, ListOrdered } from "lucide-react";
 import { useLang } from "../contexts/LangContext";
 
+const translateReason = (res: any, t: (key: string) => string): any => {
+  const nameKey = `reason.${res.id}`;
+  const detailKey = `reason.${res.id}_detail`;
+  const translatedName = t(nameKey);
+  const translatedDetail = t(detailKey);
+  return {
+    ...res,
+    name: translatedName !== nameKey ? translatedName : res.name,
+    detail: translatedDetail !== detailKey ? translatedDetail : res.detail
+  };
+};
+
 interface WhyReason {
   name?: string;
   detail?: string;
@@ -66,6 +78,7 @@ export default function WhyScoreModal({ open, onOpenChange, title, score, reason
 
             <ol className="max-h-[380px] space-y-3 overflow-y-auto pr-1 custom-scrollbar">
               {list.map((reason, idx) => {
+                const translatedReason = translateReason(reason, t);
                 const status = reason.status;
                 const isBad = status === "danger";
                 const isWarn = status === "warning";
@@ -76,14 +89,14 @@ export default function WhyScoreModal({ open, onOpenChange, title, score, reason
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="mb-0.5 flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-black text-gray-950">{reason.name ?? `${t('why.signal')} ${idx + 1}`}</span>
+                        <span className="text-sm font-black text-gray-950">{translatedReason.name ?? `${t('why.signal')} ${idx + 1}`}</span>
                         {typeof reason.scoreDelta === "number" && reason.scoreDelta !== 0 && (
                           <span className={`rounded px-1.5 py-0.5 text-[10px] font-black ${reason.scoreDelta > 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
                             {reason.scoreDelta > 0 ? `+${reason.scoreDelta}` : reason.scoreDelta}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs font-medium leading-5 text-gray-700">{reason.detail}</p>
+                      <p className="text-xs font-medium leading-5 text-gray-700">{translatedReason.detail}</p>
                     </div>
                   </li>
                 );

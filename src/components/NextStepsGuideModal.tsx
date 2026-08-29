@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 import { ShieldAlert, ShieldBan, Lock, Share2, Search, Phone } from "lucide-react";
+import { useLang } from "../contexts/LangContext";
 
 interface NextStepsGuideModalProps {
   open: boolean;
@@ -8,67 +9,70 @@ interface NextStepsGuideModalProps {
   dangerLevel: "danger" | "insufficient" | "safe";
 }
 
-const ACTION_CALLOUTS = [
-  {
-    icon: ShieldBan,
-    title: "Tuyệt đối KHÔNG",
-    items: [
-      "Không nhấp vào link, tải file hay quét mã QR trong nội dung/link này.",
-      "Không nhập tên đăng nhập, mật khẩu, OTP, số thẻ hoặc CMND/CCCD trên trang.",
-      "Không chuyển khoản, nạp thẻ hoặc 'thanh toán phí' theo bất kỳ hướng dẫn nào.",
-      "Không chia sẻ tiếp link này cho người thân, bạn bè, hội nhóm."
-    ],
-    color: "border-red-200 bg-red-50/70",
-    iconColor: "text-red-600",
-  },
-  {
-    icon: Search,
-    title: "Xác minh lại bằng nguồn chính thống",
-    items: [
-      "Tìm lại thông tin trên báo chí uy tín (VnExpress, Tuổi Trẻ, Thanh Niên, VietnamNet...) hoặc kênh tin cơ quan chức năng.",
-      "Truy cập TRỰC TIẾP website chính thức (nhập tay địa chỉ, đừng bấm link nghi ngờ).",
-      "Đối chiếu số điện thoại hotline, email, zalo chính thức của thương hiệu/cơ quan."
-    ],
-    color: "border-blue-200 bg-blue-50/80",
-    iconColor: "text-blue-600",
-  },
-  {
-    icon: Phone,
-    title: "Báo cáo ngay cho cơ quan chức năng",
-    items: [
-      "Cục An toàn Thông tin – Bộ TTTT: hotline 113 (bộ phận an ninh mạng) hoặc qua cổng online.",
-      "Trung tâm Giám sát An toàn không gian mạng quốc gia: 113 / bkcert.vn — báo phishing, lừa đảo.",
-      "Phản ánh trên trang 'Bộ Công an khvung chống tội phạm mạng' hoặc đến công an phường/xã gần nhất nếu bạn bị chuyển tiền.",
-      "Nếu là tin giả trên Facebook/Zalo: dùng tính năng 'Báo cáo' bài đăng, xem và lan tỏa cảnh báo."
-    ],
-    color: "border-emerald-200 bg-emerald-50/80",
-    iconColor: "text-emerald-600",
-  },
-  {
-    icon: Lock,
-    title: "Bảo vệ tài khoản nếu bạn đã tương tác",
-    items: [
-      "Hong đổi ngay mật khẩu của các tài khoản liên quan, bật xác thực hai lớp (2FA).",
-      "Kiểm tra lịch sử giao dịch/một mã OTP bị gửi đi.",
-      "Nếu chuyển nhầm khoản tiền: gọi hotline ngân hàng và trình báo Công an ngay trong ngày."
-    ],
-    color: "border-violet-200 bg-violet-50/80",
-    iconColor: "text-violet-600",
-  }
-];
-
 export default function NextStepsGuideModal({ open, onOpenChange, kind, dangerLevel }: NextStepsGuideModalProps) {
+  const { t } = useLang();
   const isNews = kind === "news";
   const isDanger = dangerLevel === "danger";
   const isSafe = dangerLevel === "safe";
+  
   const title = isNews
-    ? (isDanger ? "Tin giả/lừa đảo — bạn nên làm gì?" : isSafe ? "Kết quả an toàn — lưu ý" : "Nghi ngờ tin giả — bạn nên làm gì?")
-    : (isDanger ? "Link lừa đảo — bạn nên làm gì?" : isSafe ? "Kết quả an toàn — lưu ý" : "Nghi ngờ link lừa đảo — bạn nên làm gì?");
+    ? (isDanger ? t('nextsteps.titleFakeNewsDanger') : isSafe ? t('nextsteps.titleSafe') : t('nextsteps.titleFakeNewsInsufficient'))
+    : (isDanger ? t('nextsteps.titleWebDanger') : isSafe ? t('nextsteps.titleSafe') : t('nextsteps.titleWebInsufficient'));
+  
   const intro = isSafe
-    ? "Kết quả này an toàn nhưng hãy luôn thận trọng. Dưới đây là các thói quen hay giúp bạn tránh bẫy lừa đảo trong tương lai."
+    ? t('nextsteps.introSafe')
     : isNews
-      ? "Hệ thống nghi ngờ nội dung này là tin giả hoặc lừa đảo. Hãy bình tĩnh làm theo các bước dưới đây để bảo vệ bản thân và người thân."
-      : "Hệ thống nghi ngờ đây là link lừa đảo/không an toàn. Đừng hoảng loạn — làm lần lượt theo hướng dẫn."
+      ? t('nextsteps.introFakeNews')
+      : t('nextsteps.introWeb');
+
+  const ACTION_CALLOUTS = [
+    {
+      icon: ShieldBan,
+      title: t('nextsteps.never'),
+      items: [
+        t('nextsteps.neverItem1'),
+        t('nextsteps.neverItem2'),
+        t('nextsteps.neverItem3'),
+        t('nextsteps.neverItem4')
+      ],
+      color: "border-red-200 bg-red-50/70",
+      iconColor: "text-red-600",
+    },
+    {
+      icon: Search,
+      title: t('nextsteps.verify'),
+      items: [
+        t('nextsteps.verifyItem1'),
+        t('nextsteps.verifyItem2'),
+        t('nextsteps.verifyItem3')
+      ],
+      color: "border-blue-200 bg-blue-50/80",
+      iconColor: "text-blue-600",
+    },
+    {
+      icon: Phone,
+      title: t('nextsteps.report'),
+      items: [
+        t('nextsteps.reportItem1'),
+        t('nextsteps.reportItem2'),
+        t('nextsteps.reportItem3'),
+        t('nextsteps.reportItem4')
+      ],
+      color: "border-emerald-200 bg-emerald-50/80",
+      iconColor: "text-emerald-600",
+    },
+    {
+      icon: Lock,
+      title: t('nextsteps.protect'),
+      items: [
+        t('nextsteps.protectItem1'),
+        t('nextsteps.protectItem2'),
+        t('nextsteps.protectItem3')
+      ],
+      color: "border-violet-200 bg-violet-50/80",
+      iconColor: "text-violet-600",
+    }
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -108,10 +112,9 @@ export default function NextStepsGuideModal({ open, onOpenChange, kind, dangerLe
               <Share2 className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-black text-gray-900">Quy tắc vàng: 3 KHÔNG — KHÔNG NHẤP · KHÔNG NHẬP · KHÔNG CHUYỂN</p>
+              <p className="text-sm font-black text-gray-900">{t('nextsteps.goldenRule')}</p>
               <p className="mt-1 text-sm leading-relaxed text-gray-600">
-                Nếu bạn đã chuyển tiền hoặc cung cấp OTP, hãy báo ngay ngân hàng và trình báo công an càng sớm càng tốt.
-                Nếu bạn thấy cảnh báo này là Sai, hãy dùng nút <strong>"Báo kết quả sai (khiếu nại)"</strong> để đội ngũ xem xét lại.
+                {t('nextsteps.goldenRuleDesc')}
               </p>
             </div>
           </div>
