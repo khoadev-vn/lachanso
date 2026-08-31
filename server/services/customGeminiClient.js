@@ -52,7 +52,7 @@ async function customGeminiChat(messages, options = {}) {
       console.warn('[CustomGemini] Empty response from API.');
       return null;
     }
-    console.log('[CustomGemini] content.length:', content.length, '— first 100:', String(content).slice(0, 100));
+    console.log('[CustomGemini] raw content (' + content.length + '):', JSON.stringify(String(content).slice(0, 500)));
 
     if (response.data?.usage?.total_tokens) {
       stats.totalTokens += response.data.usage.total_tokens;
