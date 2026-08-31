@@ -186,11 +186,11 @@ async function collectC3(hostname) {
   }
 
   let risk = 0;
-  const manyIps = ipSet.size >= 3;
+  const manyIps = ipSet.size >= 5; // Tăng ngưỡng từ 3 lên 5 để tránh false positive với CDN/load balancer
   const orgsLike = hasMX || hasSPF || hasDMARC;
   if (!hasA) risk += 0; // unreachable → không phạt điểm, C vẫn tính được
-  else if (manyIps && !orgsLike) risk += 60; // nghi fast-flux
-  else if (!orgsLike) risk += 8; // DNS minimal
+  else if (manyIps && !orgsLike) risk += 30; // nghi fast-flux (giảm từ 60 xuống 30)
+  else if (!orgsLike) risk += 3; // DNS minimal (giảm từ 8 xuống 3 - nhiều web hợp pháp không có email records)
   else risk += 0;
 
   return { collected: true, risk, hasA, hasMX, hasSPF, hasDMARC, distinctIps: ipSet.size, likelyFastFlux: manyIps && !orgsLike };
