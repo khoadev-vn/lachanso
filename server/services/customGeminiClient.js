@@ -1,4 +1,5 @@
 const axios = require('axios');
+const http = require('http');
 const https = require('https');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
@@ -43,7 +44,9 @@ async function customGeminiChat(messages, options = {}) {
     const postData = JSON.stringify(payload);
 
     const content = await new Promise((resolve, reject) => {
-      const req = https.request({
+      const isHttps = url.protocol === 'https:';
+      const transport = isHttps ? https : http;
+      const req = transport.request({
         hostname: url.hostname,
         port: url.port || 443,
         path: url.pathname,
