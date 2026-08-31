@@ -48,7 +48,7 @@ async function customGeminiChat(messages, options = {}) {
       const transport = isHttps ? https : http;
       const req = transport.request({
         hostname: url.hostname,
-        port: url.port || 443,
+        port: url.port ? parseInt(url.port, 10) : (isHttps ? 443 : 80),
         path: url.pathname,
         method: 'POST',
         headers: {
