@@ -1,4 +1,5 @@
 const axios = require('axios');
+const https = require('https');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 
@@ -38,65 +39,74 @@ async function customGeminiChat(messages, options = {}) {
 
   try {
     stats.calls++;
-    const response = await axios.post(`${CUSTOM_GEMINI_BASE_URL}/chat/completions`, payload, {
-      headers: {
-        'Authorization': `Bearer ${CUSTOM_GEMINI_API_KEY}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      timeout,
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity
+    const url = new URL(`${CUSTOM_GEMINI_BASE_URL}/chat/completions`);
+    const postData = JSON.stringify(payload);
+
+    const content = await new Promise((resolve, reject) => {
+      const req = https.request({
+        hostname: url.hostname,
+        port: url.port || 443,
+        path: url.pathname,
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${CUSTOM_GEMINI_API_KEY}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Content-Length': Buffer.byteLength(postData)
+        },
+        timeout
+      }, (res) => {
+        let data = '';
+        res.on('data', chunk => { data += chunk; });
+        res.on('end', () => resolve(data));
+      });
+      req.on('error', reject);
+      req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+      req.write(postData);
+      req.end();
     });
 
-    const content = response.data?.choices?.[0]?.message?.content;
-    if (!content) {
+    let parsed;
+    try { parsed = JSON.parse(content); } catch (e) {
+      console.error('[CustomGemini] Response parse error:', e.message, '— raw:', String(content).slice(0, 300));
+      stats.errors++;
+      return null;
+    }
+
+    const msg = parsed?.choices?.[0]?.message?.content;
+    if (!msg) {
       console.warn('[CustomGemini] Empty response from API.');
       return null;
     }
-    console.log('[CustomGemini] raw content (' + content.length + '):', JSON.stringify(String(content).slice(0, 500)));
+    console.log('[CustomGemini] raw content (' + msg.length + '):', JSON.stringify(String(msg).slice(0, 500)));
 
-    if (response.data?.usage?.total_tokens) {
-      stats.totalTokens += response.data.usage.total_tokens;
+    if (parsed?.usage?.total_tokens) {
+      stats.totalTokens += parsed.usage.total_tokens;
     }
 
     if (jsonMode) {
-      // Strip markdown code blocks first
-      let cleaned = content.replace(/```(?:json)?\s*\n?/g, '').replace(/```\s*$/g, '').trim();
-      
-      // Try to parse directly
+      let cleaned = msg.replace(/```(?:json)?\s*\n?/g, '').replace(/```\s*$/g, '').trim();
+      if (cleaned.startsWith('[')) {
+        const firstBrace = cleaned.indexOf('{');
+        const lastBrace = cleaned.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace > firstBrace) cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+      }
       try {
-        const parsed = JSON.parse(cleaned);
-        if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object') {
-          return parsed[0];
-        }
-        return parsed;
+        return JSON.parse(cleaned);
       } catch (e) {
-        // If starts with [, extract first { ... } object
-        if (cleaned.startsWith('[')) {
-          const firstBrace = cleaned.indexOf('{');
-          const lastBrace = cleaned.lastIndexOf('}');
-          if (firstBrace !== -1 && lastBrace > firstBrace) {
-            const objStr = cleaned.slice(firstBrace, lastBrace + 1);
-            try { return JSON.parse(objStr); } catch (e2) {}
-          }
-        }
-        // Last resort: find first { ... }
-        const fallback = cleaned.match(/\{[\s\S]*\}/);
-        if (fallback) {
-          try { return JSON.parse(fallback[0]); } catch (e3) {}
+        const match = cleaned.match(/\{[\s\S]*\}/);
+        if (match) {
+          try { return JSON.parse(match[0]); } catch (e2) {}
         }
         console.error('[CustomGemini] JSON parse error:', e.message, '— cleaned:', String(cleaned).slice(0, 300));
         return null;
       }
     }
-    return content.trim();
+    return msg.trim();
   } catch (error) {
     stats.errors++;
-    stats.lastError = error.response?.status || 0;
     stats.lastErrorTime = Date.now();
-    const errMsg = error.response?.data?.error?.message || error.message;
-    console.error(`[CustomGemini] Lỗi: ${errMsg} (status: ${error.response?.status || 'N/A'})`);
+    console.error(`[CustomGemini] Lỗi: ${error.message}`);
     return null;
   }
 }
