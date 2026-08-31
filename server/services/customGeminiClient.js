@@ -65,9 +65,11 @@ function customGeminiChat(messages, options = {}) {
         if (err) {
           stats.errors++;
           stats.lastErrorTime = Date.now();
-          console.error(`[CustomGemini] Lỗi: ${err.message}`);
+          console.error(`[CustomGemini] curl error: ${err.message} stderr: ${String(stderr).slice(0, 200)}`);
           return resolve(null);
         }
+
+        console.log('[CustomGemini] curl stdout (' + String(stdout).length + '):', String(stdout).slice(0, 300));
 
         let parsed;
         try {
