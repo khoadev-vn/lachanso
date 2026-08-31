@@ -512,7 +512,62 @@ Output: {"summary":"Lừa đảo việc làm tại nhà - hứa hẹn thu nhập
 - Phân tích kỹ nội dung, KHÔNG bỏ qua dấu hiệu lừa đảo
 - Ưu tiên an toàn cho người dùng Việt Nam
 - Nếu có nghi ngờ, chấm điểm cao hơn (thà cáo giác nhầm còn hơn bỏ sót)
-- Trả về JSON NGAY LẬP TỨC, không giải thích`;
+- Trả về JSON NGAY LẬP TỨC, không giải thích
+
+## CÁC MẪU LỪA ĐẢO PHỨC TẬP (CẦN PHÁT HIỆN)
+
+### 1. CLOAKING (Hiển thị khác nhau)
+- Desktop → 404, Mobile → redirect scam
+- JavaScript detect platform: navigator.platform, screen.availWidth
+- Root page trống nhưng /payment, /pay, /claim có nội dung
+- **Điểm risk: 60-80**
+
+### 2. JAVASCRIPT OBFUSCATION (Mã hóa code)
+- eval(), atob(), fromCharCode(), hex/unicode encoding
+- Dynamic link creation: document.createElement('a')
+- Redirect ẩn: top.location.href, window.location.href
+- noreferrer/noopener để giấu redirect chain
+- **Điểm risk: 50-70**
+
+### 3. REDIRECT CHAIN (Chuỗi chuyển hướng)
+- Domain A → Domain B → Domain C (suspicious TLD: .top, .xyz, .club)
+- Script detect device rồi redirect khác nhau
+- Loading page rồi redirect sau delay
+- **Điểm risk: 40-60**
+
+### 4. MÂU BRAND (Giả mạo thương hiệu)
+- Title: "Farmácias Pague Menos" nhưng domain random
+- Og:image/logo của brand thật nhưng content khác
+- Claim "independence Day Gift" từ brand không tồn tại
+- **Điểm risk: 70-90**
+
+### 5. MOBILE-ONLY SCAM
+- Chỉ redirect trên mobile, desktop = 404
+- Target user Việt Nam với ZaloPay/Momo/VNPay
+- Link dạng: domain.com/xxx/random-number
+- **Điểm risk: 60-80**
+
+## VÍ DỤ THỰC TẾ
+
+### Ví dụ 11: Cloaking scam
+Input: TITLE: 🍫Farmácias Pague Menos - independence Day Gifts | BODY: 404 Not Found + script detect platform + redirect to nabicok.top
+Output: {"summary":"Lừa đảo giả mạo nhà thuốc Pague Menos - cloaking desktop=404, mobile=redirect scam.","category":"scam","risk":85,"keywords":["Pague Menos","cloaking","redirect","lừa đảo","pharmacy"]}
+
+### Ví dụ 12: Mobile redirect scam
+Input: TITLE: Khuyến mãi MoMo | BODY: script detect navigator.platform → redirect momoraffle.com
+Output: {"summary":"Lừa đảo MoMo - JavaScript detect platform rồi redirect sang domain scam.","category":"scam","risk":80,"keywords":["MoMo","redirect","JavaScript","platform","lừa đảo"]}
+
+### Ví dụ 13: Hidden payment path
+Input: TITLE: (empty) | BODY: 404, nhưng /payment có nội dung "Claim your reward"
+Output: {"summary":"Website che giấu nội dung lừa đảo trên path ẩn /payment.","category":"scam","risk":75,"keywords":["hidden","payment","reward","che giấu","lừa đảo"]}
+
+### Ví dụ 14: JavaScript obfuscation
+Input: BODY: eval(atob('dG9wLmxvY2F0aW9u...')) + navigator.platform detection
+Output: {"summary":"Website sử dụng JavaScript obfuscation và platform detection để redirect.","category":"scam","risk":70,"keywords":["obfuscation","eval","atob","redirect","malicious"]}
+
+### Ví dụ 15: ZaloPay phishing
+Input: TITLE: ZaloPay - Nhận ngay 500k | BODY: Nhập số điện thoại + OTP để nhận thưởng
+Output: {"summary":"Phishing ZaloPay - mạo danh khuyến mãi để đánh cắp thông tin tài khoản.","category":"phishing","risk":90,"keywords":["ZaloPay","phishing","OTP","mạo danh","lừa đảo"]}`;
 
 /**
  * Enhanced system prompt for message verification

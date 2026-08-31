@@ -22,6 +22,7 @@ const { llmChat, isLLMConfigured } = require('./llmClient');
 const { openrouterChat, isOpenRouterConfigured } = require('./openrouterClient');
 const ssrfGuard = require('./ssrfGuard');
 const { WEB_SYSTEM_PROMPT } = require('../data/trainingExamples');
+const DeepWebAnalyzer = require('./deepWebAnalyzer');
 
 const WEIGHTS = { c1: 0.18, c2: 0.14, c3: 0.08, c4: 0.14, c5: 0.15, c6: 0.10, c7: 0.06, c8: 0.05, c9: 0.10 };
 
@@ -608,6 +609,22 @@ async function collectC9(url) {
   if (cached && Date.now() < cached.expiresAt) return { collected: true, ...cached.data };
 
   try {
+    // ===== DEEP ANALYSIS: Quét nhiều path + phân tích JS + phát hiện cloaking =====
+    const deepAnalyzer = new DeepWebAnalyzer();
+    const deepResults = await deepAnalyzer.analyze(url);
+    
+    // Nếu deep analysis phát hiện cloaking/scam → tăng risk đáng kể
+    const deepRiskBonus = deepResults.overallRisk;
+    const hasCloaking = deepResults.cloakingDetected;
+    const hasObfuscation = deepResults.jsAnalysis.hasObfuscation;
+    const hasRedirect = deepResults.jsAnalysis.hasRedirect;
+    const scamIndicatorCount = deepResults.scamIndicators.length;
+    
+    if (deepRiskBonus > 20 || hasCloaking) {
+      console.log(`[riskEngineV2] c9 deepAnalysis: risk=${deepRiskBonus} cloaking=${hasCloaking} obfuscation=${hasObfuscation} indicators=${scamIndicatorCount}`);
+    }
+
+    // ===== Phân tích nội dung gốc (giữ nguyên logic cũ) =====
     let page = await extractPageText(url);
 
     // Retry #1: UA Googlebot (nhiều trang chặn bot thường vẫn phục vụ googlebot)
@@ -627,19 +644,59 @@ async function collectC9(url) {
       } catch (e) { /* bỏ qua */ }
     }
 
+    // ===== Quét thêm các path ẩn từ deep analysis =====
+    let hiddenContent = '';
+    for (const pathResult of deepResults.paths) {
+      if (pathResult.path !== '/' && pathResult.content && pathResult.status === 200) {
+        hiddenContent += `\n--- ${pathResult.path} (${pathResult.contentLength} bytes) ---\n${pathResult.content.substring(0, 2000)}`;
+      }
+    }
+
     if (!page) {
-      return { collected: false, risk: 0, summary: null, category: null };
+      // Nếu deep analysis phát hiện nội dung ẩn → vẫn coi như có signal
+      if (hiddenContent.length > 100) {
+        page = { body: hiddenContent, title: 'Hidden content detected', htmlLength: hiddenContent.length };
+      } else {
+        return { collected: false, risk: 0, summary: null, category: null };
+      }
     }
 
     // Nội dung tối thiểu để LLM phân tích: body, nếu rỗng thì dùng meta/title/h1/og
-    const hasSignal = page.body || page.title || page.desc || page.h1 || page.ogSite;
+    const hasSignal = page.body || page.title || page.desc || page.h1 || page.ogSite || hiddenContent;
     if (!hasSignal) {
       return { collected: false, risk: 0, summary: null, category: null };
     }
 
+    // ===== Tổng hợp nội dung cho AI =====
+    let textSample = `TITLE: ${page.title}\nSITE: ${page.ogSite}\nH1: ${page.h1}\nDESC: ${page.desc}\nBODY: ${page.body}`;
+    
+    // Thêm nội dung ẩn từ deep analysis
+    if (hiddenContent) {
+      textSample += `\n\n=== NỘI DUNG ẨN TỪ CÁC PATH KHÁC ===${hiddenContent}`;
+    }
+    
+    // Thêm thông tin JS analysis
+    if (deepResults.jsAnalysis.findings.length > 0) {
+      textSample += `\n\n=== PHÂN TÍCH JAVASCRIPT ===`;
+      textSample += `\nPhát hiện ${deepResults.jsAnalysis.findings.length} patterns đáng ngờ:`;
+      for (const finding of deepResults.jsAnalysis.findings.slice(0, 10)) {
+        textSample += `\n- ${finding.pattern} (risk: ${finding.risk}) tại ${finding.path}`;
+      }
+      if (hasCloaking) textSample += `\n⚠️ CLOAKING DETECTED: Website hiển thị nội dung khác nhau cho desktop/mobile`;
+      if (hasObfuscation) textSample += `\n⚠️ JAVASCRIPT OBFUSCATION: Code bị mã hóa/che giấu`;
+      if (hasRedirect) textSample += `\n⚠️ REDIRECT ẨN: JavaScript thực hiện redirect không minh bạch`;
+    }
+    
+    // Thêm scam indicators
+    if (deepResults.scamIndicators.length > 0) {
+      textSample += `\n\n=== CHỈ BÁO LỪA ĐẢO ===`;
+      for (const indicator of deepResults.scamIndicators) {
+        textSample += `\n- ${indicator.type}: ${indicator.detail} (risk: ${indicator.risk})`;
+      }
+    }
+
     // Không gọi LLM nếu chưa cấu hình → vẫn báo collected nhưng không chấm
     let analysis = null;
-    const textSample = `TITLE: ${page.title}\nSITE: ${page.ogSite}\nH1: ${page.h1}\nDESC: ${page.desc}\nBODY: ${page.body}`;
     const llmReady = await isLLMConfigured();
     if (llmReady) {
       // Bước 1: OpenRouter free (Nemotron Ultra) — tóm tắt + phân loại + chấm điểm trong 1 call
@@ -739,16 +796,34 @@ async function collectC9(url) {
         risk = categoryRisk;
       }
     }
+    
+    // ===== KẾT HỢP DEEP ANALYSIS RISK =====
+    // Nếu deep analysis phát hiện cloaking/scam → tăng risk
+    if (deepRiskBonus > 30 || hasCloaking || hasObfuscation) {
+      // Deep analysis rất đáng tin → dùng max hoặc weighted average
+      risk = Math.max(risk, deepRiskBonus * 0.8);
+      if (hasCloaking) risk = Math.max(risk, 60);
+      if (hasObfuscation) risk = Math.max(risk, 50);
+      if (scamIndicatorCount >= 3) risk = Math.max(risk, 70);
+    }
+    
     // Tiêu chí nội dung: nội dung bình thường + có LLM → coi như "collected" mạnh (C cao), risk thấp
     const result = {
       collected: true,
-      risk: clamp(risk, 0, 90),
-      summary: analysis ? analysis.summary : null,
+      risk: clamp(Math.round(risk), 0, 90),
+      summary: analysis ? analysis.summary : deepResults.summary,
       category: analysis ? analysis.category : null,
       keywords: analysis ? analysis.keywords : [],
       aiUsed: !!analysis,
       contentLength: page.htmlLength,
-      title: page.title
+      title: page.title,
+      deepAnalysis: {
+        cloakingDetected: hasCloaking,
+        jsObfuscation: hasObfuscation,
+        redirectDetected: hasRedirect,
+        scamIndicators: scamIndicatorCount,
+        risk: deepRiskBonus
+      }
     };
     c9Cache.set(cacheKey, { data: result, expiresAt: Date.now() + C9_CACHE_TTL });
     return result;
