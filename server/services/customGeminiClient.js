@@ -50,6 +50,7 @@ function customGeminiChat(messages, options = {}) {
         return resolve(null);
       }
 
+      console.log('[CustomGemini] Temp file created:', tmpFile, 'size:', payloadStr.length);
       stats.calls++;
       execFile('curl', [
         '-s', '-m', String(Math.ceil(timeout / 1000)),
@@ -65,7 +66,7 @@ function customGeminiChat(messages, options = {}) {
         if (err) {
           stats.errors++;
           stats.lastErrorTime = Date.now();
-          console.error(`[CustomGemini] curl error: ${err.message}`);
+          console.error(`[CustomGemini] curl error: ${err.message} stderr: ${String(stderr).slice(0, 200)}`);
           return resolve(null);
         }
 
