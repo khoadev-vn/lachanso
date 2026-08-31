@@ -813,8 +813,8 @@ app.post('/api/v2/verify', async (req, res) => {
 // ============ v2.0 RISK ENGINE — WEB/URL VERIFICATION (8 tiêu chí Zero-Trust) ============
 const { verifyWebsite: verifyWebsiteV2 } = require('./services/riskEngineV2');
 
-function webVerifyCacheKey(url) {
-    return String(url).toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, '');
+function webVerifyCacheKey(url, lang = 'vi') {
+    return String(url).toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, '') + ':' + lang;
 }
 
 function buildWebVerifyResponse(result, startTime) {
@@ -847,7 +847,7 @@ function runWebVerifyJob(jobId, url, lang = 'vi') {
     const startTime = Date.now();
     verifyWebsiteV2(url, { lang }).then((result) => {
         const responseData = buildWebVerifyResponse(result, startTime);
-        const cacheKey = webVerifyCacheKey(url);
+        const cacheKey = webVerifyCacheKey(url, lang);
         cacheService.set('web-verify', cacheKey, responseData, 10);
         const job = webVerifyJobs.get(jobId);
         if (job) {
@@ -875,7 +875,7 @@ app.post('/api/v2/web-verify/async', async (req, res) => {
         if (!safe.ok) return res.status(400).json({ error: `URL không được phép quét: ${safe.reason}` });
 
         // Trả ngay kết quả cache nếu có (lần check sau ~0ms)
-        const cacheKey = webVerifyCacheKey(normalized);
+        const cacheKey = webVerifyCacheKey(normalized, lang);
         const cached = cacheService.get('web-verify', cacheKey);
         if (cached) {
             console.log(`[API-v2][web:async] ⚡ Cache hit: ${cacheKey}`);
@@ -931,7 +931,7 @@ app.post('/api/v2/web-verify', async (req, res) => {
 
         // Cache kết quả theo URL gốc (10 phút) — lần check sau gần như tức thì,
         // tránh tình trạng backend chậm hơn giới hạn timeout của Vercel proxy.
-        const cacheKey = webVerifyCacheKey(normalized);
+        const cacheKey = webVerifyCacheKey(normalized, lang);
         const cached = cacheService.get('web-verify', cacheKey);
         if (cached) {
             console.log(`[API-v2][web] ⚡ Cache hit: ${cacheKey} (${Date.now() - startTime}ms)`);
