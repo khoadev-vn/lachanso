@@ -464,7 +464,14 @@ Phân tích nội dung website được cung cấp và đánh giá mức độ a
 
 ## OUTPUT FORMAT
 Trả về JSON duy nhất, KHÔNG thêm text khác:
-{"summary":"<tóm tắt 1-2 câu bằng tiếng Việt>","category":"<category>","risk":<0-100>,"keywords":["<5 từ khóa>"]}
+{"summary":"<tóm tắt 1-2 câu bằng ngôn ngữ đã chọn>","category":"<category>","risk":<0-100>,"keywords":["<5 từ khóa>"]}
+
+## LANGUAGE RULES
+- Nếu user chọn tiếng Việt → trả về tiếng Việt
+- Nếu user chọn English → trả về English
+- Nếu user chọn 中文 → trả về 中文
+- Nếu user chọn 日本語 → trả về 日本語
+- Luôn trả về summary và keywords bằng ngôn ngữ đã chọn
 
 ## EXAMPLES
 

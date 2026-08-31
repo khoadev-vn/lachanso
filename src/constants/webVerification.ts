@@ -459,14 +459,14 @@ interface WebVerifyJobResult extends BackendWebResult {
   cached?: boolean;
 }
 
-async function submitWebVerifyJob(url: string): Promise<{ jobId: string | null; result?: WebVerifyJobResult } | null> {
+async function submitWebVerifyJob(url: string, lang: string = 'vi'): Promise<{ jobId: string | null; result?: WebVerifyJobResult } | null> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 20000);
     const response = await fetch("/api/v2/web-verify/async", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url, lang }),
       signal: controller.signal
     });
     clearTimeout(timeout);
@@ -506,8 +506,8 @@ async function pollWebVerifyJob(jobId: string): Promise<WebVerifyJobResult | nul
   return null;
 }
 
-async function fetchBackendWebVerify(url: string): Promise<BackendWebResult | null> {
-  const submitted = await submitWebVerifyJob(url);
+async function fetchBackendWebVerify(url: string, lang: string = 'vi'): Promise<BackendWebResult | null> {
+  const submitted = await submitWebVerifyJob(url, lang);
   if (!submitted) return null;
   if (submitted.result) return submitted.result;
   if (!submitted.jobId) return null;
@@ -574,7 +574,7 @@ interface BackendWebResult {
   coreCriteriaOk: boolean;
 }
 
-export async function analyzeWebsite(input: string, t?: (key: string, params?: Record<string, string | number>) => string): Promise<WebVerificationResult> {
+export async function analyzeWebsite(input: string, t?: (key: string, params?: Record<string, string | number>) => string, lang: string = 'vi'): Promise<WebVerificationResult> {
   const reasons: WebVerificationReason[] = [];
   let score = 70;
   let normalizedUrl = normalizeUrl(input);
@@ -806,7 +806,7 @@ export async function analyzeWebsite(input: string, t?: (key: string, params?: R
   // Trước đây gọi tuần tự khiến backend chậm → UI hay rơi xuống heuristics cục bộ.
   const [, backendV2] = await Promise.all([
     mergeBackendAnalysis(reasons, scoreRef, hostname),
-    fetchBackendWebVerify(normalizedUrl)
+    fetchBackendWebVerify(normalizedUrl, lang)
   ]) as [void, BackendWebResult | null];
   score = Math.max(0, Math.min(100, scoreRef.value));
 

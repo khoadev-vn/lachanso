@@ -843,9 +843,9 @@ function normalizeWebUrl(input) {
     try { return new URL(s).toString(); } catch { return null; }
 }
 
-function runWebVerifyJob(jobId, url) {
+function runWebVerifyJob(jobId, url, lang = 'vi') {
     const startTime = Date.now();
-    verifyWebsiteV2(url).then((result) => {
+    verifyWebsiteV2(url, { lang }).then((result) => {
         const responseData = buildWebVerifyResponse(result, startTime);
         const cacheKey = webVerifyCacheKey(url);
         cacheService.set('web-verify', cacheKey, responseData, 10);
@@ -856,7 +856,7 @@ function runWebVerifyJob(jobId, url) {
             job.doneAt = Date.now();
         }
         incrementThreat();
-        console.log(`[API-v2][web:async] ✅ job=${jobId} state=${result.state} R=${result.R} C=${result.C} (${responseData.execution_time_ms}ms)`);
+        console.log(`[API-v2][web:async] ✅ job=${jobId} state=${result.state} R=${result.R} C=${result.C} lang=${lang} (${responseData.execution_time_ms}ms)`);
     }).catch((error) => {
         console.error(`[API-v2][web:async] ❌ job=${jobId} error:`, error.message);
         const job = webVerifyJobs.get(jobId);
@@ -866,7 +866,7 @@ function runWebVerifyJob(jobId, url) {
 
 app.post('/api/v2/web-verify/async', async (req, res) => {
     try {
-        const { url } = req.body;
+        const { url, lang = 'vi' } = req.body;
         const normalized = normalizeWebUrl(url);
         if (!normalized) return res.status(400).json({ error: 'Missing or invalid url input' });
 
@@ -883,7 +883,7 @@ app.post('/api/v2/web-verify/async', async (req, res) => {
         }
 
         const jobId = `wv_${Date.now().toString(36)}_${(webVerifySeq++).toString(36)}`;
-        webVerifyJobs.set(jobId, { status: 'running', url: normalized, createdAt: Date.now() });
+        webVerifyJobs.set(jobId, { status: 'running', url: normalized, lang, createdAt: Date.now() });
 
         // Dọn job quá cũ (> 10 phút)
         for (const [id, j] of webVerifyJobs) {
@@ -891,8 +891,8 @@ app.post('/api/v2/web-verify/async', async (req, res) => {
         }
 
         // Chạy nền, KHÔNG await → response trả ngay
-        runWebVerifyJob(jobId, normalized);
-        console.log(`[API-v2][web:async] 🚀 job=${jobId} queued: "${normalized}"`);
+        runWebVerifyJob(jobId, normalized, lang);
+        console.log(`[API-v2][web:async] 🚀 job=${jobId} queued: "${normalized}" lang=${lang}`);
         return res.json({ success: true, jobId, status: 'running', cached: false });
     } catch (error) {
         console.error('[API-v2][web:async] ❌ Error:', error.message);

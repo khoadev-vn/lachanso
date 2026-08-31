@@ -603,7 +603,7 @@ async function extractPageText(url, userAgentOverride) {
   }
 }
 
-async function collectC9(url) {
+async function collectC9(url, lang = 'vi') {
   const cacheKey = url;
   const cached = c9Cache.get(cacheKey);
   if (cached && Date.now() < cached.expiresAt) return { collected: true, ...cached.data };
@@ -701,7 +701,7 @@ async function collectC9(url) {
     if (llmReady) {
       // Bước 1: OpenRouter free (Nemotron Ultra) — tóm tắt + phân loại + chấm điểm trong 1 call
       if (isOpenRouterConfigured()) {
-        const ultraPrompt = WEB_SYSTEM_PROMPT;
+        const ultraPrompt = WEB_SYSTEM_PROMPT + `\n\n## LANGUAGE PRIORITY\nRespond in: ${lang === 'vi' ? 'Vietnamese' : lang === 'en' ? 'English' : lang === 'zh' ? 'Chinese' : lang === 'ja' ? 'Japanese' : lang === 'ko' ? 'Korean' : lang === 'th' ? 'Thai' : lang === 'ru' ? 'Russian' : lang === 'es' ? 'Spanish' : lang === 'pt' ? 'Portuguese' : lang === 'ar' ? 'Arabic' : 'Vietnamese'}\nAll output (summary, keywords) MUST be in this language.`;
         const parseAware = (raw) => {
           const rawStr = String((raw && typeof raw === 'object') ? JSON.stringify(raw) : raw || '');
           const start = rawStr.indexOf('{');
@@ -755,7 +755,8 @@ async function collectC9(url) {
 
       // Fallback: nếu OpenRouter không khả dụng → dùng llmChat (Groq/Gemini/DeepSeek/Ollama)
       if (!analysis) {
-        const systemPrompt = 'Bạn là chuyên gia an toàn thông tin Việt Nam. Phân tích nội dung website được cho và trả về JSON tuyệt đối không có text khác. Schema: {"summary":"<tóm tắt 1-2 câu web này về gì, bằng tiếng Việt>","category":"<legit_business|ecommerce|news|blog|gov_edu|gambling|scam|phishing|parked|redirect|adult|unknown>","risk":<số nguyên 0-100: 0=hoàn toàn bình thường, 30=đáng ngờ, 60=lừa đảo/cờ bạc rõ, 90=phishing nguy hiểm>,"keywords":["<5 từ khóa chính>"]}.';
+        const langName = lang === 'vi' ? 'tiếng Việt' : lang === 'en' ? 'English' : lang === 'zh' ? '中文' : lang === 'ja' ? '日本語' : lang === 'ko' ? '한국어' : lang === 'th' ? 'ภาษาไทย' : lang === 'ru' ? 'русский' : lang === 'es' ? 'español' : lang === 'pt' ? 'português' : lang === 'ar' ? 'العربية' : 'tiếng Việt';
+        const systemPrompt = `Bạn là chuyên gia an toàn thông tin. Phân tích nội dung website được cho và trả về JSON tuyệt đối không có text khác. Schema: {"summary":"<tóm tắt 1-2 câu web này về gì, bằng ${langName}>","category":"<legit_business|ecommerce|news|blog|gov_edu|gambling|scam|phishing|parked|redirect|adult|unknown>","risk":<số nguyên 0-100: 0=hoàn toàn bình thường, 30=đáng ngờ, 60=lừa đảo/cờ bạc rõ, 90=phishing nguy hiểm>","keywords":["<5 từ khóa chính bằng ${langName}>"]}. QUAN TRỌNG: summary và keywords PHẢI bằng ${langName}.`;
         try {
           const raw = await llmChat([
             { role: 'system', content: systemPrompt },
@@ -846,6 +847,7 @@ async function collectC9(url) {
 // ============ MAIN ORCHESTRATOR ============
 async function verifyWebsite(input, opts = {}) {
   const start = Date.now();
+  const lang = opts.lang || 'vi';
   let normalizedUrl = input;
   if (!/^https?:\/\//i.test(normalizedUrl)) normalizedUrl = 'https://' + normalizedUrl;
   let url;
@@ -865,7 +867,7 @@ async function verifyWebsite(input, opts = {}) {
     collectC6(hostname, paasToken),
     collectC7(normalizedUrl),
     collectC8(hostname),
-    collectC9(normalizedUrl)
+    collectC9(normalizedUrl, lang)
   ]);
 
   const criteria = { c1, c2, c3, c4, c5, c6, c7, c8, c9 };
