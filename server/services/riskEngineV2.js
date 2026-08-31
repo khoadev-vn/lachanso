@@ -729,8 +729,15 @@ async function collectC9(url) {
       parked: 35, redirect: 40, gambling: 70, adult: 55, scam: 80, phishing: 90, unknown: 20
     };
     let risk = analysis && typeof analysis.risk === 'number' ? analysis.risk : 15;
+    // Chỉ dùng CATEGORY_RISK khi LLM KHÔNG trả risk hợp lý (thiếu hoặc quá thấp)
+    // Nếu LLM đã trả risk rõ ràng → tin tưởng LLM hơn vì nó đã phân tích chi tiết
     if (analysis && analysis.category && analysis.category !== 'unknown') {
-      risk = Math.max(risk, CATEGORY_RISK[analysis.category] || 15);
+      const categoryRisk = CATEGORY_RISK[analysis.category] || 15;
+      // Chỉ nâng risk nếu category risk cao hơn AND LLM risk quá thấp (< 20)
+      // Tránh override risk của LLM khi nó đã phân tích kỹ
+      if (risk < 20 && categoryRisk > risk) {
+        risk = categoryRisk;
+      }
     }
     // Tiêu chí nội dung: nội dung bình thường + có LLM → coi như "collected" mạnh (C cao), risk thấp
     const result = {
