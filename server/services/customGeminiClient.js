@@ -33,9 +33,7 @@ async function customGeminiChat(messages, options = {}) {
     max_tokens: maxTokens
   };
 
-  if (jsonMode) {
-    payload.response_format = { type: 'json_object' };
-  }
+  // NOTE: response_format: json_object causes proxy truncation — rely on prompt instead
 
   try {
     stats.calls++;
