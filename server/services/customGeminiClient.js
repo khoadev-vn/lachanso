@@ -30,7 +30,8 @@ async function customGeminiChat(messages, options = {}) {
     model,
     messages,
     temperature,
-    max_tokens: maxTokens
+    max_tokens: maxTokens,
+    stream: false
   };
 
   // NOTE: response_format: json_object causes proxy truncation — rely on prompt instead
@@ -40,9 +41,12 @@ async function customGeminiChat(messages, options = {}) {
     const response = await axios.post(`${CUSTOM_GEMINI_BASE_URL}/chat/completions`, payload, {
       headers: {
         'Authorization': `Bearer ${CUSTOM_GEMINI_API_KEY}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
-      timeout
+      timeout,
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity
     });
 
     const content = response.data?.choices?.[0]?.message?.content;
