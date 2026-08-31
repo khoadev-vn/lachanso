@@ -59,12 +59,21 @@ async function customGeminiChat(messages, options = {}) {
 
     if (jsonMode) {
       try {
-        return JSON.parse(content);
+        const parsed = JSON.parse(content);
+        // Handle array response: extract first object
+        if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object') {
+          return parsed[0];
+        }
+        return parsed;
       } catch (e) {
         // Strip markdown code blocks: ```json ... ``` or ``` ... ```
         let cleaned = content.replace(/```(?:json)?\s*\n?/g, '').replace(/```\s*$/g, '').trim();
         try {
-          return JSON.parse(cleaned);
+          const parsed2 = JSON.parse(cleaned);
+          if (Array.isArray(parsed2) && parsed2.length > 0 && typeof parsed2[0] === 'object') {
+            return parsed2[0];
+          }
+          return parsed2;
         } catch (e2) {
           const match = cleaned.match(/\{[\s\S]*\}/);
           if (match) return JSON.parse(match[0]);
