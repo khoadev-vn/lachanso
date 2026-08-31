@@ -916,7 +916,7 @@ app.get('/api/v2/web-verify/status', (req, res) => {
 // Endpoint đồng bộ (giữ lại cho tương thích / test trực tiếp)
 app.post('/api/v2/web-verify', async (req, res) => {
     try {
-        const { url } = req.body;
+        const { url, lang = 'vi' } = req.body;
         if (!url) return res.status(400).json({ error: 'Missing url input' });
 
         const normalized = normalizeWebUrl(url);
@@ -926,7 +926,7 @@ app.post('/api/v2/web-verify', async (req, res) => {
         const safe = await ssrfGuard.assertSafeUrl(normalized);
         if (!safe.ok) return res.status(400).json({ error: `URL không được phép quét: ${safe.reason}` });
 
-        console.log(`\n[API-v2][web] 🔍 Zero-Trust Web Verify: "${String(url).substring(0, 50)}..."`);
+        console.log(`\n[API-v2][web] 🔍 Zero-Trust Web Verify: "${String(url).substring(0, 50)}..." lang=${lang}`);
         const startTime = Date.now();
 
         // Cache kết quả theo URL gốc (10 phút) — lần check sau gần như tức thì,
@@ -938,7 +938,7 @@ app.post('/api/v2/web-verify', async (req, res) => {
             return res.json({ ...cached, cached: true, cacheHit: true });
         }
 
-        const result = await verifyWebsiteV2(normalized);
+        const result = await verifyWebsiteV2(normalized, { lang });
 
         const responseData = buildWebVerifyResponse(result, startTime);
 
