@@ -52,6 +52,7 @@ async function customGeminiChat(messages, options = {}) {
       console.warn('[CustomGemini] Empty response from API.');
       return null;
     }
+    console.log('[CustomGemini] content.length:', content.length, '— first 100:', String(content).slice(0, 100));
 
     if (response.data?.usage?.total_tokens) {
       stats.totalTokens += response.data.usage.total_tokens;
@@ -69,14 +70,21 @@ async function customGeminiChat(messages, options = {}) {
         }
         return parsed;
       } catch (e) {
-        // If starts with [, extract first object
+        // If starts with [, extract first { ... } object
         if (cleaned.startsWith('[')) {
-          const match = cleaned.match(/\{[\s\S]*\}/);
-          if (match) {
-            try { return JSON.parse(match[0]); } catch (e2) {}
+          const firstBrace = cleaned.indexOf('{');
+          const lastBrace = cleaned.lastIndexOf('}');
+          if (firstBrace !== -1 && lastBrace > firstBrace) {
+            const objStr = cleaned.slice(firstBrace, lastBrace + 1);
+            try { return JSON.parse(objStr); } catch (e2) {}
           }
         }
-        console.error('[CustomGemini] JSON parse error:', e.message, '— raw:', String(content).slice(0, 200));
+        // Last resort: find first { ... }
+        const fallback = cleaned.match(/\{[\s\S]*\}/);
+        if (fallback) {
+          try { return JSON.parse(fallback[0]); } catch (e3) {}
+        }
+        console.error('[CustomGemini] JSON parse error:', e.message, '— cleaned:', String(cleaned).slice(0, 300));
         return null;
       }
     }
