@@ -798,13 +798,24 @@ async function collectC9(url) {
     }
     
     // ===== KẾT HỢP DEEP ANALYSIS RISK =====
-    // Nếu deep analysis phát hiện cloaking/scam → tăng risk
-    if (deepRiskBonus > 30 || hasCloaking || hasObfuscation) {
-      // Deep analysis rất đáng tin → dùng max hoặc weighted average
-      risk = Math.max(risk, deepRiskBonus * 0.8);
-      if (hasCloaking) risk = Math.max(risk, 60);
-      if (hasObfuscation) risk = Math.max(risk, 50);
-      if (scamIndicatorCount >= 3) risk = Math.max(risk, 70);
+    // Chỉ dùng deep analysis khi:
+    // 1. AI KHÔNG phân tích được (analysis = null), HOẶC
+    // 2. AI đã phân tích nhưng deep analysis phát hiện cloaking/obfuscation RÕ RÀNG
+    // KHÔNG dùng deep analysis để override AI khi AI đã khẳng định "safe"
+    if (!analysis || (hasCloaking && !hasObfuscation === false)) {
+      if (deepRiskBonus > 30 || hasCloaking || hasObfuscation) {
+        // Deep analysis rất đáng tin → dùng max hoặc weighted average
+        risk = Math.max(risk, deepRiskBonus * 0.8);
+        if (hasCloaking) risk = Math.max(risk, 60);
+        if (hasObfuscation) risk = Math.max(risk, 50);
+        if (scamIndicatorCount >= 3) risk = Math.max(risk, 70);
+      }
+    } else if (analysis && analysis.risk < 20) {
+      // AI nói safe → chỉ dùng deep analysis để verify, KHÔNG tăng risk
+      // Trừ khi deep analysis phát hiện cloaking RÕ RÀNG
+      if (hasCloaking && deepRiskBonus > 50) {
+        risk = Math.max(risk, 40); // Chỉ tăng nhẹ khi có cloaking rõ ràng
+      }
     }
     
     // Tiêu chí nội dung: nội dung bình thường + có LLM → coi như "collected" mạnh (C cao), risk thấp
