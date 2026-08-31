@@ -701,7 +701,9 @@ async function collectC9(url, lang = 'vi') {
     if (llmReady) {
       // Bước 1: OpenRouter free (Nemotron Ultra) — tóm tắt + phân loại + chấm điểm trong 1 call
       if (isOpenRouterConfigured()) {
-        const ultraPrompt = WEB_SYSTEM_PROMPT + `\n\n## LANGUAGE PRIORITY\nRespond in: ${lang === 'vi' ? 'Vietnamese' : lang === 'en' ? 'English' : lang === 'zh' ? 'Chinese' : lang === 'ja' ? 'Japanese' : lang === 'ko' ? 'Korean' : lang === 'th' ? 'Thai' : lang === 'ru' ? 'Russian' : lang === 'es' ? 'Spanish' : lang === 'pt' ? 'Portuguese' : lang === 'ar' ? 'Arabic' : 'Vietnamese'}\nAll output (summary, keywords) MUST be in this language.`;
+        const langName = lang === 'vi' ? 'Vietnamese' : lang === 'en' ? 'English' : lang === 'zh' ? 'Chinese' : lang === 'ja' ? 'Japanese' : lang === 'ko' ? 'Korean' : lang === 'th' ? 'Thai' : lang === 'ru' ? 'Russian' : lang === 'es' ? 'Spanish' : lang === 'pt' ? 'Portuguese' : lang === 'ar' ? 'Arabic' : 'Vietnamese';
+        const ultraPrompt = WEB_SYSTEM_PROMPT + `\n\n## LANGUAGE PRIORITY\nRespond in: ${langName}\nAll output (summary, keywords) MUST be in ${langName}.`;
+        console.log(`[riskEngineV2] c9 lang=${lang} → prompt language=${langName}`);
         const parseAware = (raw) => {
           const rawStr = String((raw && typeof raw === 'object') ? JSON.stringify(raw) : raw || '');
           const start = rawStr.indexOf('{');
