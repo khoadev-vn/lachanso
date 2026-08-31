@@ -5,6 +5,7 @@ const { deepseekChat } = require('./deepseekClient');
 const { geminiChat, isGeminiConfigured, getKeyCount, getKeyStats, GEMINI_MODEL } = require('./geminiClient');
 const { groqChat, isGroqConfigured, getGroqStats, GROQ_MODEL } = require('./groqClient');
 const { openrouterChat, isOpenRouterConfigured, getOpenRouterStats } = require('./openrouterClient');
+const { customGeminiChat, isCustomGeminiConfigured, getCustomGeminiStats } = require('./customGeminiClient');
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3:latest';
@@ -136,32 +137,38 @@ async function llmChat(messages, options = {}) {
   let result = null;
   let mode = null;
 
-  // 1. OpenRouter free (NVIDIA Nemotron) — nhanh, miễn phí, giỏi tiếng Việt
+  // 1. Custom Gemini (primary — mạnh nhất, unlimited tokens)
+  if (!result && isCustomGeminiConfigured()) {
+    result = await customGeminiChat(messages, options);
+    if (result) mode = 'custom-gemini';
+  }
+
+  // 2. OpenRouter free (NVIDIA Nemotron) — nhanh, miễn phí, giỏi tiếng Việt
   //    Bỏ qua khi preferFastProvider (warmup) — OpenRouter hay trả reasoning text không JSON.
   if (!result && isOpenRouterConfigured() && !options.preferFastProvider) {
     result = await openrouterChat(messages, options);
     if (result) mode = 'openrouter';
   }
 
-  // 2. Try Groq first (fast, 280 tok/s)
+  // 3. Try Groq first (fast, 280 tok/s)
   if (!result && isGroqConfigured()) {
     result = await groqChat(messages, options);
     if (result) mode = 'groq';
   }
 
-  // 3. Try Gemini (round-robin keys, good Vietnamese)
+  // 4. Try Gemini (round-robin keys, good Vietnamese)
   if (!result && isGeminiConfigured()) {
     result = await geminiChat(messages, options);
     if (result) mode = 'gemini';
   }
 
-  // 4. Fallback to DeepSeek
+  // 5. Fallback to DeepSeek
   if (!result) {
     result = await deepseekChat(messages, options);
     if (result) mode = 'deepseek';
   }
 
-  // 5. Fallback to Ollama (local, free)
+  // 6. Fallback to Ollama (local, free)
   if (!result) {
     const ollama = await checkOllama();
     if (ollama.available) {
@@ -189,6 +196,7 @@ async function llmChat(messages, options = {}) {
 async function getLLMStatus() {
   const ollama = await checkOllama(true);
   return {
+    customGemini: getCustomGeminiStats(),
     openrouter: getOpenRouterStats(),
     groq: getGroqStats(),
     ollama: {
@@ -205,13 +213,13 @@ async function getLLMStatus() {
       stats: getKeyStats()
     },
     deepseekConfigured: Boolean(process.env.DEEPSEEK_API_KEY),
-    enabled: isOpenRouterConfigured() || isGroqConfigured() || ollama.available || isGeminiConfigured() || Boolean(process.env.DEEPSEEK_API_KEY)
+    enabled: isCustomGeminiConfigured() || isOpenRouterConfigured() || isGroqConfigured() || ollama.available || isGeminiConfigured() || Boolean(process.env.DEEPSEEK_API_KEY)
   };
 }
 
 async function isLLMConfigured() {
   const ollama = await checkOllama();
-  return isOpenRouterConfigured() || isGroqConfigured() || ollama.available || isGeminiConfigured() || Boolean(process.env.DEEPSEEK_API_KEY);
+  return isCustomGeminiConfigured() || isOpenRouterConfigured() || isGroqConfigured() || ollama.available || isGeminiConfigured() || Boolean(process.env.DEEPSEEK_API_KEY);
 }
 
 module.exports = {
