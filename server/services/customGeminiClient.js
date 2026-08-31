@@ -61,10 +61,16 @@ async function customGeminiChat(messages, options = {}) {
       try {
         return JSON.parse(content);
       } catch (e) {
-        const match = content.match(/\{[\s\S]*\}/);
-        if (match) return JSON.parse(match[0]);
-        console.error('[CustomGemini] JSON parse error:', e.message);
-        return null;
+        // Strip markdown code blocks: ```json ... ``` or ``` ... ```
+        let cleaned = content.replace(/```(?:json)?\s*\n?/g, '').replace(/```\s*$/g, '').trim();
+        try {
+          return JSON.parse(cleaned);
+        } catch (e2) {
+          const match = cleaned.match(/\{[\s\S]*\}/);
+          if (match) return JSON.parse(match[0]);
+          console.error('[CustomGemini] JSON parse error:', e.message, '— raw:', String(content).slice(0, 200));
+          return null;
+        }
       }
     }
     return content.trim();
