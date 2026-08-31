@@ -58,33 +58,26 @@ async function customGeminiChat(messages, options = {}) {
     }
 
     if (jsonMode) {
+      // Strip markdown code blocks first
+      let cleaned = content.replace(/```(?:json)?\s*\n?/g, '').replace(/```\s*$/g, '').trim();
+      
+      // Try to parse directly
       try {
-        const parsed = JSON.parse(content);
-        // Handle array response: extract first object
+        const parsed = JSON.parse(cleaned);
         if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object') {
           return parsed[0];
         }
         return parsed;
       } catch (e) {
-        // Strip markdown code blocks: ```json ... ``` or ``` ... ```
-        let cleaned = content.replace(/```(?:json)?\s*\n?/g, '').replace(/```\s*$/g, '').trim();
-        // If starts with [ but no matching {, try to extract first object
+        // If starts with [, extract first object
         if (cleaned.startsWith('[')) {
-          const firstObjMatch = cleaned.match(/\{[\s\S]*\}/);
-          if (firstObjMatch) cleaned = firstObjMatch[0];
-        }
-        try {
-          const parsed2 = JSON.parse(cleaned);
-          if (Array.isArray(parsed2) && parsed2.length > 0 && typeof parsed2[0] === 'object') {
-            return parsed2[0];
-          }
-          return parsed2;
-        } catch (e2) {
           const match = cleaned.match(/\{[\s\S]*\}/);
-          if (match) return JSON.parse(match[0]);
-          console.error('[CustomGemini] JSON parse error:', e.message, '— raw:', String(content).slice(0, 200));
-          return null;
+          if (match) {
+            try { return JSON.parse(match[0]); } catch (e2) {}
+          }
         }
+        console.error('[CustomGemini] JSON parse error:', e.message, '— raw:', String(content).slice(0, 200));
+        return null;
       }
     }
     return content.trim();
