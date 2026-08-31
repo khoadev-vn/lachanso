@@ -604,7 +604,7 @@ async function extractPageText(url, userAgentOverride) {
 }
 
 async function collectC9(url, lang = 'vi') {
-  const cacheKey = url;
+  const cacheKey = `${url}:${lang}`;
   const cached = c9Cache.get(cacheKey);
   if (cached && Date.now() < cached.expiresAt) return { collected: true, ...cached.data };
 
