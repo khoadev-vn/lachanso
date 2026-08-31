@@ -21,6 +21,7 @@ const verifiedDomains = require('./verifiedDomains');
 const { llmChat, isLLMConfigured } = require('./llmClient');
 const { openrouterChat, isOpenRouterConfigured } = require('./openrouterClient');
 const ssrfGuard = require('./ssrfGuard');
+const { WEB_SYSTEM_PROMPT } = require('../data/trainingExamples');
 
 const WEIGHTS = { c1: 0.18, c2: 0.14, c3: 0.08, c4: 0.14, c5: 0.15, c6: 0.10, c7: 0.06, c8: 0.05, c9: 0.10 };
 
@@ -643,7 +644,7 @@ async function collectC9(url) {
     if (llmReady) {
       // Bước 1: OpenRouter free (Nemotron Ultra) — tóm tắt + phân loại + chấm điểm trong 1 call
       if (isOpenRouterConfigured()) {
-        const ultraPrompt = 'Bạn là chuyên gia an toàn thông tin Việt Nam. Phân tích nội dung website được cho rồi trả về JSON tuyệt đối không thêm bất kỳ text nào khác. Schema: {"summary":"<tóm tắt 1-2 câu bằng tiếng Việt: web này làm gì>","category":"<một trong: legit_business|ecommerce|news|blog|gov_edu|gambling|scam|phishing|parked|redirect|adult|unknown>","risk":<số nguyên 0-100: 0=hoàn toàn bình thường (doanh nghiệp thật/tin tức), 30=đáng ngờ, 60=lừa đảo/cờ bạc rõ ràng, 90=phishing nguy hiểm>","keywords":["<5 từ khóa chính>"]}. Phải MỞ ĐẦU câu trả lời bằng ký tự { một cách trực tiếp.';
+        const ultraPrompt = WEB_SYSTEM_PROMPT;
         const parseAware = (raw) => {
           const rawStr = String((raw && typeof raw === 'object') ? JSON.stringify(raw) : raw || '');
           const start = rawStr.indexOf('{');

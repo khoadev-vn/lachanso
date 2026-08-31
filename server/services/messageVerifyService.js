@@ -5,6 +5,7 @@
 const { llmChat, isLLMConfigured } = require('./llmClient');
 const fs = require('fs');
 const path = require('path');
+const { MESSAGE_SYSTEM_PROMPT } = require('../data/trainingExamples');
 
 // ============================================================
 // SCAM INTELLIGENCE DATABASE (Real-time integration)
@@ -632,7 +633,7 @@ async function verifyMessage(text) {
     if (await isLLMConfigured()) {
       const raw = await llmChat(
         [
-          { role: 'system', content: LLM_SYSTEM_PROMPT },
+          { role: 'system', content: MESSAGE_SYSTEM_PROMPT },
           { role: 'user', content: `Perform deep analysis on this message:\n\n"${plain}"\n\nProvide comprehensive scam analysis in JSON format.` }
         ],
         { temperature: 0.05, maxTokens: 1000, jsonMode: true, timeout: 90000 }
